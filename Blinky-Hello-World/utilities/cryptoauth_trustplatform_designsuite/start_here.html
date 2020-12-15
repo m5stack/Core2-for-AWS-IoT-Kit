@@ -1,0 +1,890 @@
+<!doctype html>
+<!-- Copyright (c) 2018-2019 Microchip Technology Inc. and its subsidiaries
+
+    Subject to your compliance with these terms, you may use Microchip software
+    and any derivatives exclusively with Microchip products. It is your
+    responsibility to comply with third party license terms applicable to your
+    use of third party software (including open source software) that may
+    accompany Microchip software.
+
+    THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
+    EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
+    WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
+    PARTICULAR PURPOSE. IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT,
+    SPECIAL, PUNITIVE, INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE
+    OF ANY KIND WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF
+    MICROCHIP HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE
+    FORESEEABLE. TO THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL
+    LIABILITY ON ALL CLAIMS IN ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED
+    THE AMOUNT OF FEES, IF ANY, THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR
+    THIS SOFTWARE.
+-->
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<!--Designerd by: http://bootstrapthemes.co-->
+
+<head>
+    <meta charset="utf-8">
+    <title>Microchip Secure Products Group Use Case Tool</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="assets/html/images/favicon.ico">
+
+    <!--Google Font link-->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Raleway:400,600,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="assets/html/css/style.css">
+    <link rel="stylesheet" href="assets/html/css/slick.css">
+    <link rel="stylesheet" href="assets/html/css/slick-theme.css">
+    <link rel="stylesheet" href="assets/html/css/animate.css">
+    <link rel="stylesheet" href="assets/html/css/fonticons.css">
+    <link rel="stylesheet" href="assets/html/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/html/css/bootstrap.css">
+    <link rel="stylesheet" href="assets/html/css/magnific-popup.css">
+    <link rel="stylesheet" href="assets/html/css/bootsnav.css">
+    <link rel="stylesheet" href="assets/html/css/configuration_styles.css">
+    <link rel="stylesheet" href="assets/html/css/style_usecasetool.css">
+
+    <!--For Plugins external css-->
+
+    <!--Theme custom css -->
+    <link rel="stylesheet" href="assets/html/css/style.css">
+    <!--<link rel="stylesheet" href="assets/html/css/colors/maron.css">-->
+
+    <!--Theme Responsive css-->
+    <link rel="stylesheet" href="assets/html/css/responsive.css" />
+    <script src="assets/html/js/jquery.js"></script>
+    <script type="text/javascript" src="assets/html/js/jquery_plantuml.js"></script>
+    <script type="text/javascript" src="assets/html/js/rawdeflate.js"></script>
+    <script src="assets/html/js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+</head>
+
+<body onload="load_version(); href_test();" data-spy="scroll" data-target=".navbar-collapse">
+    <div id="templates" style="display:none">
+        <div id="note-msg-template" class="config-note">
+            <svg viewBox="0 0 75 75" width="0.2in" height="0.2in">
+                <use xlink:href="#note-icon" /></svg>
+            <span class="msg-text"></span>
+        </div>
+
+        <div id="warning-msg-template" class="config-warning">
+            <svg viewBox="0 0 75 75" width="0.2in" height="0.2in">
+                <use xlink:href="#warning-icon" /></svg>
+            WARNING: <span class="msg-text"></span>
+        </div>
+
+        <div id="error-msg-template" class="config-error">
+            <svg viewBox="0 0 75 75" width="0.2in" height="0.2in">
+                <use xlink:href="#error-icon" /></svg>
+            ERROR: <span class="msg-text"></span>
+        </div>
+    </div>
+
+    <!-- Preloader -->
+    <div id="loading">
+        <div id="loading-center">
+            <div id="loading-center-absolute">
+                <div class="object" id="object_one"></div>
+                <div class="object" id="object_two"></div>
+                <div class="object" id="object_three"></div>
+                <div class="object" id="object_four"></div>
+            </div>
+        </div>
+    </div>
+    <!--End off Preloader -->
+
+
+    <div class="culmn">
+        <!--Home page style-->
+
+
+        <nav class="navbar navbar-default navbar-fixed white no-background bootsnav">
+            <!-- Start Top Search -->
+            <div class="top-search">
+                <div class="container">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search">
+                        <span class="input-group-addon close-search"><i class="fa fa-times"></i></span>
+                    </div>
+                </div>
+            </div>
+            <!-- End Top Search -->
+
+            <div class="container">
+                <!-- Start Atribute Navigation -->
+                <div class="attr-nav">
+                    <ul>
+                        <li class="side-menu"><a href="#"><i class="fa fa-bars"></i></a></li>
+                    </ul>
+                </div>
+                <!-- End Atribute Navigation -->
+
+                <!-- Start Header Navigation -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-menu">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand" href="https://www.microchip.com" target="_blank">
+
+                        <img src="assets/html/images/MCHP_Logo_Vertical_4C.png" class="logo logo-display m-top-10" alt="">
+                        <img src="assets/html/images/MCHP_Logo_Vertical_4C.png" class="logo logo-scrolled" alt="">
+                    </a>
+
+                </div>
+                <!-- End Header Navigation -->
+
+                <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="nav navbar-nav navbar-center" data-in="fadeInDown" data-out="fadeOutUp">
+                        <li><a href="#hello">Home</a></li>
+                        <li><a href="assets/html/embedded_security_primer_curriculum.html" target="_blank">Security Primer</a></li>
+                         <li><a href="#trustplatform">Trust Platform</a></li>
+                        <!-- <li><a href="#method">Methodology</a></li> -->
+                        <li><a href="#hardware">Prototyping</a></li>
+                        <li><a href="#trustngo">Trust&amp;GO</a></li>
+                        <li><a href="#trustflex">TrustFLEX</a></li>
+                        <li><a href="#trustcustom">TrustCUSTOM</a></li>
+                    </ul>
+                </div><!-- /.navbar-collapse -->
+            </div>
+
+
+            <!-- Start Side Menu -->
+            <div class="side">
+                <a href="#" class="close-side"><i class="fa fa-times"></i></a>
+                <div class="widget">
+                    <h6 class="title">Quick links</h6>
+                    <ul class="link">
+                        <li><a href="#hello">Home</a></li>
+                        <!-- <li><a href="#method">Methodology</a></li> -->
+                        <li><a href="#trustplatform">Trust Platform</a></li>
+                        <li><a href="#hardware">Prototyping</a></li>
+                        <li><a href="#trustngo">Trust&amp;GO</a></li>
+                        <li><a href="#trustflex">TrustFLEX</a></li>
+                        <li><a href="#trustcustom">TrustCUSTOM</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="widget">
+                    <h6 class="title">Trust&amp;GO tool</h6>
+                    <ul class="link">
+                        <li><a href="assets/html/usecase_configurator/TrustnGO_usecase_library.html" target="_blank">Use Cases Library</a></li>
+                    </ul>
+                </div>
+                <div class="widget">
+                    <h6 class="title">TrustFLEX tool</h6>
+                    <ul class="link">
+                        <li><a href="assets/html/usecase_configurator/TrustFlex_configurator.html#methos" target="_blank">Methodology</a></li>
+                        <li><a href="assets/html/usecase_configurator/TrustFlex_configurator.html#standard_config" target="_blank">Use Cases Library</a></li>
+                        <li><a href="assets/html/usecase_configurator/TrustFlex_configurator.html#trustflex_config" target="_blank">Configurator</a></li>
+                    </ul>
+                </div>
+                <div class="widget">
+                    <h6 class="title">TrustCUSTOM tool</h6>
+                    <ul class="link">
+                        <li><a href="assets/html/usecase_configurator/TrustCustom_configurator.html#trustcustom_config" target="_blank">Use Cases Library</a></li>
+                        <li><a href="assets/html/usecase_configurator/TrustCustom_configurator.html#trustcustom_config" target="_blank">Configurator</a></li>
+                    </ul>
+                </div>
+                <div class="widget">
+                    <h6 class="title">External Links</h6>
+                    <ul class="link">
+                        <li><a href="https://microchiptech.github.io/cryptoauthlib" target="_blank">CryptoAuthLib GitHub</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- End Side Menu -->
+        </nav>
+
+        <!--Home Sections-->
+        <section id="hello" class="home bg-mega">
+            <div class="overlay"></div>
+            <div class="container">
+                <div class="row">
+                    <div class="main_home">
+                        <div class="home_text p-top-110">
+                            <h1 class="text-white text-center">SECURE YOUR DESIGN WITH MICROCHIP TRUST PLATFORM</h1>
+                        </div>
+                    </div>
+                </div>
+                <!--End off row-->
+            </div>
+            <!--End off container -->
+        </section>
+        <!--End off Home Sections-->
+
+        <!--TrustPlatform Section-->
+        <section id="trustplatform" class="roomy-50 lightbg">
+            <div class="container">
+                <div class="col-md-12 col-sm-12">
+                    <div class="head_title text-center">
+                        <h2>TRUST PLATFORM for CryptoAuthentication&#174; devices</h2>
+                        <div class="separator_auto"></div>
+                    </div>
+                    <div class="text_left">
+                        <p>The Trust Platform for CryptoAuthentication&trade; is a combination of multiple elements to simplify the addition of hardware security to any embedded design.</p>
+                        <p>It combines: A unique secure flow to easily protype various security use cases leveraging Microchip CryptoAuthentication&trade; device family (ATECC608B / ATSHA204A and future devices) and an optimized secure provisioning flow with limited Minimum Order Quantities: starting at 10 units!</p>
+                        <p>This platform includes Hardware protyping tools along with a unique design suite to accelerate the prototyping of the most common use cases.</p>
+                        <p>The Trust Platform is split in 3 sub-families: Trust&amp;GO, TrustFLEX and TrustCUSTOM which allow different level of flexibility in the customization and provisioning services. Start your journey with Trust&amp;GO and navigate to TrustFLEX / TrustCUSTOM for the highest level flexibility.</p>
+                        <br>
+                    </div>
+                    <!--TrustnGo section-->
+                    <div class="col-md-4 col-sm-12">
+                    <div class="use_case_head p-top-30 p-bottom-30 text-center">
+                        <a href="#trustngo"><img width="40%" height="40%" src="assets/html/images/ServicePlan-Logo-TrustandGo-ColorBG.png"></a>
+                        <div class="trust_item_head">
+                        <h4>Pre-Configured and Pre-provisioned Secure Elements for fix-function Use Cases</h4><br>
+                        <p>The Microchip <a href="https://www.microchip.com/TrustGO" target="_blank">Trust&amp;GO</a> product family allows to secure a connection to any cloud infrastructure whether IP based or LoRaWAN based</p>
+                        <ul class="list-group">
+                            <li class="list-group-item text-left">
+                                <a href="https://www.microchip.com/trustgotls" target="_blank"><u><h5>Trust&GO for TLS (ATECC608B)</h5></u></a>
+                                <p>This configuration should be used to connect to any public cloud infrastucture using a TLS based authentication. It is compatible with</p>
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <a href="https://www.microchip.com/TrustGOGCP" title="GCP IoT Core product page" target="_blank">Google Cloud Platform IoT Core</a>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a href="https://www.microchip.com/TrustGOAWSIoT" title="AWS IoT product page" target="_blank">Amazon AWS IoT device</a>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a href="https://www.microchip.com/ATECC608aHSI" title="AWS IoT GreenGrass product page" target="_blank" target="_blank">Amazon AWS GreenGrass</a>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a href="https://www.microchip.com/TrustGOAzure/" title="Microsoft Azure IoT Hub product page" target="_blank" target="_blank">Microsoft Azure IoT Hub services</a>
+                                    </li>
+                                </ul>
+                                <p>This configuration can also be used for Accessory / Disposable asymmetric authentication</p>
+                            </li>
+                            <li class="list-group-item text-left">
+                                <a href="https://www.microchip.com/trustgolora" target="_blank"><u><h5>Trust&GO for LoRaWAN (ATECC608B)</h5></u></a>
+                                <p>These configurations should be used to connect to a LoRaWAN <a href="https://www.thethingsindustries.com" title="The Things Industries" target="_blank">TTI</a> or <a href="https://www.actility.com" title="Actility" target="_blank">Actility</a> join server</p>
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <a href="https://github.com/MicrochipTech/cryptoauthlib/wiki/TTI-Getting-Started" title="Microchip LoRaWAN stack for TTI (SAMR34)" target="_blank">Microchip LoRaWAN stack for TTI (SAMR34)</a>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a href="https://github.com/MicrochipTech/atsamr34_ecc608a_actility" title="Microchip LoRaWAN stack for Actility (SAMR34)" target="_blank">Microchip LoRaWAN stack for Actility (SAMR34)</a>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a href="https://github.com/armmbed/mbed-os-example-lorawan-atecc608a" title="ARM mbed LoRaWAN stack product page" target="_blank">ARM mbed LoRaWAN stack for TTI (SAML21)</a>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a href="https://github.com/TheThingsNetwork/lorawan-example-atecc608a-tnglora/tree/master/LoRaMac-node" title="LoRaMac-node stack" target="_blank">LoRaMac-node stack for TTI (SAMR34)</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p>If your application requires different or additional use cases, please consider using <a href="#trustflex">TrustFLEX</a></p>
+                        <div class="home_btns m-top-40 text-center">
+                            <a href="#trustngo" class="btn-primary">Select Trust&amp;GO</a>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                    <!--end TrustnGo section -->
+
+                    <!-- TrustFLEX section -->
+                    <div class="col-md-4 col-sm-12">
+                    <div class="use_case_head p-top-30 p-bottom-30 text-center">
+                        <a href="#trustflex"><img width="40%" height="40%" src="assets/html/images/ServicePlan-Logo-TrustFlex-ColorBG.png"></a>
+                        <div class="trust_item_head">
+                            <h4>Pre-configured and partially Pre-Provisioned Secure Element for Cloud Authentication</h4><br>
+                            <p>The Microchip <a href="https://www.microchip.com/TrustFLEX" target="_blank">TrustFLEX</a> product family allows to extend the supported use cases from Trust&amp;GO with additional Security Use Cases</p>
+                            <ul class="list_group">
+                                <li class="list-group-item text-left">
+                                    <a href="http://microchip.com/trustflextls" target="_blank"><u><h5>TrustFLEX for TLS (ATECC608B)</h5></u></a>
+                                    <p>In addition to the Trust&amp;GO TLS capabilities, this device supports the following use case extension:</p>
+                                    <ul class="list-group">
+                                        <li class="list-group-item">Firmware validation (aka secure boot)</li>
+                                        <li class="list-group-item">Secure Over the Air upgrade (OTA)</li>
+                                        <li class="list-group-item">Custom Public Key Infrastructure (PKI)</li>
+                                        <li class="list-group-item">IP / Firmware protection</li>
+                                        <li class="list-group-item">Accessory or Disposable authentication</li>
+                                    </ul>
+                                </li>
+                                <li class="list-group-item text-left">
+                                    <h5>TrustFLEX for LORAWAN (ATECC608B)</h5>
+                                    <p>This device extends the ATECC608B LoRaWAN features (TTI or Actility) with the following use cases:</p>
+                                    <ul class="list-group text-left">
+                                        <li class="list-group-item">Customer specific DevEUI range</li>
+                                        <li class="list-group-item">Firmware validation (aka Secure boot)</li>
+                                    </ul>
+                                </li>
+                            </ul><br>
+                            <p>If your use cases are not supported, please consider using
+                            <a href="#trustcustom">TrustCUSTOM</a></p>
+                            <div class="home_btns m-top-40 text-center">
+                                <a href="#trustflex" class="btn-primary">Select TrustFLEX</a>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    <!-- end Trusflex section -->
+
+                    <!-- Trustcustom section -->
+                    <div class="col-md-4 col-sm-12">
+                        <div class="use_case_head p-top-30 p-bottom-30 text-center">
+                            <a href="#trustcustom"><img width="40%" height="40%" src="assets/html/images/ServicePlan-Logo-TrustCustom-ColorBG.png"></a>
+                            <div class="trust_item_head">
+                                <h4>Secure Element to be custom configured and provisioned for Custom Usecases</h4><br>
+                                <p>The Microchip <a href="https://www.microchip.com/TrustCUSTOM" target="_blank">TrustCUSTOM</a> product family allows to address the most demanding use cases. The user has full freedom in defining the device configuration and the provisioned cryptographic assets.</p>
+                                <ul class="list-group text-left">
+                                    <li class="list-group-item">
+                                        <h5>ATECC608B-TCSM</h5>
+                                        <p>For security schemes requiring asymmetric and symmetric cryptography</p>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <h5>ATSHA204A-TCTM</h5>
+                                        <p>For security schemes requireing symmetric cryptography</p>
+                                    </li>
+                                </ul>
+                                <p>The TrustCUSTOM Configurator tool  (available under NDA) will allow you to explore configuration options and to follow a methodology to implement the most demanding embedded system security schemes </p>
+                                <div class="home_btns m-top-40 text-center">
+                                    <a href="#trustcustom" class="btn-primary">Select TrustCUSTOM</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Trustcustom section -->
+                </div>
+            </div>
+        </section>
+        <!--End TrustPlatform section-->
+
+        <!--hardware section-->
+        <section id="hardware" class="roomy-50">
+        <div class="container">
+        <div class="row">
+        <div class="col-md-12">
+        <div class="head_title text-left">
+        <h2>PROTYPING PLATFORM</h2>
+        <div class="separator_left"></div>
+        <p>Microchip has developed a hardware prototyping platform to directly interract with the TrustPlatform Design Suite tools for fast and easy prototyping.</p></div></div>
+        <div class="main_method">
+        <div class="col-md-6">
+                <h4>CrytptoAuth Trust Platform kit- DM320118</h4>
+                <div class="separator_small"></div>
+                <div><a href="https://www.microchip.com/DevelopmentTools/ProductDetails/DM320118" target="_blank">DM320118 Product Page</a></div>
+                <div><a href="docs/CryptoAuth_trustplatform_userguide.pdf" target="_blank">DM320118 User Guide</a></div><br>
+                <p>This board comes with the 3 elements of the TrustPlatform: 1 Trust&amp;GO, 1 TrustFLEX and 1 TrustCUSTOM device. They are all connected to an ARM Cortex-M0+ SAMD21 Microcontroller containing communication firmware to interact with the tool suite over USB.</p>
+                <p>This kit also carries an on board debugger which allows to flash the Microcontroller and live debug the application directly from MPLAB X or Atmel Studio. It also allows to plug MikroElektronika click boards.</p>
+                <img src="assets/html/images/kits/190717-SPG-PHOTO-DM320118-Angle-Transparent.png" width="50%" height="50%">
+                <div class="home_btns m-top-40 text-left"><a href="https://www.microchipdirect.com/product/DM320118" class="btn-primary" target="_blank">Buy Here</a></div>
+                <div class="separator_left"></div></div><br><br>
+        <div class="col-md-6">
+                <h4>ATECC608A Trust - DT100104</h4>
+                <div class="separator_small"></div>
+                <div><a href= "https://www.microchip.com/DevelopmentTools/ProductDetails/DT100104" target="_blank">DT100104 Product Page</a></div>
+                <div><a href="docs/ATECC608A_trust_development_board_userguide.pdf" target="_blank">DT100104 User Guide</a></div><br>
+                <p>This add on board carries 8 devices:
+                <ul>4 TrustCUSTOM devices</ul>
+                <ul>3 TrustFLEX devices</ul>
+                <ul>1 Trust&amp;GO device</ul></p>
+                <p>It allows the flexibility of easily switching between configurations during the prototyping phase.</p>
+                <img src="assets/html/images/kits/190815-SPG-PHOTO-DT100104-Angle3-Transparent.png" width="50%" height="50%">
+                <div class="home_btns m-top-40 text-left"><a href="https://www.microchipdirect.com/product/DT100104" class="btn-primary" target="_blank">Buy Here</a></div>
+                <div class="separator_left"></div></div></div></div><br><br>
+        <div class="row">
+        <div class="main_method">
+        <div class="col-md-6">
+                <h4>MikroE Socket expansion board - SECURE UDFN CLICK</h4>
+                <div class="separator_small"></div>
+                <p>This add on board allows to connect any TrustFLEX or TrustCUSTOM device to the prototyping platform.</p>
+                <div><a href="https://www.mikroe.com/secure-udfn-click" target="_blank">SECURE UDFN CLICK product page</a></div>
+                <div></div>
+                <img src="assets/html/images/kits/secure-udfn-click.jpg" width="50%" height="50%">
+                <div class="separator_left"></div></div>
+        <div class="col-md-6">
+                <h4>MikroE Socket expansion board - SECURE SOIC CLICK</h4>
+                <div class="separator_small"></div>
+                <p>This add on board allows to connect any TrustFLEX or TrustCUSTOM device to the prototyping platform.</p>
+                <div><a href="https://www.mikroe.com/secure-soic-click" target="_blank">SECURE SOIC CLICK product page</a></div>
+                <div></div>
+                <img src="assets/html/images/kits/secure-soic-click.jpg" width="50%" height="50%">
+                <div class="separator_left"></div></div></div></div>
+        </section>
+        <!--End hardware section-->
+
+        <!--TrustnGo section-->
+        <section id="trustngo" class="roomy-50 lightbg">
+            <div class="container">
+                <div class="row">
+                    <div class="roomy-50">
+                        <div class="col-md-10 col-sm-12">
+                            <div class="head_title text-center">
+                                <h2>Trust&amp;GO Devices</h2>
+                                <div class="separator_auto"></div>
+                                <p>The following Trust&amp;GO devices are available for purchase directly from Microchip or through your favorite local distributor</p>
+                                <table class="table table-responsive partnumberrow table-bordered">
+                                    <thead class="partnumberrow">
+                                        <tr>
+                                            <th width=30%>ATECC608B-TNGTLS</th>
+                                            <th width=30%>Part Number</th>
+                                            <th width=10%>Package</th>
+                                            <th width=10%>Packing</th>
+                                            <th width=20%>Minimum Order Quantity (units)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan=7 align=left style="font-size:90%">TLS configuration for Cloud Authentication<br><li>Google Cloud Platform IoT Core</li><li>Amazon AWS IoT device</li><li>Amazon AWS GreenGrass</li><li>Microsoft Azure IoT Hub</li><a href="docs/ATECC608A_TNGTLS_datasheet.pdf" target="_blank">Datasheet</a></td>
+                                            <td>ATECC608B-TNGTLSU-B</td>
+                                            <td>8-uDFN</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGTLSS-B</td>
+                                            <td>SO8</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGTLSU-C</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>100</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGTLSS-C</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>100</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGTLSU-G</td>
+
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGTLSS-G</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=4 align=center><a href="assets/html/usecase_configurator/TrustnGO_usecase_library.html" target="_blank">Click here to start with Trust&GO Use Cases </a><p></td>
+                                    </tbody>
+                                </table>
+                               <table class="table table-responsive partnumberrow table-bordered">
+                                    <thead class="partnumberrow">
+                                        <tr>
+                                            <th width=30%>ATECC608B-TNGLORA</th>
+                                            <th width=30%>Part Number</th>
+                                            <th width=10%>Package</th>
+                                            <th width=10%>Packing</th>
+                                            <th width=20%>Minimum Order Quantity (units)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan=7 align=left style="font-size:90%">LoRaWAN configuration for TTI Join Server<br><li>includes 1 year of join server service</li><br><a href="docs/ATECC608A_TNGLORA_datasheet.pdf" target="_blank">Datasheet</a></td>
+                                            <td>ATECC608B-TNGLORAS-B</td>
+                                            <td>SO8</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGLORAU-B</td>
+                                            <td>8-uDFN</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGLORAS-C</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>100</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGLORAU-C</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>100</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGLORAS-G</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGLORAU-G</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=4 align=center><a href="https://github.com/MicrochipTech/cryptoauthlib/wiki/TTI-Getting-Started" target="_blank">ATECC608A-TNGLORA getting started software and step by step guide</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table class="table table-responsive partnumberrow table-bordered">
+                                    <thead class="partnumberrow">
+                                        <tr>
+                                            <th width=30%>ATECC608B-TNGACT</th>
+                                            <th width=30%>Part Number</th>
+                                            <th width=10%>Package</th>
+                                            <th width=10%>Packing</th>
+                                            <th width=20%>Minimum Order Quantity (units)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan=7 align=left style="font-size:90%">LoRaWAN configuration for Actility Join Server<br><br><a href="docs/ATECC608A_TNGLORA_datasheet.pdf" target="_blank">Datasheet</a></td>
+                                            <td>ATECC608B-TNGACTS-B</td>
+                                            <td>SO8</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGACTU-B</td>
+                                            <td>8-uDFN</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGACTS-C</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>100</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGACTU-C</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>100</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGACTS-G</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TNGACTU-G</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=4 align=center><a href="https://github.com/MicrochipTech/atsamr34_ecc608a_actility" target="_blank">ATECC608A-TNGACT getting started software and step by step guide</td>
+                                        </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-10 col-sm-12">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- End TrustnGo section-->
+
+        <!-- TrustFLEX section-->
+        <section id="trustflex" class="roomy-50">
+            <div class="container">
+                <div class="row">
+                    <div class="roomy-50">
+                        <div class="col-md-10 col-sm-12">
+                            <div class="head_title text-center">
+                                <h2>TrustFLEX Devices</h2>
+                                <div class="separator_auto"></div>
+                                <p>The following TrustFLEX devices are available for purchase directly from Microchip or through your favorite distributor</p>
+                                <table class="table table-responsive partnumberrow table-bordered">
+                                    <thead class="partnumberrow">
+                                        <tr>
+                                            <th width=30%>ATECC608B-TFLXTLS</th>
+                                            <th width=30%>Part Number</th>
+                                            <th width=10%>Package</th>
+                                            <th width=10%>Packing</th>
+                                            <th width=20%>Minimum Order Quantity (units)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan=5 align=left style="font-size:90%">TrustFLEX TLS configuration for Cloud Authentication<br><li>Firmware validation (aka secure boot)</li><li>Secure Over the Air upgrade (OTA)</li><li>Custom Public Key Infrastructure (PKI)</li><li>IP / Firmware protection</li><li>Accessory or Disposable authentication</li><p><a href="Docs/ATECC608A_TFLXTLS_datasheet.pdf" target="_blank" style="font-size:90%">Datasheet</a></td>
+                                            <td>ATECC608B-TFLXTLSU-Proto</td>
+                                            <td>8-uDFN</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TFLXTLSS-Proto</td>
+                                            <td>SO8</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TFLXTLSU</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TFLXTLSS</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=4 align=center><a href="assets/html/usecase_configurator/TrustFlex_configurator.html" target="_blank">Click here to start with TrustFLEX TLS Pre-defined Use Case(s)</a></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table class="table table-responsive partnumberrow table-bordered">
+                                    <thead class="partnumberrow">
+                                        <tr>
+                                            <th width=30%>ATECC608A-TFLXLORA (TTI)</th>
+                                            <th width=30%>Part Number</th>
+                                            <th width=10%>Package</th>
+                                            <th width=10%>Packing</th>
+                                            <th width=20%>Minimum Order Quantity (units)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan=5 align=left style="font-size:90%">TrustFLEX LoRaWAN configuration for TTI Join Server<p><li>Customer specific DevEUI range</li><li>Firmware validation (aka Secure boot)</li></td>
+                                            <td>ATECC608A-TFLXLORAU-Proto</td>
+                                            <td>8-uDFN</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608A-TFLXLORAS-Proto)</td>
+                                            <td>SO8</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608A-TFLXLORAU</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608A-TFLXLORAS</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=4 align=center>Contact Microchip for TrustFLEX LoRaWAN Datasheet</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table class="table table-responsive partnumberrow table-bordered">
+                                    <thead class="partnumberrow">
+                                        <tr>
+                                            <th width=30%>ATECC608A-TFLXACT (Actility)</th>
+                                            <th width=30%>Part Number</th>
+                                            <th width=10%>Package</th>
+                                            <th width=10%>Packing</th>
+                                            <th width=20%>Minimum Order Quantity (units)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                            <td rowspan=5 align=left style="font-size:90%">TrustFLEX LoRaWAN configuration for Actility Join Server<p><li>Customer specific DevEUI range</li><li>Firmware validation (aka Secure boot)</li></td>
+                                            <td>ATECC608A-TFLXACTU-Proto (Actility)</td>
+                                            <td>8-uDFN</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608A-TFLXACTS-Proto (Actility)</td>
+                                            <td>SO8</td>
+                                            <td>Bag</td>
+                                            <td>10</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608A-TFLXACTU (Actility)</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608A-TFLXACTS (Actility)</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>2000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan=4 align=center>Contact Microchip for TrustFLEX LoRaWAN Datasheet</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!--End TrustFLEX section-->
+
+        <!-- TrustCUSTOM section -->
+        <section id="trustcustom"  class="roomy-50 lightbg">
+            <div class="container">
+                <div class="row">
+                    <div>
+                        <div class="col-md-10 col-sm-12">
+                        <div class="head_title text-center">
+                            <h2>TrustCUSTOM Devices</h2>
+                            <div class="separator_auto"></div>
+                            <table class="table table-responsive partnumberrow table-bordered">
+                                    <thead class="partnumberrow">
+                                        <tr>
+                                            <th width=20%>Part Number</th>
+                                            <th width=40%>Description</th>
+                                            <th width=10%>Package</th>
+                                            <th width=10%>Packing</th>
+                                            <th width=20%>Minimum Order Quantity (units)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>ATECC608B-TCSMS</td>
+                                            <td>ATECC608B custom configuration and provisioning</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>4000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATECC608B-TCMSMU</td>
+                                            <td>ATECC608B custom configuration and provisioning</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>4000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATSHA204A-TCSMS</td>
+                                            <td>ATSHA204A custom configuration and provisioning</td>
+                                            <td>SO8</td>
+                                            <td>Reel</td>
+                                            <td>4000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATSHA204A-TCMSU</td>
+                                            <td>ATSHA204A custom configuration and provisioning</td>
+                                            <td>8-uDFN</td>
+                                            <td>Reel</td>
+                                            <td>4000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="text-left"> The Microchip TrustCUSTOM product family allows user to address any Use Cases not covered from the TrustFLEX product family, as well as custom device configuration. If Trust&amp;GO or TrustFLEX devices cannot meet your application requirements, Microchip will provide under NDA the TrustCUSTOM Configurator tools.
+                                    <br />
+                                    <br />
+                                    <a id='trust_custom_link'> Click here for TrustCUSTOM Pre-defined Use Case(s) and Configurator</a>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- End TrusCustom section -->
+
+        <!--Contact Us Section-->
+        <section id="contact" class="roomy-50">
+            <div class="container">
+                <div class="row">
+                    <div class="main_contact text-black">
+                        <div class="col-md-12">
+                            <div class="rage_widget">
+                                <div class="widget_head">
+                                    <h3 class="text-black">MICROCHIP</h3>
+                                    <div class="separator_left"></div>
+                                    <a href="mailto:SPG_personalization@microchip.com">Send us feedback here</a>
+                                </div>
+                                <p id="id_version_license">This text will be replaced</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!--End off row -->
+            </div>
+            <!--End off container -->
+        </section>
+        <!--End off Contact Section-->
+
+        <!-- scroll up-->
+        <div class="scrollup">
+            <a href="#"><i class="fa fa-chevron-up"></i></a>
+        </div><!-- End off scroll up -->
+
+        <footer id="footer" class="footer bgblack">
+            <div class="container">
+                <div class="row">
+                    <div class="main_footer text-center p-top-40 p-bottom-30">
+                        <p class="wow fadeInRight" data-wow-duration="1s">
+                            Made with
+                            <i class="fa fa-heart"></i>
+                            by
+                            <a target="_blank" href="https://bootstrapthemes.co">Bootstrap Themes</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- JS includes -->
+
+        <script src="assets/html/js/vendor/jquery-1.11.2.min.js"></script>
+        <script src="assets/html/js/vendor/bootstrap.min.js"></script>
+
+        <script src="assets/html/js/jquery.magnific-popup.js"></script>
+        <script src="assets/html/js/jquery.easing.1.3.js"></script>
+        <script src="assets/html/js/slick.min.js"></script>
+        <script src="assets/html/js/jquery.collapse.js"></script>
+        <script src="assets/html/js/bootsnav.js"></script>
+        <script src="assets/html/js/script_strings.js"></script>
+        <script src="assets/html/usecase_configurator/assets/js/VERSION"></script>
+		<script src="TrustCUSTOM/assets/js/configurator.js"></script>
+        <script>
+            function load_version()
+            {
+                document.getElementById("id_version_license").innerHTML = TPDS_VERSION_STRING + TPDS_LICENSE;
+            }
+
+            function showmap() {
+                var mapOptions = {
+                    zoom: 8,
+                    scrollwheel: false,
+                    center: new google.maps.LatLng(-34.397, 150.644),
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                };
+                var map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+                $('.mapheight').css('height', '350');
+                $('.maps_text h3').hide();
+            }
+            function href_test()
+            {
+                document.getElementById("trust_custom_link").setAttribute("target", "_blank");
+                document.getElementById("trust_custom_link").setAttribute("href", "assets/html/usecase_configurator//TrustCustom_configurator.html");
+                if (TrustCUSTOM)
+                {
+                    document.getElementById("trust_custom_link").setAttribute("href", "TrustCUSTOM/assets/TrustCustom_configurator.html");
+                }
+            }
+        </script>
+        <script src="assets/html/js/plugins.js"></script>
+        <script src="assets/html/js/main.js"></script>
+</body>
+
+</html>

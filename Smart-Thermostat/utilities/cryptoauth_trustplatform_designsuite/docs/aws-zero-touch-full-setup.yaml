@@ -1,0 +1,188 @@
+Parameters:
+  UserName:
+    Type: String
+    Description: Username of the account the kit will be run from.
+    Default: ZTUser
+  UserPassword:
+    Type: String
+    Description: Password of the account the kit will be run from.
+    MinLength: 4
+
+Resources:
+  KitUser:
+    Type: AWS::IAM::User
+    Properties:
+      Path: "/"
+      UserName: !Ref UserName
+      LoginProfile:
+        Password: !Ref UserPassword
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSLambdaFullAccess
+        - arn:aws:iam::aws:policy/AWSIoTFullAccess
+  
+  KitUserKeyPair:
+    Type: "AWS::IAM::AccessKey"
+    Properties:
+      UserName:
+        !Ref KitUser
+  
+  ZTLambdaJITRRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+      Path: "/"
+      Policies:
+        - PolicyName: "ZTLambdaJITRPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "iot:UpdateCertificate"
+                  - "iot:CreatePolicy"
+                  - "iot:AttachPrincipalPolicy"
+                  - "iot:CreateThing"
+                  - "iot:CreateThingType"
+                  - "iot:DescribeCertificate"
+                  - "iot:DescribeCaCertificate"
+                  - "iot:DescribeThing"
+                  - "iot:DescribeThingType"
+                  - "iot:GetPolicy"
+                Resource: "*"
+
+  ZTLambdaJITR:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: "index.lambda_handler"
+      Role: !GetAtt ZTLambdaJITRRole.Arn
+      Runtime: "python3.6"
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import os
+          import base64
+          import binascii
+          import json
+          import boto3
+          import botocore
+          iot = boto3.client('iot')
+          ZT_THING_TYPE_NAME = 'microchip-zero-touch-kit'
+          def lambda_handler(event, context):
+              region = os.environ['AWS_DEFAULT_REGION']
+              account_id = event['awsAccountId']
+              certificate_id = event['certificateId']
+              response = iot.describe_certificate(certificateId=certificate_id)
+              certificate_arn = response['certificateDescription']['certificateArn']
+              pem_lines = response['certificateDescription']['certificatePem'].split('\n')
+              pem_lines = list(filter(None, pem_lines))
+              raw_pem = ''.join(pem_lines[1:-1])
+              cert_der = base64.standard_b64decode(raw_pem)
+              subj_key_id_prefix = b'\x30\x1D\x06\x03\x55\x1D\x0E\x04\x16\x04\x14'
+              subj_key_id_index = cert_der.index(subj_key_id_prefix) + len(subj_key_id_prefix)
+              subj_key_id = binascii.b2a_hex(cert_der[subj_key_id_index:subj_key_id_index+20]).decode('ascii')
+              print('Certificate Subject Key ID: {}'.format(subj_key_id))
+              thing_name = subj_key_id
+              client_id = subj_key_id
+              response = iot.create_thing_type(thingTypeName=ZT_THING_TYPE_NAME)
+              response = iot.create_thing(thingName=thing_name,thingTypeName=ZT_THING_TYPE_NAME)
+              policy_name = 'ZTPolicy_{}'.format(certificate_id)
+              policy_document = {
+                  'Version': '2012-10-17',
+                  'Statement': [
+                      {
+                          'Effect': 'Allow',
+                          'Action': [
+                              'iot:Connect'
+                          ],
+                          'Resource': [
+                              'arn:aws:iot:{}:{}:client/{}'.format(region, account_id, client_id)
+                          ]
+                      },
+                      {
+                          'Effect': 'Allow',
+                          'Action': [
+                              'iot:Publish',
+                              'iot:Receive'
+                          ],
+                          'Resource': [
+                              'arn:aws:iot:{}:{}:topic/${{iot:ClientId}}/*'.format(region, account_id),
+                              'arn:aws:iot:{}:{}:topic/$aws/things/${{iot:ClientId}}/shadow/*'.format(region, account_id)
+                          ]
+                      },
+                      {
+                          'Effect': 'Allow',
+                          'Action': [
+                              'iot:Subscribe'
+                          ],
+                          'Resource': [
+                              'arn:aws:iot:{}:{}:topicfilter/${{iot:ClientId}}/#'.format(region, account_id),
+                              'arn:aws:iot:{}:{}:topicfilter/$aws/things/${{iot:ClientId}}/shadow/*'.format(region, account_id)
+                          ]
+                      },
+                      {
+                          'Effect': 'Allow',
+                          'Action': [
+                              'iot:UpdateThingShadow',
+                              'iot:GetThingShadow'
+                          ],
+                          'Resource': [
+                              'arn:aws:iot:{}:{}:topic/$aws/things/${{iot:ClientId}}/shadow/*'.format(region, account_id)
+                          ]
+                      }
+                  ]
+              }
+              try:
+                  response = iot.create_policy(
+                      policyName=policy_name,
+                      policyDocument=json.dumps(policy_document, indent=4))
+                  print('Created policy {}'.format(policy_name))
+              except botocore.exceptions.ClientError as e:
+                  if e.response['Error']['Code'] == 'ResourceAlreadyExistsException':
+                      print('Policy {} already exists'.format(policy_name))
+                  else:
+                      raise
+              iot.attach_principal_policy(
+                  policyName=policy_name,
+                  principal=certificate_arn)
+              response = iot.update_certificate(
+                  certificateId=certificate_id,
+                  newStatus='ACTIVE')
+
+  ZTIoTJITRRule:
+    Type: "AWS::IoT::TopicRule"
+    Properties:
+      TopicRulePayload: 
+        RuleDisabled: false
+        Sql: >-
+          SELECT * FROM '$aws/events/certificates/registered/#'
+        Actions: 
+          - Lambda: 
+              FunctionArn: !GetAtt ZTLambdaJITR.Arn
+
+  ZTIoTLambdaInvokePerms: 
+    Type: "AWS::Lambda::Permission"
+    Properties: 
+      FunctionName: !GetAtt ZTLambdaJITR.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "iot.amazonaws.com"
+
+Outputs:
+  UserName:
+    Value: !Ref UserName
+  UserPassword:
+    Value: !Ref UserPassword
+  AccessKey:
+    Value: !Ref KitUserKeyPair
+  SecretAccessKey:
+    Value: !GetAtt KitUserKeyPair.SecretAccessKey

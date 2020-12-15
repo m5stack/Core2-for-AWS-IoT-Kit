@@ -1,0 +1,1 @@
+0x700000 ${CMAKE_CURRENT_BINARY_DIR}/spiffs-alexa-img.bin

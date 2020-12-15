@@ -1,0 +1,291 @@
+<!doctype html>
+<!-- Copyright (c) 2018-2019 Microchip Technology Inc. and its subsidiaries
+
+    Subject to your compliance with these terms, you may use Microchip software
+    and any derivatives exclusively with Microchip products. It is your
+    responsibility to comply with third party license terms applicable to your
+    use of third party software (including open source software) that may
+    accompany Microchip software.
+
+    THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
+    EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
+    WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
+    PARTICULAR PURPOSE. IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT,
+    SPECIAL, PUNITIVE, INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE
+    OF ANY KIND WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF
+    MICROCHIP HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE
+    FORESEEABLE. TO THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL
+    LIABILITY ON ALL CLAIMS IN ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED
+    THE AMOUNT OF FEES, IF ANY, THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR
+    THIS SOFTWARE.
+-->
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<!--Designerd by: http://bootstrapthemes.co-->
+
+<head>
+    <meta charset="utf-8">
+    <title>Microchip Secure Products Group Use Case Tool</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="assets/images/favicon.ico">
+
+    <!--Google Font link-->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Raleway:400,600,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/slick.css">
+    <link rel="stylesheet" href="assets/css/slick-theme.css">
+    <link rel="stylesheet" href="assets/css/animate.css">
+    <link rel="stylesheet" href="assets/css/fonticons.css">
+    <link rel="stylesheet" href="assets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/css/bootstrap.css">
+    <link rel="stylesheet" href="assets/css/magnific-popup.css">
+    <link rel="stylesheet" href="assets/css/bootsnav.css">
+    <link rel="stylesheet" href="assets/css/configuration_styles.css">
+    <link rel="stylesheet" href="assets/css/style_usecasetool.css">
+
+
+    <!--For Plugins external css-->
+    <!--<link rel="stylesheet" href="assets/css/plugins.css" />-->
+
+    <!--Theme custom css -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!--<link rel="stylesheet" href="assets/css/colors/maron.css">-->
+
+    <!--Theme Responsive css-->
+    <link rel="stylesheet" href="assets/css/responsive.css" />
+    <script src="assets/js/jquery.js"></script>
+    <script type="text/javascript" src="assets/js/jquery_plantuml.js"></script>
+    <script type="text/javascript" src="assets/js/rawdeflate.js"></script>
+    <script src="assets/js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+</head>
+
+<body onload="load_version()" data-spy="scroll" data-target=".navbar-collapse">
+    <div id="templates" style="display:none">
+        <div id="note-msg-template" class="config-note">
+            <svg viewBox="0 0 75 75" width="0.2in" height="0.2in">
+                <use xlink:href="#note-icon" /></svg>
+            <span class="msg-text"></span>
+        </div>
+
+        <div id="warning-msg-template" class="config-warning">
+            <svg viewBox="0 0 75 75" width="0.2in" height="0.2in">
+                <use xlink:href="#warning-icon" /></svg>
+            WARNING: <span class="msg-text"></span>
+        </div>
+
+        <div id="error-msg-template" class="config-error">
+            <svg viewBox="0 0 75 75" width="0.2in" height="0.2in">
+                <use xlink:href="#error-icon" /></svg>
+            ERROR: <span class="msg-text"></span>
+        </div>
+    </div>
+
+    <!-- Preloader -->
+    <div id="loading">
+        <div id="loading-center">
+            <div id="loading-center-absolute">
+                <div class="object" id="object_one"></div>
+                <div class="object" id="object_two"></div>
+                <div class="object" id="object_three"></div>
+                <div class="object" id="object_four"></div>
+            </div>
+        </div>
+    </div>
+    <!--End off Preloader -->
+
+
+    <div class="culmn">
+        <!--Home page style-->
+
+
+        <nav class="navbar navbar-default navbar-fixed white no-background bootsnav">
+            <!-- Start Top Search -->
+            <div class="top-search">
+                <div class="container">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search">
+                        <span class="input-group-addon close-search"><i class="fa fa-times"></i></span>
+                    </div>
+                </div>
+            </div>
+            <!-- End Top Search -->
+
+            <div class="container">
+                <!-- Start Atribute Navigation -->
+                <div class="attr-nav">
+                    <ul>
+                        <li class="side-menu"><a href="#"><i class="fa fa-bars"></i></a></li>
+                    </ul>
+                </div>
+                <!-- End Atribute Navigation -->
+
+                <!-- Start Header Navigation -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-menu">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand" href="https://www.microchip.com" target="_blank">
+
+                        <img src="assets/images/MCHP_Logo_Vertical_4C.png" class="logo logo-display m-top-10" alt="">
+                        <img src="assets/images/MCHP_Logo_Vertical_4C.png" class="logo logo-scrolled" alt="">
+
+                    </a>
+                </div>
+                <!-- End Header Navigation -->
+
+                <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="nav navbar-nav navbar-left" data-in="fadeInDown" data-out="fadeOutUp">
+                        <li><a href="#usecases">TrustCUSTOM Use Case Library</a></li>
+                        <li><a href="#trustcustom_config">TrustCUSTOM Configurator</a></li>
+                    </ul>
+                </div><!-- /.navbar-collapse -->
+            </div>
+
+
+            <!-- Start Side Menu -->
+            <div class="side">
+                <a href="#" class="close-side"><i class="fa fa-times"></i></a>
+                <div class="widget">
+                    <h6 class="title">Additional Links</h6>
+                    <ul class="link">
+                        <li><a href="https://microchiptech.github.io/cryptoauthlib" target="_blank">CryptoAuthLib
+                                GitHub</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- End Side Menu -->
+
+        </nav>
+
+
+        <!--Home Sections-->
+
+        <section id="hello" class="home bg-mega">
+            <div class="overlay"></div>
+            <div class="container">
+                <div class="row">
+                    <div class="main_home">
+                        <div class="home_text p-top-110">
+                            <br>
+                            <br>
+                            <br>
+                            <h1 class="text-white">SECURE YOUR DESIGN WITH MICROCHIP SECURE PRODUCTS GROUP!</h1>
+                        </div>
+                    </div>
+                </div>
+                <!--End off row-->
+            </div>
+            <!--End off container -->
+        </section>
+        <!--End off Home Sections-->
+        <section id="usecases" class="roomy-50">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12 col-sm-12">
+                        <div class="head_title text-left">
+                            <h2>TrustCUSTOM Use Case Library</h2>
+                            <div class="separator_left"></div>
+                            <div class="text-left">
+                                <p>This Tool is available under NDA. Please contact your <a href=https://www.microchip.com/salesdirectory>local Sales Representative</a> to get access to this extension</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <section id="trustcustom_config">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12 col-sm-12">
+                        <div class="head_title text-left">
+                            <h2>TrustCUSTOM Configurator</h2>
+                            <div class="separator_left"></div>
+                            <div class="text-left">
+                                <p>This Tool is available under NDA. Please contact your <a href=https://www.microchip.com/salesdirectory>local Sales Representative</a> to get access to this extension</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!--Contact Us Section-->
+        <section id="contact" class="contact bg-white fix">
+            <div class="container">
+                <div class="row">
+                    <div class="main_contact text-black">
+                        <div class="col-md-12">
+                            <div class="rage_widget">
+                                <div class="widget_head">
+                                    <h3 class="text-black">MICROCHIP</h3>
+                                    <div class="separator_left"></div>
+                                    <a href="mailto:SPG_personalization@microchip.com">Send us feedback here</a>
+                                </div>
+                                <p id="id_version_license">This text will be replaced</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!--End off row -->
+            </div>
+            <!--End off container -->
+        </section>
+        <!--End off Contact Section-->
+
+        <!-- JS includes -->
+
+        <script src="assets/js/vendor/jquery-1.11.2.min.js"></script>
+        <script src="assets/js/vendor/bootstrap.min.js"></script>
+
+        <script src="assets/js/jquery.magnific-popup.js"></script>
+        <script src="assets/js/jquery.easing.1.3.js"></script>
+        <script src="assets/js/slick.min.js"></script>
+        <script src="assets/js/jquery.collapse.js"></script>
+        <script src="assets/js/bootsnav.js"></script>
+        <script src="assets/js/script_strings.js"></script>
+
+        <script src="assets/js/usecase_library.js"></script>
+        <script src="assets/js/gmaps.min.js"></script>
+        <script src="assets/js/VERSION"></script>
+
+        <script>
+            function load_version()
+            {
+                document.getElementById("id_version_license").innerHTML = TPDS_CUSTOM_VERSION_STRING + TPDS_LICENSE;
+            }
+            function showmap() {
+                var mapOptions = {
+                    zoom: 8,
+                    scrollwheel: false,
+                    center: new google.maps.LatLng(-34.397, 150.644),
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                };
+                var map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+                $('.mapheight').css('height', '350');
+                $('.maps_text h3').hide();
+            }
+        </script>
+
+
+
+
+
+        <script src="assets/js/plugins.js"></script>
+        <script src="assets/js/main.js"></script>
+
+</body>
+
+</html>

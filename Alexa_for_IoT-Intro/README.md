@@ -1,0 +1,2 @@
+# Alexa for IoT-Intro for AWS IoT EduKit
+This is the corresponding code for AWS IoT EduKit's [Intro to Alexa for IoT](https://edukit.workshop.aws/en/intro-to-alexa-for-iot.html) tutorial. This code is made to work exclusively with the M5Stack Core2 ESP32 IoT Development Kit for AWS IoT EduKit available on [Amazon.com](https://www.amazon.com/dp/B08NP5LVFH) or on the [M5Stack store](https://m5stack.com/products/m5stack-core2-esp32-iot-development-kit-for-aws-iot-edukit).

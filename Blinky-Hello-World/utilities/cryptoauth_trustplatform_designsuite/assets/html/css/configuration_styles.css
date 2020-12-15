@@ -1,0 +1,260 @@
+@import url(http://fonts.googleapis.com/css?family=Raleway);
+h1 { font-family: Verdana, Geneva, sans-serif; font-size: 24px; font-style: normal; font-variant: normal; font-weight: bold; line-height: 26px; }
+h3 { font-family: Verdana, Geneva, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: bold; line-height: 15px; }
+p { font-family: Verdana, Geneva, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: 400; line-height: 20px; }
+blockquote { font-family: Verdana, Geneva, sans-serif; font-size: 21px; font-style: normal; font-variant: normal; font-weight: 400; line-height: 30px; }
+pre { font-family: Verdana, Geneva, sans-serif; font-size: 13px; font-style: normal; font-variant: normal; font-weight: 400; line-height: 18px; }
+a:link {font-family: Verdana, Geneva, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: bold; line-height: 20px;}
+
+#cssmenu,
+#cssmenu ul,
+#cssmenu ul li,
+#cssmenu ul li a {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  list-style: none;
+  line-height: 2;
+  display: block;
+  position: relative;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+#cssmenu:after,
+#cssmenu > ul:after {
+  content: ".";
+  display: block;
+  clear: both;
+  visibility: hidden;
+  line-height: 0;
+  height: 0;
+}
+#cssmenu {
+  width: auto;
+  border-bottom: 3px solid #47c9af;
+  font-family:sans-serif;
+  line-height: 1;
+  position: bottom;
+}
+#cssmenu ul {
+  background: #ffffff;
+}
+#cssmenu > ul > li {
+  float: left;
+}
+#cssmenu.align-center > ul {
+  font-size: 0;
+  text-align: center;
+}
+#cssmenu.align-center > ul > li {
+  display: inline-block;
+  float: none;
+}
+#cssmenu.align-right > ul > li {
+  float: right;
+}
+#cssmenu.align-right > ul > li > a {
+  margin-right: 0;
+  margin-left: -4px;
+}
+#cssmenu > ul > li > a {
+  z-index: 2;
+  padding: 18px 25px 12px 25px;
+  font-size: 15px;
+  font-weight: 400;
+  text-decoration: none;
+  color: #444444;
+  -webkit-transition: all .2s ease;
+  -moz-transition: all .2s ease;
+  -ms-transition: all .2s ease;
+  -o-transition: all .2s ease;
+  transition: all .2s ease;
+  margin-right: -4px;
+}
+#cssmenu > ul > li.active > a,
+#cssmenu > ul > li:hover > a,
+#cssmenu > ul > li > a:hover {
+  color: #ffffff;
+}
+
+#cssmenu > ul > li > a:after {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: -1;
+  width: 100%;
+  height: 120%;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  content: "";
+  -webkit-transition: all .2s ease;
+  -o-transition: all .2s ease;
+  transition: all .2s ease;
+  -webkit-transform: perspective(5px) rotateX(2deg);
+  -webkit-transform-origin: bottom;
+  -moz-transform: perspective(5px) rotateX(2deg);
+  -moz-transform-origin: bottom;
+  transform: perspective(5px) rotateX(2deg);
+  transform-origin: bottom;
+}
+#cssmenu > ul > li.active > a:after,
+#cssmenu > ul > li:hover > a:after,
+#cssmenu > ul > li > a:hover:after {
+  background: #42c9ae;
+}
+
+.hidden_desc
+{
+ display:none;
+ visibility:hidden;
+}
+
+
+.instructions h2 {
+  font-weight: bold;
+  font-size: medium;
+}
+
+.description {
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 14px;
+  margin-bottom: 1em;
+  width: 70em;
+}
+
+#config-table td {
+  vertical-align: top;
+}
+.range-start {
+  text-align: right;
+}
+.range-sep {
+  text-align: center;
+}
+.range-stop {
+  text-align: right;
+}
+.range-single {
+    font-size: 10px;
+  text-align: right;
+}
+tr.config16 {
+    font-size: 10px;
+  background-color: #DDDDDD;
+}
+tr.update-extra {
+  background-color: #DDDDDD;
+}
+tr.lock {
+  background-color: #DDDDDD;
+}
+th {
+  text-align: left;
+}
+.config-disabled {
+  color: #AAAAAA;
+}
+.config-row {
+    font-size: 10px;
+}
+.config-note {
+}
+.config-warning {
+}
+.config-error {
+}
+a.detail-toggle {
+    font-size: 10px;
+  padding-left: 0.1in;
+  padding-right: 0.1in;
+  color: #e40222;
+}
+.details {
+    font-size: 10px;
+  display: none;
+}
+.error-icon {
+  visibility: hidden;
+}
+.warning-icon {
+  visibility: hidden;
+}
+textarea.comments {
+  overflow-x: hidden; /* Firefox reserves space for a horizontal scroll bar, effectively adding an extra line. This prevents that. */
+  font-family: sans-serif;
+  font-size: 10px;
+}
+
+.table-header-rotated {
+    font-size: 10px;
+  border-collapse: collapse;
+}
+.csstransforms .table-header-rotated td {
+  /*width: 30px;*/
+}
+.no-csstransforms .table-header-rotated th {
+  /*padding: 5px 10px;*/
+}
+.table-header-rotated td {
+  text-align: right;
+  /*padding: 10px 5px;*/
+  border: 1px solid #ccc;
+}
+.csstransforms .table-header-rotated th.rotate {
+  height: 140px;
+  white-space: nowrap;
+}
+.csstransforms .table-header-rotated th.rotate > div {
+  -webkit-transform: translate(15px, -10px) rotate(315deg);
+  -ms-transform: translate(15px, -10px) rotate(315deg);
+  transform: translate(15px, -10px) rotate(315deg);
+  width: 30px;
+}
+.csstransforms .table-header-rotated th.rotate > div > span {
+  border-bottom: 1px solid #ccc;
+  padding: 5px 10px;
+}
+.table-header-rotated th.row-header {
+  padding: 0 10px;
+  border-bottom: 1px solid #ccc;
+}
+.slot-num {
+  font-size: 0.5in;
+  overflow: hidden;
+  white-space: nowrap;
+  height: 0in;
+}
+tr.slot-editor-row:hover {
+  background-color: #C0C0FF;
+}
+
+#myBtn {
+  display: none; /* Hidden by default */
+  position: fixed; /* Fixed/sticky position */
+  bottom: 20px; /* Place the button at the bottom of the page */
+  right: 30px; /* Place the button 30px from the right */
+  z-index: 99; /* Make sure it does not overlap */
+  border: none; /* Remove borders */
+  outline: none; /* Remove outline */
+  background-color: #47c9af; /* Set a background color */
+  color: white; /* Text color */
+  cursor: pointer; /* Add a mouse pointer on hover */
+  padding: 15px; /* Some padding */
+  border-radius: 10px; /* Rounded corners */
+  font-size: 18px; /* Increase font size */
+}
+
+#myBtn:hover {
+  background-color: #555; /* Add a dark-grey background on hover */
+}
+
+ol {
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 14px;
+}
+
+.table > tfoot > tr > td {
+    padding: 0x;
+}

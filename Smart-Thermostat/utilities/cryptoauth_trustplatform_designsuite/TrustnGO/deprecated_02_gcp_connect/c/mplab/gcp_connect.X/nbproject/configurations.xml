@@ -1,0 +1,640 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="65">
+  <logicalFolder name="root" displayName="root" projectFiles="true">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+      <logicalFolder name="config" displayName="config" projectFiles="true">
+        <itemPath>config/hpl_dmac_config.h</itemPath>
+        <itemPath>config/hpl_eic_config.h</itemPath>
+        <itemPath>config/hpl_gclk_config.h</itemPath>
+        <itemPath>config/hpl_pm_config.h</itemPath>
+        <itemPath>config/hpl_rtc_config.h</itemPath>
+        <itemPath>config/hpl_sercom_config.h</itemPath>
+        <itemPath>config/hpl_sysctrl_config.h</itemPath>
+        <itemPath>config/hpl_systick_config.h</itemPath>
+        <itemPath>config/hpl_tcc_config.h</itemPath>
+        <itemPath>config/peripheral_clk_config.h</itemPath>
+        <itemPath>config/winc1500_config.h</itemPath>
+        <itemPath>config/stdio_redirect_config.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="examples" displayName="examples" projectFiles="true">
+        <itemPath>examples/driver_examples.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="hal" displayName="hal" projectFiles="true">
+        <logicalFolder name="include" displayName="include" projectFiles="true">
+          <itemPath>hal/include/hal_atomic.h</itemPath>
+          <itemPath>hal/include/hal_calendar.h</itemPath>
+          <itemPath>hal/include/hal_delay.h</itemPath>
+          <itemPath>hal/include/hal_ext_irq.h</itemPath>
+          <itemPath>hal/include/hal_gpio.h</itemPath>
+          <itemPath>hal/include/hal_i2c_m_sync.h</itemPath>
+          <itemPath>hal/include/hal_init.h</itemPath>
+          <itemPath>hal/include/hal_io.h</itemPath>
+          <itemPath>hal/include/hal_sleep.h</itemPath>
+          <itemPath>hal/include/hal_spi_m_sync.h</itemPath>
+          <itemPath>hal/include/hpl_core.h</itemPath>
+          <itemPath>hal/include/hpl_delay.h</itemPath>
+          <itemPath>hal/include/hpl_dma.h</itemPath>
+          <itemPath>hal/include/hpl_ext_irq.h</itemPath>
+          <itemPath>hal/include/hpl_gpio.h</itemPath>
+          <itemPath>hal/include/hpl_i2c_m_async.h</itemPath>
+          <itemPath>hal/include/hpl_i2c_m_sync.h</itemPath>
+          <itemPath>hal/include/hpl_i2c_s_async.h</itemPath>
+          <itemPath>hal/include/hpl_i2c_s_sync.h</itemPath>
+          <itemPath>hal/include/hpl_init.h</itemPath>
+          <itemPath>hal/include/hpl_irq.h</itemPath>
+          <itemPath>hal/include/hpl_sleep.h</itemPath>
+          <itemPath>hal/include/hpl_spi.h</itemPath>
+          <itemPath>hal/include/hpl_spi_async.h</itemPath>
+          <itemPath>hal/include/hpl_spi_dma.h</itemPath>
+          <itemPath>hal/include/hpl_spi_sync.h</itemPath>
+          <itemPath>hal/include/hpl_time_measure.h</itemPath>
+          <itemPath>hal/include/hpl_usart.h</itemPath>
+          <itemPath>hal/include/hal_timer.h</itemPath>
+          <itemPath>hal/include/hal_usart_sync.h</itemPath>
+          <itemPath>hal/include/hpl_calendar.h</itemPath>
+          <itemPath>hal/include/hpl_missing_features.h</itemPath>
+          <itemPath>hal/include/hpl_pwm.h</itemPath>
+          <itemPath>hal/include/hpl_reset.h</itemPath>
+          <itemPath>hal/include/hpl_spi_m_async.h</itemPath>
+          <itemPath>hal/include/hpl_spi_m_dma.h</itemPath>
+          <itemPath>hal/include/hpl_spi_m_sync.h</itemPath>
+          <itemPath>hal/include/hpl_spi_s_async.h</itemPath>
+          <itemPath>hal/include/hpl_spi_s_sync.h</itemPath>
+          <itemPath>hal/include/hpl_timer.h</itemPath>
+          <itemPath>hal/include/hpl_usart_async.h</itemPath>
+          <itemPath>hal/include/hpl_usart_sync.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="utils" displayName="utils" projectFiles="true">
+          <logicalFolder name="include" displayName="include" projectFiles="true">
+            <itemPath>hal/utils/include/compiler.h</itemPath>
+            <itemPath>hal/utils/include/err_codes.h</itemPath>
+            <itemPath>hal/utils/include/events.h</itemPath>
+            <itemPath>hal/utils/include/utils.h</itemPath>
+            <itemPath>hal/utils/include/utils_assert.h</itemPath>
+            <itemPath>hal/utils/include/utils_decrement_macro.h</itemPath>
+            <itemPath>hal/utils/include/utils_event.h</itemPath>
+            <itemPath>hal/utils/include/utils_increment_macro.h</itemPath>
+            <itemPath>hal/utils/include/utils_list.h</itemPath>
+            <itemPath>hal/utils/include/utils_recursion_macro.h</itemPath>
+            <itemPath>hal/utils/include/utils_repeat_macro.h</itemPath>
+            <itemPath>hal/utils/include/parts.h</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+      </logicalFolder>
+      <logicalFolder name="hpl" displayName="hpl" projectFiles="true">
+        <logicalFolder name="core" displayName="core" projectFiles="true">
+          <itemPath>hpl/core/hpl_core_port.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="gclk" displayName="gclk" projectFiles="true">
+          <itemPath>hpl/gclk/hpl_gclk_base.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="pm" displayName="pm" projectFiles="true">
+          <itemPath>hpl/pm/hpl_pm_base.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="port" displayName="port" projectFiles="true">
+          <itemPath>hpl/port/hpl_gpio_base.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="rtc" displayName="rtc" projectFiles="true">
+          <itemPath>hpl/rtc/hpl_rtc_base.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="tcc" displayName="tcc" projectFiles="true">
+          <itemPath>hpl/tcc/hpl_tcc.h</itemPath>
+        </logicalFolder>
+      </logicalFolder>
+      <logicalFolder name="hri" displayName="hri" projectFiles="true">
+        <itemPath>hri/hri_ac_d21.h</itemPath>
+        <itemPath>hri/hri_adc_d21.h</itemPath>
+        <itemPath>hri/hri_d21.h</itemPath>
+        <itemPath>hri/hri_dac_d21.h</itemPath>
+        <itemPath>hri/hri_dmac_d21.h</itemPath>
+        <itemPath>hri/hri_dsu_d21.h</itemPath>
+        <itemPath>hri/hri_eic_d21.h</itemPath>
+        <itemPath>hri/hri_evsys_d21.h</itemPath>
+        <itemPath>hri/hri_gclk_d21.h</itemPath>
+        <itemPath>hri/hri_hmatrixb_d21.h</itemPath>
+        <itemPath>hri/hri_i2s_d21.h</itemPath>
+        <itemPath>hri/hri_mtb_d21.h</itemPath>
+        <itemPath>hri/hri_nvic_d21.h</itemPath>
+        <itemPath>hri/hri_nvmctrl_d21.h</itemPath>
+        <itemPath>hri/hri_pac_d21.h</itemPath>
+        <itemPath>hri/hri_pm_d21.h</itemPath>
+        <itemPath>hri/hri_port_d21.h</itemPath>
+        <itemPath>hri/hri_rtc_d21.h</itemPath>
+        <itemPath>hri/hri_sercom_d21.h</itemPath>
+        <itemPath>hri/hri_sysctrl_d21.h</itemPath>
+        <itemPath>hri/hri_systemcontrol_d21.h</itemPath>
+        <itemPath>hri/hri_systick_d21.h</itemPath>
+        <itemPath>hri/hri_tc_d21.h</itemPath>
+        <itemPath>hri/hri_tcc_d21.h</itemPath>
+        <itemPath>hri/hri_usb_d21.h</itemPath>
+        <itemPath>hri/hri_wdt_d21.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="stdio_redirect"
+                     displayName="stdio_redirect"
+                     projectFiles="true">
+        <itemPath>stdio_redirect/stdio_io.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="winc1500" displayName="winc1500" projectFiles="true">
+        <logicalFolder name="bsp" displayName="bsp" projectFiles="true">
+          <logicalFolder name="include" displayName="include" projectFiles="true">
+            <itemPath>winc1500/bsp/include/nm_bsp_internal.h</itemPath>
+            <itemPath>winc1500/bsp/include/nm_bsp.h</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="bus_wrapper" displayName="bus_wrapper" projectFiles="true">
+          <logicalFolder name="include" displayName="include" projectFiles="true">
+            <itemPath>winc1500/bus_wrapper/include/nm_bus_wrapper.h</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="common" displayName="common" projectFiles="true">
+          <logicalFolder name="include" displayName="include" projectFiles="true">
+            <itemPath>winc1500/common/include/nm_common.h</itemPath>
+            <itemPath>winc1500/common/include/nm_debug.h</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="driver" displayName="driver" projectFiles="true">
+          <logicalFolder name="include" displayName="include" projectFiles="true">
+            <itemPath>winc1500/driver/include/ecc_types.h</itemPath>
+            <itemPath>winc1500/driver/include/m2m_ate_mode.h</itemPath>
+            <itemPath>winc1500/driver/include/m2m_crypto.h</itemPath>
+            <itemPath>winc1500/driver/include/m2m_ota.h</itemPath>
+            <itemPath>winc1500/driver/include/m2m_periph.h</itemPath>
+            <itemPath>winc1500/driver/include/m2m_ssl.h</itemPath>
+            <itemPath>winc1500/driver/include/m2m_types.h</itemPath>
+            <itemPath>winc1500/driver/include/m2m_wifi.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="source" displayName="source" projectFiles="true">
+            <itemPath>winc1500/driver/source/m2m_hif.h</itemPath>
+            <itemPath>winc1500/driver/source/nmasic.h</itemPath>
+            <itemPath>winc1500/driver/source/nmbus.h</itemPath>
+            <itemPath>winc1500/driver/source/nmdrv.h</itemPath>
+            <itemPath>winc1500/driver/source/nmi2c.h</itemPath>
+            <itemPath>winc1500/driver/source/nmspi.h</itemPath>
+            <itemPath>winc1500/driver/source/nmuart.h</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="programmer" displayName="programmer" projectFiles="true">
+          <itemPath>winc1500/programmer/programmer.h</itemPath>
+          <itemPath>winc1500/programmer/programmer_apis.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="socket" displayName="socket" projectFiles="true">
+          <logicalFolder name="include" displayName="include" projectFiles="true">
+            <itemPath>winc1500/socket/include/m2m_socket_host_if.h</itemPath>
+            <itemPath>winc1500/socket/include/socket.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="source" displayName="source" projectFiles="true">
+            <itemPath>winc1500/socket/source/socket_internal.h</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="spi_flash" displayName="spi_flash" projectFiles="true">
+          <logicalFolder name="include" displayName="include" projectFiles="true">
+            <itemPath>winc1500/spi_flash/include/spi_flash.h</itemPath>
+            <itemPath>winc1500/spi_flash/include/spi_flash_map.h</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+      </logicalFolder>
+      <itemPath>driver_init.h</itemPath>
+      <itemPath>atmel_start_pins.h</itemPath>
+      <itemPath>winc_init.h</itemPath>
+      <itemPath>stdio_start.h</itemPath>
+      <itemPath>atmel_start.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="LinkerScript"
+                   displayName="Linker Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <logicalFolder name="common" displayName="common" projectFiles="true">
+        <logicalFolder name="paho_mqtt_embedded_c"
+                       displayName="paho_mqtt_embedded_c"
+                       projectFiles="true">
+          <logicalFolder name="MQTTClient-C"
+                         displayName="MQTTClient-C"
+                         projectFiles="true">
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTClient-C/MQTTClient.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="MQTTPacket" displayName="MQTTPacket" projectFiles="true">
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTConnectClient.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTConnectServer.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTDeserializePublish.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTFormat.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTPacket.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTSerializePublish.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTSubscribeClient.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTSubscribeServer.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTUnsubscribeClient.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/MQTTPacket/MQTTUnsubscribeServer.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="platform" displayName="platform" projectFiles="true">
+            <itemPath>../../common/paho_mqtt_embedded_c/platform/network_interface.c</itemPath>
+            <itemPath>../../common/paho_mqtt_embedded_c/platform/timer_interface.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="parson_json" displayName="parson_json" projectFiles="true">
+          <itemPath>../../common/parson_json/parson.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="utilities" displayName="utilities" projectFiles="true">
+        </logicalFolder>
+        <itemPath>../../common/config.c</itemPath>
+        <itemPath>../../common/gcp_status.c</itemPath>
+        <itemPath>../../common/gcp_wifi_task.c</itemPath>
+        <itemPath>../../common/main.c</itemPath>
+        <itemPath>../../common/time_utils.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f1" displayName="cryptoauthlib" projectFiles="true">
+        <logicalFolder name="lib" displayName="lib" projectFiles="true">
+          <logicalFolder name="atcacert" displayName="atcacert" projectFiles="true">
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atcacert/atcacert_client.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atcacert/atcacert_date.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atcacert/atcacert_def.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atcacert/atcacert_der.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atcacert/atcacert_host_hw.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atcacert/atcacert_host_sw.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atcacert/atcacert_pem.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="basic" displayName="basic" projectFiles="true">
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_aes.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_aes_cbc.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_aes_cmac.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_aes_ctr.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_aes_gcm.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_checkmac.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_counter.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_derivekey.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_ecdh.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_gendig.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_genkey.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_hmac.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_info.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_kdf.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_lock.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_mac.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_nonce.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_privwrite.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_random.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_read.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_secureboot.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_selftest.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_sha.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_sign.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_updateextra.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_verify.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_basic_write.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/basic/atca_helpers.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="crypto" displayName="crypto" projectFiles="true">
+            <logicalFolder name="hashes" displayName="hashes" projectFiles="true">
+              <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/crypto/hashes/sha1_routines.c</itemPath>
+              <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/crypto/hashes/sha2_routines.c</itemPath>
+            </logicalFolder>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/crypto/atca_crypto_sw_ecdsa.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/crypto/atca_crypto_sw_rand.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/crypto/atca_crypto_sw_sha1.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/crypto/atca_crypto_sw_sha2.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="hal" displayName="hal" projectFiles="true">
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/hal/atca_hal.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/hal/hal_i2c_start.c</itemPath>
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/hal/hal_timer_start.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="host" displayName="host" projectFiles="true">
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/host/atca_host.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="jwt" displayName="jwt" projectFiles="true">
+            <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/jwt/atca_jwt.c</itemPath>
+          </logicalFolder>
+          <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atca_cfgs.c</itemPath>
+          <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atca_command.c</itemPath>
+          <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atca_device.c</itemPath>
+          <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atca_execution.c</itemPath>
+          <itemPath>../../../../../assets/dependencies/cryptoauthlib/lib/atca_iface.c</itemPath>
+        </logicalFolder>
+      </logicalFolder>
+      <logicalFolder name="examples" displayName="examples" projectFiles="true">
+        <itemPath>examples/driver_examples.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="hal" displayName="hal" projectFiles="true">
+        <logicalFolder name="src" displayName="src" projectFiles="true">
+          <itemPath>hal/src/hal_atomic.c</itemPath>
+          <itemPath>hal/src/hal_delay.c</itemPath>
+          <itemPath>hal/src/hal_gpio.c</itemPath>
+          <itemPath>hal/src/hal_i2c_m_sync.c</itemPath>
+          <itemPath>hal/src/hal_init.c</itemPath>
+          <itemPath>hal/src/hal_io.c</itemPath>
+          <itemPath>hal/src/hal_sleep.c</itemPath>
+          <itemPath>hal/src/hal_calendar.c</itemPath>
+          <itemPath>hal/src/hal_ext_irq.c</itemPath>
+          <itemPath>hal/src/hal_spi_m_sync.c</itemPath>
+          <itemPath>hal/src/hal_timer.c</itemPath>
+          <itemPath>hal/src/hal_usart_sync.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="utils" displayName="utils" projectFiles="true">
+          <logicalFolder name="src" displayName="src" projectFiles="true">
+            <itemPath>hal/utils/src/utils_assert.c</itemPath>
+            <itemPath>hal/utils/src/utils_event.c</itemPath>
+            <itemPath>hal/utils/src/utils_list.c</itemPath>
+            <itemPath>hal/utils/src/utils_syscalls.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+      </logicalFolder>
+      <logicalFolder name="hpl" displayName="hpl" projectFiles="true">
+        <logicalFolder name="core" displayName="core" projectFiles="true">
+          <itemPath>hpl/core/hpl_core_m0plus_base.c</itemPath>
+          <itemPath>hpl/core/hpl_init.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="dmac" displayName="dmac" projectFiles="true">
+          <itemPath>hpl/dmac/hpl_dmac.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="eic" displayName="eic" projectFiles="true">
+          <itemPath>hpl/eic/hpl_eic.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="gclk" displayName="gclk" projectFiles="true">
+          <itemPath>hpl/gclk/hpl_gclk.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="pm" displayName="pm" projectFiles="true">
+          <itemPath>hpl/pm/hpl_pm.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="rtc" displayName="rtc" projectFiles="true">
+          <itemPath>hpl/rtc/hpl_rtc.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="sercom" displayName="sercom" projectFiles="true">
+          <itemPath>hpl/sercom/hpl_sercom.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="sysctrl" displayName="sysctrl" projectFiles="true">
+          <itemPath>hpl/sysctrl/hpl_sysctrl.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="systick" displayName="systick" projectFiles="true">
+          <itemPath>hpl/systick/hpl_systick.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="tcc" displayName="tcc" projectFiles="true">
+          <itemPath>hpl/tcc/hpl_tcc.c</itemPath>
+        </logicalFolder>
+      </logicalFolder>
+      <logicalFolder name="samd21a" displayName="samd21a" projectFiles="true">
+        <logicalFolder name="gcc" displayName="gcc" projectFiles="true">
+          <logicalFolder name="gcc" displayName="gcc" projectFiles="true">
+            <itemPath>samd21a/gcc/gcc/startup_samd21.c</itemPath>
+          </logicalFolder>
+          <itemPath>samd21a/gcc/system_samd21.c</itemPath>
+        </logicalFolder>
+      </logicalFolder>
+      <logicalFolder name="stdio_redirect"
+                     displayName="stdio_redirect"
+                     projectFiles="true">
+        <logicalFolder name="gcc" displayName="gcc" projectFiles="true">
+          <itemPath>stdio_redirect/gcc/read.c</itemPath>
+          <itemPath>stdio_redirect/gcc/write.c</itemPath>
+        </logicalFolder>
+        <itemPath>stdio_redirect/stdio_io.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="utilities" displayName="utilities" projectFiles="true">
+        <itemPath>../../common/utilities/hex_dump.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="winc1500" displayName="winc1500" projectFiles="true">
+        <logicalFolder name="bsp" displayName="bsp" projectFiles="true">
+          <logicalFolder name="source" displayName="source" projectFiles="true">
+            <itemPath>winc1500/bsp/source/nm_bsp.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="bus_wrapper" displayName="bus_wrapper" projectFiles="true">
+          <logicalFolder name="source" displayName="source" projectFiles="true">
+            <itemPath>winc1500/bus_wrapper/source/nm_bus_wrapper.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="common" displayName="common" projectFiles="true">
+          <logicalFolder name="source" displayName="source" projectFiles="true">
+            <itemPath>winc1500/common/source/nm_common.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="driver" displayName="driver" projectFiles="true">
+          <logicalFolder name="source" displayName="source" projectFiles="true">
+            <itemPath>winc1500/driver/source/m2m_ate_mode.c</itemPath>
+            <itemPath>winc1500/driver/source/m2m_crypto.c</itemPath>
+            <itemPath>winc1500/driver/source/m2m_hif.c</itemPath>
+            <itemPath>winc1500/driver/source/m2m_ota.c</itemPath>
+            <itemPath>winc1500/driver/source/m2m_periph.c</itemPath>
+            <itemPath>winc1500/driver/source/m2m_ssl.c</itemPath>
+            <itemPath>winc1500/driver/source/m2m_wifi.c</itemPath>
+            <itemPath>winc1500/driver/source/nmasic.c</itemPath>
+            <itemPath>winc1500/driver/source/nmbus.c</itemPath>
+            <itemPath>winc1500/driver/source/nmdrv.c</itemPath>
+            <itemPath>winc1500/driver/source/nmi2c.c</itemPath>
+            <itemPath>winc1500/driver/source/nmspi.c</itemPath>
+            <itemPath>winc1500/driver/source/nmuart.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="socket" displayName="socket" projectFiles="true">
+          <logicalFolder name="source" displayName="source" projectFiles="true">
+            <itemPath>winc1500/socket/source/socket.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="spi_flash" displayName="spi_flash" projectFiles="true">
+          <logicalFolder name="source" displayName="source" projectFiles="true">
+            <itemPath>winc1500/spi_flash/source/spi_flash.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+      </logicalFolder>
+      <itemPath>driver_init.c</itemPath>
+      <itemPath>winc_init.c</itemPath>
+      <itemPath>stdio_start.c</itemPath>
+      <itemPath>atmel_start.c</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceRootList>
+    <Elem>../../../dependencies/cryptoauthlib/lib</Elem>
+    <Elem>../../common</Elem>
+    <Elem>../../../../../assets/dependencies/cryptoauthlib/lib</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="2">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <targetDevice>ATSAMD21E18A</targetDevice>
+        <targetHeader></targetHeader>
+        <targetPluginBoard></targetPluginBoard>
+        <platformTool>nEdbgTool</platformTool>
+        <languageToolchain>ARM</languageToolchain>
+        <languageToolchainVersion>6.3.1</languageToolchainVersion>
+        <platform>3</platform>
+      </toolsSet>
+      <packs>
+        <pack name="CMSIS" vendor="ARM" version="5.4.0"/>
+        <pack name="SAMD21_DFP" vendor="Microchip" version="3.0.23"/>
+      </packs>
+      <compileType>
+        <linkerTool>
+          <linkerLibItems>
+          </linkerLibItems>
+        </linkerTool>
+        <archiverTool>
+        </archiverTool>
+        <loading>
+          <useAlternateLoadableFile>false</useAlternateLoadableFile>
+          <parseOnProdLoad>false</parseOnProdLoad>
+          <alternateLoadableFile></alternateLoadableFile>
+        </loading>
+        <subordinates>
+        </subordinates>
+      </compileType>
+      <makeCustomizationType>
+        <makeCustomizationPreStepEnabled>false</makeCustomizationPreStepEnabled>
+        <makeCustomizationPreStep></makeCustomizationPreStep>
+        <makeCustomizationPostStepEnabled>false</makeCustomizationPostStepEnabled>
+        <makeCustomizationPostStep></makeCustomizationPostStep>
+        <makeCustomizationPutChecksumInUserID>false</makeCustomizationPutChecksumInUserID>
+        <makeCustomizationEnableLongLines>false</makeCustomizationEnableLongLines>
+        <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
+      </makeCustomizationType>
+      <ARM-AR>
+        <property key="archiver-flags" value="-r"/>
+      </ARM-AR>
+      <ARM-AS>
+        <property key="announce-version" value="false"/>
+        <property key="include-paths" value=""/>
+        <property key="suppress-warnings" value="false"/>
+      </ARM-AS>
+      <ARM-AS-PRE>
+        <property key="announce-version" value="false"/>
+        <property key="include-paths" value=""/>
+        <property key="preprocessor-macros" value=""/>
+        <property key="preprocessor-macros-undefined" value=""/>
+        <property key="suppress-warnings" value="false"/>
+      </ARM-AS-PRE>
+      <ARM-CPP>
+        <property key="additional-warnings" value="true"/>
+        <property key="called-functions-located" value="true"/>
+        <property key="default-bitfield-type" value="false"/>
+        <property key="default-char-type" value="false"/>
+        <property key="disable-extra-code-exception" value="true"/>
+        <property key="disable-extra-code-generation" value="true"/>
+        <property key="extra-include-directories" value=""/>
+        <property key="extra-warnings" value="false"/>
+        <property key="fast-math" value="false"/>
+        <property key="garbage-collect-data" value="false"/>
+        <property key="garbage-collect-functions" value="true"/>
+        <property key="inhibit-all" value="false"/>
+        <property key="make-warnings-into-errors" value="false"/>
+        <property key="no-system-directories" value="false"/>
+        <property key="optimization-level" value="-Os"/>
+        <property key="position-independent" value="false"/>
+        <property key="preprocess-only" value="false"/>
+        <property key="preprocessor-macros" value=""/>
+        <property key="preprocessor-macros-undefined" value=""/>
+        <property key="strict-ansi" value="false"/>
+        <property key="strict-ansi-errors" value="false"/>
+        <property key="syntax-only" value="false"/>
+        <property key="undefined-identifier" value="false"/>
+        <property key="unsafe-math" value="false"/>
+        <property key="use-rodata" value="false"/>
+        <property key="verbose" value="false"/>
+      </ARM-CPP>
+      <ARM-GCC>
+        <property key="additional-warnings" value="true"/>
+        <property key="called-functions-located" value="true"/>
+        <property key="default-bitfield-type" value="false"/>
+        <property key="default-char-type" value="false"/>
+        <property key="extra-include-directories"
+                  value="..\..\common\paho_mqtt_embedded_c;..\..\common\paho_mqtt_embedded_c\MQTTPacket;..\..\common\paho_mqtt_embedded_c\platform;..\..\common\parson_json;..\..\common\utilities;..\..\common;..\..\..\..\..\assets\dependencies\cryptoauthlib\lib;..\..\common\paho_mqtt_embedded_c\MQTTClient-C"/>
+        <property key="extra-warnings" value="false"/>
+        <property key="fast-math" value="false"/>
+        <property key="garbage-collect-data" value="false"/>
+        <property key="garbage-collect-functions" value="true"/>
+        <property key="inhibit-all" value="false"/>
+        <property key="make-warnings-into-errors" value="false"/>
+        <property key="no-system-directories" value="false"/>
+        <property key="optimization-level" value="-Os"/>
+        <property key="position-independent" value="false"/>
+        <property key="preprocessor-macros"
+                  value="ATCA_HAL_I2C;DEBUG;I2C_SERCOM_CORE_FREQ=CONF_GCLK_SERCOM2_CORE_FREQUENCY"/>
+        <property key="preprocessor-macros-undefined" value=""/>
+        <property key="strict-ansi" value="false"/>
+        <property key="strict-ansi-errors" value="false"/>
+        <property key="support-ansi" value="false"/>
+        <property key="syntax-only" value="false"/>
+        <property key="undefined-identifier" value="false"/>
+        <property key="unsafe-math" value="false"/>
+        <property key="verbose" value="false"/>
+      </ARM-GCC>
+      <ARM-Global>
+        <property key="bin" value="false"/>
+        <property key="common-include-directories"
+                  value=".\.;hpl/port;hpl/tcc;hpl/systick;hal/utils/include;hal/include;hpl/rtc;hpl/pm;hri;hpl/gclk;hpl/sercom;hpl/sysctrl;hpl/core;hpl/dmac;winc1500;examples;hpl/eic;config;stdio_redirect;..\..\..\..\..\assets\dependencies\common"/>
+        <property key="eep" value="false"/>
+        <property key="hex" value="true"/>
+        <property key="lss" value="false"/>
+        <property key="omit-pack-options" value="true"/>
+        <property key="processor-mode" value="-mthumb"/>
+        <property key="srec" value="false"/>
+        <property key="user-pack-include" value="samd21a/include;CMSIS/Core/Include"/>
+      </ARM-Global>
+      <ARM-LD>
+        <property key="additional-specs" value="--specs=nosys.specs"/>
+        <property key="exclude-standard-libraries" value="false"/>
+        <property key="extra-lib-directories" value="samd21a/gcc/gcc"/>
+        <property key="fast-math" value="false"/>
+        <property key="flash-segment" value=""/>
+        <property key="generate-map-file" value="true"/>
+        <property key="input-libraries" value=""/>
+        <property key="no-default-libs" value="false"/>
+        <property key="no-shared-libraries" value="false"/>
+        <property key="no-startup-files" value="false"/>
+        <property key="omit-symbol-information" value="false"/>
+        <property key="other-options" value=""/>
+        <property key="position-independent" value="false"/>
+        <property key="remove-unused-sections" value="true"/>
+        <property key="size-optimized-library" value="false"/>
+        <property key="sram-segment" value=""/>
+        <property key="unsafe-math" value="false"/>
+        <appendMe value="-T&quot;samd21a/gcc/gcc/samd21e18a_flash.ld&quot; "/>
+      </ARM-LD>
+      <nEdbgTool>
+        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="communication.activationmode" value="nohv"/>
+        <property key="communication.interface" value="swd"/>
+        <property key="communication.speed" value="2.000"/>
+        <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="firmware.path"
+                  value="Press to browse for a specific firmware version"/>
+        <property key="firmware.update.action" value="firmware.update.use.latest"/>
+        <property key="memories.aux" value="false"/>
+        <property key="memories.bootflash" value="true"/>
+        <property key="memories.configurationmemory" value="true"/>
+        <property key="memories.configurationmemory2" value="true"/>
+        <property key="memories.dataflash" value="true"/>
+        <property key="memories.eeprom" value="true"/>
+        <property key="memories.exclude.configurationmemory" value="true"/>
+        <property key="memories.flashdata" value="true"/>
+        <property key="memories.id" value="true"/>
+        <property key="memories.instruction.ram.ranges"
+                  value="${memories.instruction.ram.ranges}"/>
+        <property key="memories.programmemory" value="true"/>
+        <property key="memories.programmemory.ranges" value="0-3ffff"/>
+        <property key="poweroptions.powerenable" value="false"/>
+        <property key="programmerToGoFilePath"
+                  value="E:/Desktop/Trust Platform/usecasetool_dev/TrustnGO/02_gcp_connect/c/mplab/gcp_connect.X/debug/Default/gcp_connect_ptg"/>
+        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="programoptions.preservedataflash" value="false"/>
+        <property key="programoptions.preservedataflash.ranges"
+                  value="${memories.dataflash.default}"/>
+        <property key="programoptions.preserveeeprom" value="false"/>
+        <property key="programoptions.preserveeeprom.ranges" value=""/>
+        <property key="programoptions.preserveprogram.ranges" value="0-20007fff"/>
+        <property key="programoptions.preserveprogramrange" value="false"/>
+        <property key="programoptions.preserveuserid" value="false"/>
+        <property key="programoptions.programuserotp" value="false"/>
+        <property key="voltagevalue" value=""/>
+      </nEdbgTool>
+    </conf>
+  </confs>
+</configurationDescriptor>

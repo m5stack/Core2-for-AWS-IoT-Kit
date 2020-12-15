@@ -1,0 +1,209 @@
+.alignright {
+    text-align: right;
+}
+
+.allignleft {
+    text-align: left;
+}
+
+.aligncenter {
+    text-align: center;
+}
+
+.grayout {
+    opacity: 0.6;
+    filter: alpha(opacity = 60);
+}
+
+h2.pagetitle {
+    text-align: center;
+    font-weight: bold;
+    font-style: normal;
+}
+
+table.slotdata {
+    border-collapse: collapse;
+}
+.trustsection_head_title{
+    padding-bottom: 2rem;
+    overflow: hidden;
+}
+.table.partnumberrow {
+    padding: 20px;
+    height: 20px;
+    text-align: center;
+    vertical-align: middle;
+    border-color: #e40222;
+}
+.table.partnumberrow th{
+    border-color: white;
+    text-align:center;
+    vertical-align: middle;
+    background-color: #e40222;
+    color: white;
+    font-size: 90%;
+}
+.table.partnumberrow td{
+    border-color: #e40222;
+    color: black;
+    font-size: 80%;
+}
+
+table.slotdata th, table.slotdata td{
+    padding: 10px;
+    height: 10px;
+    position: relative;
+}
+
+/*
+table.slotdata tr:nth-child(even) {
+    background: rgb(238, 238, 238);
+}
+*/
+
+tr.expanded_row {
+    display: table-row;
+    vertical-align: inherit;
+    border-color: inherit;
+    background-color: rgba(240, 210, 185, 0.877);
+  }
+
+.slotTextDisabled {
+    padding: 0;
+    height: 35px;
+    position: relative;
+    left: 0;
+    outline: none;
+    border: 1px solid #cdcdcd;
+    border-color: rgba(172, 174, 255, 0.658);
+    background-color: rgb(247, 245, 245);
+    border-radius: 4px;
+}
+
+.slotTextEnabled {
+    padding: 3px;
+    height: 35px;
+    position: relative;
+    left: 0;
+    outline: 0px;
+    margin-bottom: 5px;
+    border: 1px solid #aeafb1;
+    border-color:  rgba(172, 174, 255, 0.658);
+    background-color: rgb(255, 255, 255);
+    border-radius: 4px;
+}
+
+.advancedSearchTextbox {
+    width: 100%;
+    margin-right: -4px;
+}
+
+.advancedSearchTextboxReduced {
+    width: 25%;
+    margin-right: -4px;
+}
+
+input.placeholder{
+    text-align: left;
+}
+
+textarea.slotTextArea{
+    resize: horizontal;
+    position: relative;
+    min-width: 300px;
+    max-width: 1000px;
+    height: 100%;
+    border-radius: 4px;
+    border-color: rgba(25, 32, 26, 0.315);
+    background-color: white;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+.slotTextArea:disabled{
+    border-color: rgba(86, 241, 109, 0.315);
+    background-color: rgb(180, 177, 177);
+}
+
+.slotTextEnabled:disabled{
+    border-color: rgba(86, 241, 109, 0.315);
+    background-color: rgb(180, 177, 177);
+}
+
+button.opt1button{
+    border: 1px solid #aeafb1;
+    border-color:  rgba(172, 174, 255, 0.658);
+    border-radius: 4px;
+    padding: 5px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+button.opt2button{
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+}
+
+tr.TrPresets{
+    background-color: rgba(249, 250, 255, 0.897);
+    cursor: pointer;
+}
+
+table.slotlock {
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+
+table.slotlock td, table.slotlock td{
+    padding: 5px;
+    position: relative;
+}
+
+.headingDropdown{
+    display: table;
+    font-weight: bold;
+    font-style: normal;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.slotLockVisibility{
+    /*display: none;*/
+    color: rgba(32, 32, 32, 0.781) !important;
+}
+
+p.textWarning{
+    color: mediumslateblue;
+}
+
+.radiotext{
+    font-weight: 100;
+}
+
+.hiddenElement{
+    display: none;
+}
+
+div.divPresets{
+    background-color: rgba(249, 250, 255, 0.897);
+    padding-top: 5px;
+    padding-right: 15px;
+    padding-bottom: 5px;
+    padding-left: 15px;
+    cursor: pointer;
+    border: 1px solid black;
+}
+div.divPresets.danger{
+    background-color: #f2dede;
+}
+
+.img.training {
+    max-height: 50%;
+    max-width: 50%;
+}

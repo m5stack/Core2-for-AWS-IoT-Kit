@@ -1,0 +1,34 @@
+menu "ULP_ADC"
+    depends on ESP32_ULP_COPROC_ENABLED
+
+    config  ULP_REL_ADC_CHANNEL
+    int "ADC1 channel monitoring relative difference crossings"
+    range 0 7
+    default 3
+    depends on ESP32_ULP_COPROC_ENABLED
+    help
+        ADC1 channel which polls ADC value and generates interrupt when ADC reading
+        greater than relative difference
+
+        |current - prev| > relative_thres
+
+        Ex. Polling multiple buttons connected on single ADC channel
+
+    config ULP_ABS_ADC_CHANNEL_ENABLE
+    bool "Enable ADC1 channel for absolute ADC monitoring"
+    help
+        If enabled, ADC1 channel will monitor ADC readings crossing absolute ADC thresholds
+
+        Ex. Monitoring battery voltage
+
+    config ULP_ABS_ADC_CHANNEL
+    int "ADC1 channel monitoring absolute threshold crossings"
+    range 0 7
+    default 6
+    depends on ULP_ABS_ADC_CHANNEL_ENABLE
+    help
+        ADC1 channel which polls ADC value and generates interrupt when ADC reading
+        goes below or above the thresholds specified
+
+        ADC reading < abs_thres_low  or ADC reading > abs_thres_high
+endmenu
