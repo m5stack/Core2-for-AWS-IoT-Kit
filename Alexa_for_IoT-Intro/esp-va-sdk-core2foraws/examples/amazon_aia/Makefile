@@ -3,8 +3,8 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := AWS_IoT_EduKit-AlexaForIoT-Intro
-PROJECT_VER := 1.0
+PROJECT_NAME := aia
+PROJECT_VER := 1.0.0
 export VOICE_ASSISTANT = aia
 export LED_PATTERN_TYPE = alexa
 CPPFLAGS += -DVOICE_ASSISTANT_AIA

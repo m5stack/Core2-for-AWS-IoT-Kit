@@ -4,6 +4,7 @@
 #
 
 PROJECT_NAME := AWS_IoT_EduKit-Factory_Firmware
+PROJECT_VER := 1.0.0
 
 include $(IDF_PATH)/make/project.mk
 

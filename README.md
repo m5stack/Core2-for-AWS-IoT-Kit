@@ -7,7 +7,7 @@ For Arduino, UIFlow, or MicroPython content and code, please view the official [
 
 ## Included Projects
 ### Core2 for AWS IoT Features Demo
-This project is a demo of the hardware features available on the M5Stack Core2 for AWS IoT EduKit reference hardware. It uses at least one available API of each hardware feature in the board support package (BSP). The BSP drivers are located in the **/components/core2forAWS/** directory. There is also a ported version of Espressif's ESP-CRYPTOAUTHLIB to be used with the BSP for the Microchip ATECC608A Trust&GO secure element to function.
+This project is a demo of the hardware features available on the M5Stack Core2 for AWS IoT EduKit reference hardware. It uses at least one available API of each hardware feature in the board support package (BSP). The BSP drivers are located in the **/components/core2forAWS/** directory. There is also a ported version of Espressif's ESP-CRYPTOAUTHLIB to be used with the BSP for the Microchip ATECC608 Trust&GO secure element to function.
 
 You can flash this firmware by entering the command into your shell prompt (replace <<DEVICE_PORT>> with your device's logically mounted system port):
 ```bash
