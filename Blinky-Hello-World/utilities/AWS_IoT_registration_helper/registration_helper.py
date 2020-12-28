@@ -37,18 +37,22 @@ import sys
 import binascii
 import json
 
+# Verify ESP-IDF is installed and environmental variables are added to PATH
 try:
     import esptool
 except ImportError: 
     idf_path = os.getenv("IDF_PATH")
     if not idf_path or not os.path.exists(idf_path):
+        print("\n\nESP-IDF not found! Install ESP-IDF and run the export script...\n\n")
         raise
     sys.path.insert(0, os.path.join(idf_path, "components", "esptool_py", "esptool"))
     import esptool
 
+# Import the Espressif CryptoAuthLib Utility libraries
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), "..", "..", "components", "esp-cryptoauthlib", "esp_cryptoauth_utility")))
 import helper_scripts as esp_hs
 
+# Import the Microchip Trust Platform Design Suite libraries
 trustplatform_path = os.path.join(os.getcwd(), "..", "cryptoauth_trustplatform_designsuite", "assets", "python")
 sys.path.append(trustplatform_path)
 import certs_handler
@@ -56,6 +60,7 @@ import trustplatform
 from requirements_helper import requirements_installer
 import manifest_helper
 
+# Import the Microchip Trust Platform Design Suite AWS and manifest helper libraries
 trustplatform_aws_path = os.path.join(os.getcwd(), "..", "cryptoauth_trustplatform_designsuite", "TrustnGO", "05_cloud_connect", "notebook", "aws")
 sys.path.append(trustplatform_aws_path)
 from helper_aws import *
@@ -73,8 +78,7 @@ def check_environment():
     """
     conda_env = os.environ.get('CONDA_DEFAULT_ENV')
     if conda_env == None or conda_env == "base":
-        print("The 'edukit' Conda environment is not created or activated:\n  To create the environment, use the command 'conda create -n edukit python=3.7'\n  To activate the environment, use the command 'conda activate edukit'\n")
-        exit(0)
+        print("The 'edukit' Conda environment is not created or activated:\n  To install miniconda, visit https://docs.conda.io/en/latest/miniconda.html.\n  To create the environment, use the command 'conda create -n edukit python=3.7'\n  To activate the environment, use the command 'conda activate edukit'\n")
     print("Conda 'edukit' environment active...")
     
     if sys.version_info[0] == "3" and sys.version_info[1] == "7":
@@ -83,7 +87,7 @@ def check_environment():
         exit(0)
     print("Python 3.7.x detected...")
 
-    aws_iot_endpoint = subprocess.run(["aws", "iot", "describe-endpoint"], universal_newlines=True, capture_output=True)
+    aws_iot_endpoint = subprocess.run(["aws", "iot", "describe-endpoint", "--endpoint-type", "iot:Data-ATS"], universal_newlines=True, capture_output=True)
     if aws_iot_endpoint.returncode != 0:
         print("Error with AWS CLI! Follow the configurtion docs at 'https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html'")
         exit(0)
@@ -170,9 +174,9 @@ def upload_manifest():
 def main():
     """AWS IoT EduKit MCU hardware device registration script
     Checkes environment is set correctly, generates ECDSA certificates,
-    retrieves on-board device certificate using the esp-cryptoauth library 
-    and utility, creates an AWS IoT thing using the AWS CLI and Microchip 
-    TrustPlatform.
+    ensures all required python libraries are included, retrieves on-board 
+    device certificate using the esp-cryptoauth library and utility, creates 
+    an AWS IoT thing using the AWS CLI and Microchip Trust Platform Design Suite.
     """
     app_binary = 'sample_bins/secure_cert_mfg_esp32.bin'
     parser = argparse.ArgumentParser(description='''Provision the Core2 for AWS IoT EduKit with 
