@@ -89,6 +89,9 @@ void display_init() {
     out_txtarea = lv_textarea_create(lv_scr_act(), NULL);
     lv_obj_set_size(out_txtarea, 300, 180);
     lv_obj_align(out_txtarea, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, -12);
-    lv_textarea_set_text(out_txtarea, "Starting Blinky Hello World...");
+    lv_textarea_set_max_length(out_txtarea, 1024);
+    lv_textarea_set_text_sel(out_txtarea, false);
+    lv_textarea_set_cursor_hidden(out_txtarea, true);
+    lv_textarea_set_text(out_txtarea, "Starting Blinky Hello World...\n");
     xSemaphoreGive(xGuiSemaphore);
 }

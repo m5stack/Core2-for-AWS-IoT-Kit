@@ -51,7 +51,7 @@
 #include "axp192.h"
 #include "cryptoauthlib.h"
 #include "i2c_device.h"
-#include "atecc608a.h"
+#include "atecc608.h"
 
 #include "aws_iot_config.h"
 #include "aws_iot_log.h"
@@ -139,12 +139,16 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
         esp_wifi_connect();
         break;
     case SYSTEM_EVENT_STA_GOT_IP:
+        xEventGroupClearBits(wifi_event_group, DISCONNECTED_BIT);
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
         display_wifi_label_update(true);
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
         /* This is a workaround as ESP32 WiFi libs don't currently
            auto-reassociate. */
+        ESP_LOGE(TAG, "Wi-Fi disconnected. Reason: %d\n",event->event_info.disconnected.reason);
+        ESP_LOGI(TAG, "Wi-Fi reason codes: https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-guides/wifi.html#wi-fi-reason-code");
+        display_textarea_add("Wi-Fi error. Attempting reconnect...\n", NULL, NULL);
         esp_wifi_connect();
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
         xEventGroupSetBits(wifi_event_group, DISCONNECTED_BIT);
@@ -221,7 +225,7 @@ void aws_iot_task(void *param) {
     mqttInitParams.pDevicePrivateKeyLocation = "#0";
     
     char * clientId = malloc(ATCA_SERIAL_NUM_SIZE * 2 + 1);
-    ATCA_STATUS ret = Atecc608a_GetSerialString(clientId);
+    ATCA_STATUS ret = Atecc608_GetSerialString(clientId);
     if (ret != ATCA_SUCCESS){
         ESP_LOGE(TAG, "Failed to get device serial from secure element. Error: %i", ret);
         abort();
@@ -401,7 +405,6 @@ static void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_wifi_start() );
 }
 
-
 void app_main()
 {
     // Initialize NVS.
@@ -426,13 +429,11 @@ void app_main()
     initialise_wifi();
 
     #if defined (CONFIG_AWS_IOT_USE_HARDWARE_SECURE_ELEMENT)
-        
-        ATCA_STATUS ret = Atecc608a_Init();
+        ATCA_STATUS ret = Atecc608_Init();
         if (ret != ATCA_SUCCESS){
-            ESP_LOGE(TAG, "ATECC608A secure element initialization error");
+            ESP_LOGE(TAG, "ATECC608 secure element initialization error!");
             abort();
         }
-    
     #endif
 
         xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", 9216, NULL, 5, NULL, 1);
