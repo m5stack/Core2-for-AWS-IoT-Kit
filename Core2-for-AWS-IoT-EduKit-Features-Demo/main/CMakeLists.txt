@@ -1,5 +1,5 @@
 set(SOURCES main.c)
-idf_component_register(SRCS main.c music.c atecc608a_test.c sk6812_test.c fft.c mic_fft_test.c
+idf_component_register(SRCS main.c music.c atecc608_test.c sk6812_test.c fft.c mic_fft_test.c
                     INCLUDE_DIRS .
                     REQUIRES core2forAWS esp-cryptoauthlib fatfs)
 

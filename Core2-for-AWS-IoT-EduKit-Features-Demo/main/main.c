@@ -24,7 +24,7 @@
 #include "mpu6886.h"
 #include "axp192.h"
 #include "cryptoauthlib.h"
-#include "atecc608a_test.h"
+#include "atecc608_test.h"
 #include "sk6812_test.h"
 #include "i2c_device.h"
 #include "mic_fft_test.h"

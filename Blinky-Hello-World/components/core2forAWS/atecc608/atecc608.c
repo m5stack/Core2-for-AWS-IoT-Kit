@@ -6,7 +6,7 @@
 #include "esp_log.h"
 
 #include "i2c_device.h"
-#include "atecc608a.h"
+#include "atecc608.h"
 
 /* mbedTLS includes */
 #include "mbedtls/platform.h"
@@ -16,7 +16,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/pk.h"
 
-static const char *TAG = "atecc608a";
+static const char *TAG = "atecc608";
 
 static mbedtls_entropy_context entropy;
 static mbedtls_ctr_drbg_context ctr_drbg;
@@ -53,7 +53,7 @@ static void handleErr(){
     close_mbedtls_rng();
 }
 
-ATCA_STATUS Atecc608a_GetSerialString(char * sn) {
+ATCA_STATUS Atecc608_GetSerialString(char * sn) {
     int ret;
     uint8_t serial[ATCA_SERIAL_NUM_SIZE];
     
@@ -69,14 +69,14 @@ ATCA_STATUS Atecc608a_GetSerialString(char * sn) {
     return ret;
 }
 
-ATCA_STATUS Atecc608a_Init() {
+ATCA_STATUS Atecc608_Init() {
     int ret = ATCA_SUCCESS;
     bool lock;
     uint8_t buf[ATCA_ECC_CONFIG_SIZE];
     // uint8_t pubkey[ATCA_PUB_KEY_SIZE];
     ret = configure_mbedtls_rng();
     ret = atcab_init(&cfg_ateccx08a_i2c_default);
-    ESP_LOGI(TAG, "Initializing ATECC608a secure element");
+    ESP_LOGI(TAG, "Initializing ATECC608 secure element");
     if (ret != ATCA_SUCCESS) {
         ESP_LOGI(TAG, "*FAILED* atcab_init returned %02x", ret);
         handleErr();
@@ -96,7 +96,7 @@ ATCA_STATUS Atecc608a_Init() {
                 ESP_LOGI(TAG, "ok: locked");
             }
             else {
-                ESP_LOGE(TAG, "*FAILED* ATECC608a is unlocked. Lock with esp_cryptoauth_utility and try again");
+                ESP_LOGE(TAG, "*FAILED* ATECC608 is unlocked. Lock with esp_cryptoauth_utility and try again");
                 handleErr();
                 return ATCA_NOT_LOCKED;
             }

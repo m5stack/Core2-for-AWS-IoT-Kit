@@ -163,12 +163,12 @@ IoT_Error_t iot_tls_connect(Network *pNetwork, TLSConnectParams *params) {
 #ifdef CONFIG_AWS_IOT_USE_HARDWARE_SECURE_ELEMENT
     if (pNetwork->tlsConnectParams.pDeviceCertLocation[0] == '#') {
         const atcacert_def_t* cert_def = NULL;
-        ESP_LOGD(TAG, "Using certificate stored in ATECC608A");
+        ESP_LOGD(TAG, "Using certificate stored in ATECC608");
         ret = tng_get_device_cert_def(&cert_def);
         if (ret == 0) {
             ret = atca_mbedtls_cert_add(&(tlsDataParams->clicert), cert_def);
         } else {
-            ESP_LOGE(TAG, "failed! could not load cert from ATECC608A, tng_get_device_cert_def returned %02x", ret);
+            ESP_LOGE(TAG, "failed! could not load cert from ATECC608, tng_get_device_cert_def returned %02x", ret);
         }
     } else
 #endif
@@ -192,10 +192,10 @@ IoT_Error_t iot_tls_connect(Network *pNetwork, TLSConnectParams *params) {
     if (pNetwork->tlsConnectParams.pDevicePrivateKeyLocation[0] == '#') {
         int8_t slot_id = pNetwork->tlsConnectParams.pDevicePrivateKeyLocation[1] - '0';
         if (slot_id < 0 || slot_id > 9) {
-            ESP_LOGE(TAG, "Invalid ATECC608A slot ID.");
+            ESP_LOGE(TAG, "Invalid ATECC608 slot ID.");
             ret = NETWORK_PK_PRIVATE_KEY_PARSE_ERROR;
         } else {
-            ESP_LOGD(TAG, "Using ATECC608A private key from slot %d", slot_id);
+            ESP_LOGD(TAG, "Using ATECC608 private key from slot %d", slot_id);
             ret = atca_mbedtls_pk_init(&(tlsDataParams->pkey), slot_id);
             if (ret != 0) {
                 ESP_LOGE(TAG, "failed !  atca_mbedtls_pk_init returned %02x", ret);

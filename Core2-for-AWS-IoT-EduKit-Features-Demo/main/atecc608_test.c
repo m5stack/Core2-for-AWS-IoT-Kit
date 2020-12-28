@@ -160,7 +160,7 @@ void atecc_test() {
     if (lock) {
         ESP_LOGI(TAG, " ok: locked");
     } else {
-        ESP_LOGE(TAG, "unlocked, please lock(configure) the ATECC608A chip with help of esp_cryptoauth_utility and try again");
+        ESP_LOGE(TAG, "unlocked, please lock(configure) the ATECC608 chip with help of esp_cryptoauth_utility and try again");
         goto exit;
     }
 

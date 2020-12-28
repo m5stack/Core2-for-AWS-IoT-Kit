@@ -19,7 +19,7 @@ Only supports ESP-IDF v4.1 or v4.2. Prefer to use 4.2 due to improved mbedTLS pe
 | BM8563 | Real Time Clock |
 | FT6336U | Capacitive Touch |
 | SPM1423 | PDM Microphone |
-| ATECC608A | Microchip Trust&GO secure element |
+| ATECC608 | Microchip Trust&GO secure element |
 | MPU6886 | 6-axis IMU w/ internal temperature sensor |
 | - | SD Card (up to 16GB)* |
 

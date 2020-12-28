@@ -9,14 +9,14 @@ For Arduino, UIFlow, or MicroPython content and code, please view the official [
 ### Core2 for AWS IoT Features Demo
 This project is a demo of the hardware features available on the M5Stack Core2 for AWS IoT EduKit reference hardware. It uses at least one available API of each hardware feature in the board support package (BSP). The BSP drivers are located in the **/components/core2forAWS/** directory. There is also a ported version of Espressif's ESP-CRYPTOAUTHLIB to be used with the BSP for the Microchip ATECC608 Trust&GO secure element to function.
 
-You can flash this firmware by entering the command into your shell prompt (replace <<DEVICE_PORT>> with your device's logically mounted system port):
+You can flash this firmware by entering the command into your shell prompt (replace **<<DEVICE_PORT>>** with the serial port your Core2 for AWS IoT EduKit device is connected to):
 ```bash
 cd Core2-for-AWS-IoT-EduKit-Features-Demo
 idf.py build -p <<DEVICE_PORT>>
 ```
 
 ## Core2 for AWS  IoT EduKit Factory Firmware
-This project is the factory firmware that comes loaded with the device. It contains basic functionality and can be used to restore the device to factory state by running the following command (replace <<DEVICE_PORT>> with your device's logically mounted system port):
+This project is the factory firmware that comes loaded with the device. It contains basic functionality and can be used to restore the device to factory state by running the following command (replace **<<DEVICE_PORT>>** with the serial port your Core2 for AWS IoT EduKit device is connected to):
 ```bash
 cd Core2-for-AWS-IoT-EduKit-Factory-Firmware
 idf.py build erase_flash flash -p <<DEVICE_PORT>> 

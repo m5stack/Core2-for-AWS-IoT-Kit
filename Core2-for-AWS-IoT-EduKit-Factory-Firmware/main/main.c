@@ -52,7 +52,7 @@
 #include "powered_by_aws_logo.c"
 #include "core2forAWS_qr_code.c"
 #include "music.c"
-#include "atecc608a.h"
+#include "atecc608.h"
 
 static void speakerTask(void *arg);
 static const char *TAG = "Core2ForAWS";
@@ -76,7 +76,7 @@ void app_main(void)
     Core2ForAWS_Button_Init();
     Core2ForAWS_Sk6812_Init();
     Core2ForAWS_LCD_SetBrightness(80);
-    Atecc608a_Init();
+    Atecc608_Init();
 
     xTaskCreatePinnedToCore(sk6812ShowTask, "sk6812ShowTask", 4096*2, NULL, 1, NULL, 1);
 
@@ -108,9 +108,9 @@ void app_main(void)
         sk6812TaskResume();
     
     char * device_serial = malloc(ATCA_SERIAL_NUM_SIZE * 2 + 1);
-    i2c_take_port(ATECC608A_I2C_PORT, portMAX_DELAY);
-    ATCA_STATUS ret = Atecc608a_GetSerialString(device_serial);
-    i2c_free_port(ATECC608A_I2C_PORT);
+    i2c_take_port(ATECC608_I2C_PORT, portMAX_DELAY);
+    ATCA_STATUS ret = Atecc608_GetSerialString(device_serial);
+    i2c_free_port(ATECC608_I2C_PORT);
     if (ret == ATCA_SUCCESS){
         ESP_LOGI(TAG,"**************************************\n");
         ESP_LOGI(TAG, "Device Serial: %s\n", device_serial);

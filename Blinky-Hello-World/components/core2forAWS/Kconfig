@@ -9,8 +9,8 @@ menu "Core2 for AWS hardware enable"
     config SOFTWARE_SK6812_SUPPORT
         bool "RGB-SK6812"
         default y
-    config SOFTWARE_ATECC608A_SUPPORT
-        bool "Encryption chip-ATECC608A"
+    config SOFTWARE_ATECC608_SUPPORT
+        bool "Encryption chip-ATECC608"
         default y
     config SOFTWARE_BUTTON_SUPPORT
         bool "BUTTON-Touch screen virtual"

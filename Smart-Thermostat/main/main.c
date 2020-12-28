@@ -54,7 +54,7 @@
 #include "axp192.h"
 #include "cryptoauthlib.h"
 #include "i2c_device.h"
-#include "atecc608a.h"
+#include "atecc608.h"
 
 #include "aws_iot_config.h"
 #include "aws_iot_log.h"
@@ -366,7 +366,7 @@ void aws_iot_task(void *param) {
     
     #define CLIENT_ID_LEN (ATCA_SERIAL_NUM_SIZE * 2 + 1)
     char * clientId = malloc(CLIENT_ID_LEN);
-    ATCA_STATUS ret = Atecc608a_GetSerialString(clientId);
+    ATCA_STATUS ret = Atecc608_GetSerialString(clientId);
     if (ret != ATCA_SUCCESS){
         ESP_LOGE(TAG, "Failed to get device serial from secure element. Error: %i", ret);
         abort();
@@ -571,9 +571,9 @@ void app_main()
 
     #if defined (CONFIG_AWS_IOT_USE_HARDWARE_SECURE_ELEMENT)
     
-    ATCA_STATUS ret = Atecc608a_Init();
+    ATCA_STATUS ret = Atecc608_Init();
     if (ret != ATCA_SUCCESS){
-        ESP_LOGE(TAG, "ATECC608A secure element initialization error");
+        ESP_LOGE(TAG, "ATECC608 secure element initialization error");
         abort();
     }
 
