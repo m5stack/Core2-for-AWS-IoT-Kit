@@ -1,7 +1,9 @@
 **/.pio
 **/.vscode
 **/build
-components/esp-cryptoauthlib/esp_cryptoauth_utility/output_files/*
+**/components/esp-cryptoauthlib/esp_cryptoauth_utility/output_files/*
 **/.DS_Store
-sdkconfig
-
+**/sdkconfig
+**/sdkconfig.old
+**/__pycache__
+/utilities/device_registration_helper/output_files/*

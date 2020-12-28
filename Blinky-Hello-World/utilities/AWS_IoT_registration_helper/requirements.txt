@@ -1,0 +1,13 @@
+awscli>=1.18.202
+cryptography>=2.7
+pyasn1_modules==0.1.5
+pyasn1==0.3.7
+python-jose==3.1.0
+ecdsa==0.16.1
+cryptoauthlib==20201130
+asn1crypto>=1.4.0
+pyOpenSSL==20.0.1
+requests-aws4auth==1.0.1
+hexrec==0.2.2
+hidapi==0.10.1
+boto3>=1.16.43
