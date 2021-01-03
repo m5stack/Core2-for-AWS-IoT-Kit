@@ -82,6 +82,7 @@ const int DISCONNECTED_BIT = BIT1;
 // in disp_spi.c
 extern SemaphoreHandle_t xGuiSemaphore;
 extern SemaphoreHandle_t spi_mutex;
+
 // Used for reading/writing from SD_Card
 extern void spi_poll();
 
@@ -265,8 +266,8 @@ void aws_iot_task(void *param) {
 
 #ifdef CONFIG_EXAMPLE_SDCARD_CERTS
     ESP_LOGI(TAG, "Mounting SD card...");
-    spi_poll();
     xSemaphoreTake(spi_mutex)
+    spi_poll();
     sdmmc_host_t host = SDMMC_HOST_DEFAULT();
     sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
@@ -275,10 +276,12 @@ void aws_iot_task(void *param) {
     };
     sdmmc_card_t* card;
     esp_err_t ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
+    xSemaphoreGive(spi_mutex);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount SD card VFAT filesystem. Error: %s", esp_err_to_name(ret));
         abort();
     }
+    
 #endif
 
     rc = aws_iot_mqtt_init(&client, &mqttInitParams);

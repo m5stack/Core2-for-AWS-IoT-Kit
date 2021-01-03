@@ -63,7 +63,7 @@ void BM8563_GetTime(rtc_date_t* data) {
     data->minute = BCD2Byte(time_buf[1] & 0x7f);
     data->hour = BCD2Byte(time_buf[2] & 0x3f);
     data->day = BCD2Byte(time_buf[3] & 0x3f);
-    data->month = BCD2Byte(time_buf[5] & 0x0f);
+    data->month = BCD2Byte(time_buf[5] & 0x1f);
     data->year = BCD2Byte(time_buf[6]) + (time_buf[5] & 0x80 ? 1900 : 2000);
 }
 
