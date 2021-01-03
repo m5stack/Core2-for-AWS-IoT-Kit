@@ -1,0 +1,74 @@
+// Copyright 2018 Espressif Systems (Shanghai) PTE LTD
+// All rights reserved.
+
+#include "stdio.h"
+#include <va_ui.h>
+#include <voice_assistant_app_cb.h>
+#include "va_board.h"
+#include <media_hal.h>
+#include "esp_log.h"
+#include <esp_system.h>
+#include <esp_heap_caps.h>
+#include <audio_board.h>
+
+static const char *TAG = "[app_va_cb]";
+static int prv_led_state = 1000;
+
+static inline int heap_caps_get_free_size_sram()
+{
+    return heap_caps_get_free_size(MALLOC_CAP_8BIT) - heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+}
+
+void va_app_dialog_states(va_dialog_states_t va_state)
+{
+    if(prv_led_state != va_state) {
+        va_ui_set_state(va_state);
+        ESP_LOGI(TAG, "Dialog state is: %d", va_state);
+    }
+    prv_led_state = va_state;
+   
+#ifdef HALF_DUPLEX_I2S_MODE
+    if(va_state == VA_IDLE)  
+    {
+        ESP_LOGI(TAG, "Enabling Mic");
+        audio_board_i2s_set_spk_mic_mode(MODE_MIC);
+    }
+#endif
+}
+
+int va_app_volume_is_set(int vol)
+{
+    volume_to_set = vol;
+    va_ui_set_state(VA_SET_VOLUME);
+    va_ui_set_state(VA_SET_VOLUME_DONE);
+    return 0;
+}
+
+int va_app_mute_is_set(va_mute_state_t va_mute_state)
+{
+    if (va_mute_state == VA_MUTE_ENABLE) {
+        va_ui_set_state(VA_SPEAKER_MUTE_ENABLE);
+        va_ui_set_state(VA_SET_VOLUME_DONE);
+    } else {
+        //do nothing
+    }
+    ESP_LOGI(TAG, "Mute: %d", va_mute_state);
+    return 0;
+}
+
+int alexa_app_raise_alert(alexa_alert_types_t alexa_alert_type, alexa_alert_state_t alexa_alert_state)
+{
+    if (alexa_alert_type == ALEXA_ALERT_SHORT) {
+        va_ui_set_state(LED_PATTERN_ALERT_SHORT);
+        return 0;
+    } else if (alexa_alert_type != ALEXA_ALERT_NOTIFICATION) {
+        if (alexa_alert_state == ALEXA_ALERT_ENABLE) {
+            number_of_active_alerts++;
+        } else if (number_of_active_alerts > 0) {
+            number_of_active_alerts--;
+        }
+    }
+    va_ui_set_alert(alexa_alert_type, alexa_alert_state);
+    va_ui_set_state(VA_IDLE);
+    return 0;
+}

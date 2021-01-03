@@ -31,8 +31,8 @@ This project is used in the [AWS IoT EduKit — Blinky Hello World](https://eduk
 ### Smart Thermostat
 This project is used in the [AWS IoT EduKit — Smart Thermostat](https://edukit.workshop.aws/en/smart-thermostat.html) and [AWS IoT EduKit — Smart Spaces](https://edukit.workshop.aws/en/smart-spaces.html) tutorials. Is a demonstration that uses AWS IoT device shadows. This example uses the AWS IoT Device SDK for Embedded C and the ESP-IDF v4.2. Please follow the tutorial for usage.
 
-### Alexa for IoT-Intro
-This project is used in the [AWS IoT EduKit — Intro to Alexa for IoT](https://edukit.workshop.aws/en/intro-to-alexa-for-iot.html) tutorial. It is a basic blinky LED demo that uses the on-board secure element for provisioning the device to AWS IoT. This example uses the AWS IoT Device SDK for Embedded C and the ESP-IDF v4.2. Please follow the tutorial for usage.
+### Alexa for IoT-Intro (Beta)
+This project is used in the [AWS IoT EduKit — Intro to Alexa for IoT](https://edukit.workshop.aws/en/intro-to-alexa-for-iot.html) tutorial. It contains several Alexa for AWS IoT (AIA) features including english "Alexa" wake word detection, smart home device, audio player and others. Please follow the tutorial for usage. This is preview software based on the [ESP-VA-SDK](https://github.com/espressif/esp-va-sdk), and is not a stable port.
 
 ## Support
 For issues with the AWS IoT EduKit content or this repo, please [submit an issue](https://github.com/m5stack/Core2-for-AWS-IoT-EduKit/issues) to this repository.
