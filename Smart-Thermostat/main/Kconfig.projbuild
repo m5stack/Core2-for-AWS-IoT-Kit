@@ -16,7 +16,8 @@ menu "AWS IoT EduKit Configuration"
 
     config AWS_EXAMPLE_CLIENT_ID
         string "AWS IoT Client ID"
-        default "myesp32"
+        depends on ! AWS_IOT_USE_HARDWARE_SECURE_ELEMENT
+        default "mycore2foraws"
         help
             AWS IoT Client ID for the example. Should be unique for every device.
 
