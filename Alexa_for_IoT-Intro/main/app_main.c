@@ -25,7 +25,7 @@
 #include <wifi_cli.h>
 #include <tone.h>
 #include <prompt.h>
-#include <speaker.h>
+#include <va_speaker.h>
 #include <avs_config.h>
 #include <auth_delegate.h>
 #include <speech_recognizer.h>

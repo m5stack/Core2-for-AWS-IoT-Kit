@@ -49,7 +49,7 @@
 #include "core2forAWS.h"
 #include "lvgl/lvgl.h"
 #include "ft6336u.h"
-#include "core2_microphone.h"
+#include "microphone.h"
 #include "mpu6886.h"
 #include "axp192.h"
 #include "cryptoauthlib.h"

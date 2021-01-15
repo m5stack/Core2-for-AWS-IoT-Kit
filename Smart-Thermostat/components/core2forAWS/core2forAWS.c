@@ -215,8 +215,11 @@ void Core2ForAWS_Sk6812_Clear() {
 SemaphoreHandle_t xGuiSemaphore;
 
 static void guiTask(void *pvParameter);
-static bool ft6336u_read(lv_indev_drv_t * drv, lv_indev_data_t * data);
 static void lv_tick_task(void *arg);
+
+#if CONFIG_SOFTWARE_FT6336U_SUPPORT
+static bool ft6336u_read(lv_indev_drv_t * drv, lv_indev_data_t * data);
+#endif
 
 void Core2ForAWS_LCD_Init() {
     xGuiSemaphore = xSemaphoreCreateMutex();
@@ -249,12 +252,14 @@ void Core2ForAWS_LCD_Init() {
     lv_disp_drv_register(&disp_drv);
 
     /* Register an input device when enabled on the menuconfig */
+#if CONFIG_SOFTWARE_FT6336U_SUPPORT
     lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
     indev_drv.read_cb = ft6336u_read;
     indev_drv.type = LV_INDEV_TYPE_POINTER;
     lv_indev_drv_register(&indev_drv);
-    
+#endif
+
     /* Create and start a periodic timer interrupt to call lv_tick_inc */
     const esp_timer_create_args_t periodic_timer_args = {
         .callback = &lv_tick_task,
@@ -282,6 +287,7 @@ void Core2ForAWS_LED_Enable(uint8_t enable) {
     Axp192_SetGPIO1Mode(value);
 }
 
+#if CONFIG_SOFTWARE_FT6336U_SUPPORT
 static bool ft6336u_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
     bool valid = true;
     uint16_t x = 0;
@@ -292,6 +298,7 @@ static bool ft6336u_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
     data->state = valid == false ? LV_INDEV_STATE_REL : LV_INDEV_STATE_PR;
     return false;
 }
+#endif
 
 static void lv_tick_task(void *arg) {
     (void) arg;
