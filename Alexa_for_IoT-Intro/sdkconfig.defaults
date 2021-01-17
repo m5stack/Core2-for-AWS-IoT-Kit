@@ -21,7 +21,7 @@ CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"
 #
 # Voice Assistant Configurations
 #
-CONFIG_ALEXA_PRODUCT_ID="Core2ForAWS"
+CONFIG_ALEXA_PRODUCT_ID="esp_alexa_open"
 
 #
 # Compiler options
