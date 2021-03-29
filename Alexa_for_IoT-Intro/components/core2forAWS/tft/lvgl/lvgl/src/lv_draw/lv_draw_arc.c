@@ -34,7 +34,6 @@ typedef struct {
     const lv_area_t * clip_area;
 } quarter_draw_dsc_t;
 
-
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -42,8 +41,7 @@ static void draw_quarter_0(quarter_draw_dsc_t * q);
 static void draw_quarter_1(quarter_draw_dsc_t * q);
 static void draw_quarter_2(quarter_draw_dsc_t * q);
 static void draw_quarter_3(quarter_draw_dsc_t * q);
-static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t tickness, lv_area_t * res_area);
-
+static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t thickness, lv_area_t * res_area);
 
 /**********************
  *  STATIC VARIABLES
@@ -331,7 +329,6 @@ static void draw_quarter_2(quarter_draw_dsc_t * q)
     }
 }
 
-
 static void draw_quarter_3(quarter_draw_dsc_t * q)
 {
     lv_area_t quarter_area;
@@ -385,14 +382,13 @@ static void draw_quarter_3(quarter_draw_dsc_t * q)
     }
 }
 
-
-static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t tickness, lv_area_t * res_area)
+static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t thickness, lv_area_t * res_area)
 {
     const uint8_t ps = 8;
     const uint8_t pa = 127;
 
-    int32_t thick_half = tickness / 2;
-    uint8_t thick_corr = (tickness & 0x01) ? 0 : 1;
+    int32_t thick_half = thickness / 2;
+    uint8_t thick_corr = (thickness & 0x01) ? 0 : 1;
 
     int32_t cir_x;
     int32_t cir_y;
@@ -423,4 +419,3 @@ static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t tickness,
         res_area->y2 = cir_y + thick_half - thick_corr;
     }
 }
-

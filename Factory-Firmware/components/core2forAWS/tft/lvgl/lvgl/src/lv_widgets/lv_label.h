@@ -167,7 +167,7 @@ void lv_label_set_align(lv_obj_t * label, lv_label_align_t align);
 void lv_label_set_recolor(lv_obj_t * label, bool en);
 
 /**
- * Set the label's animation speed in LV_LABEL_LONG_SROLL/SCROLL_CIRC modes
+ * Set the label's animation speed in LV_LABEL_LONG_SROLL/SROLL_CIRC modes
  * @param label pointer to a label object
  * @param anim_speed speed of animation in px/sec unit
  */
@@ -264,7 +264,6 @@ uint32_t lv_label_get_text_sel_start(const lv_obj_t * label);
  * @return selection end index. `LV_LABEL_TXT_SEL_OFF` if nothing is selected.
  */
 uint32_t lv_label_get_text_sel_end(const lv_obj_t * label);
-
 
 lv_style_list_t * lv_label_get_style(lv_obj_t * label, uint8_t type);
 

@@ -1,4 +1,3 @@
-awscli
 cryptoauthlib
 cryptography
 ipywidgets
@@ -11,7 +10,3 @@ boto3
 requests-aws4auth
 hexrec
 hidapi
-google-cloud-pubsub
-google-cloud-iot
-azure-cli
-azure-cli-extension

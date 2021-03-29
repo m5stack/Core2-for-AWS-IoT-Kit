@@ -75,7 +75,7 @@ def main():
         "--valid-for-years",
         dest='nva_years',
         default=40,type=int,
-        help='number of years for which device cert is valid (from current year), efault = 40')
+        help='number of years for which device cert is valid (from current year), default = 40')
     args = parser.parse_args()
     esp = esptool.ESP32ROM(args.port,baud=115200)
     hs.serial.load_app_stub(args.bin_path,esp)

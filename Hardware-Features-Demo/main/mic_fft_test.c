@@ -121,7 +121,7 @@ void microphoneTask(void *arg) {
         fft_dis_buff = (uint8_t *)heap_caps_malloc(CANVAS_HEIGHT * sizeof(uint8_t), MALLOC_CAP_DEFAULT | MALLOC_CAP_SPIRAM);
         memset(fft_dis_buff, 0, CANVAS_HEIGHT);
         fft_config_t *real_fft_plan = fft_init(512, FFT_REAL, FFT_FORWARD, NULL, NULL);
-        i2s_read(I2S_NUM_0, (char *)i2s_readraw_buff, 1024, &bytesread, (100 / portTICK_RATE_MS));
+        i2s_read(I2S_NUM_0, (char *)i2s_readraw_buff, 1024, &bytesread, pdMS_TO_TICKS(100));
         buffptr = (int16_t *)i2s_readraw_buff;
         for (uint16_t count_n = 0; count_n < real_fft_plan->size; count_n++) {
             real_fft_plan->input[count_n] = (float)map(buffptr[count_n], INT16_MIN, INT16_MAX, -1000, 1000);

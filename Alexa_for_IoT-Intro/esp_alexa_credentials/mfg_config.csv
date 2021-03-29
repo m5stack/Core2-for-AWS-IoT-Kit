@@ -1,0 +1,8 @@
+key,type,encoding,value
+device,namespace,,
+device_id,file,binary,esp_alexa_credentials/device.info
+account_id,file,binary,esp_alexa_credentials/account.info
+mqtt_host,file,binary,esp_alexa_credentials/endpoint.info
+client_cert,file,binary,esp_alexa_credentials/device.cert
+client_key,file,binary,esp_alexa_credentials/device.key
+server_cert,file,binary,esp_alexa_credentials/server.cert

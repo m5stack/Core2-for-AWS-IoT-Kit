@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Smart Thermostat v1.0.0
+ * AWS IoT EduKit - Smart Thermostat v1.1.0
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * Additions Copyright 2016 Espressif Systems (Shanghai) PTE LTD
  *
@@ -37,10 +37,8 @@
 #include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
-#include "esp_event_loop.h"
+#include "esp_event.h"
 #include "esp_log.h"
-#include "esp_vfs_fat.h"
-#include "driver/sdmmc_host.h"
 #include "driver/i2s.h"
 
 #include "nvs.h"
@@ -62,8 +60,8 @@
 #include "aws_iot_mqtt_client_interface.h"
 #include "aws_iot_shadow_interface.h"
 
-#include "display.h"
 #include "fft.h"
+#include "ui.h"
 
 static const char *TAG = "Smart_Spaces";
 
@@ -81,15 +79,6 @@ static const char *TAG = "Smart_Spaces";
 
 #define MAX_LENGTH_OF_UPDATE_JSON_BUFFER 200
 
-/* The examples use simple WiFi configuration that you can set via
-   'make menuconfig'.
-
-   If you'd rather not, just change the below entries to strings with
-   the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
-*/
-#define EXAMPLE_WIFI_SSID CONFIG_WIFI_SSID
-#define EXAMPLE_WIFI_PASS CONFIG_WIFI_PASSWORD
-
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t wifi_event_group;
 
@@ -97,46 +86,10 @@ static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
 const int DISCONNECTED_BIT = BIT1;
 
-// in disp_spi.c
-extern SemaphoreHandle_t xGuiSemaphore;
-extern SemaphoreHandle_t spi_mutex;
-// Used for reading/writing from SD_Card
-extern void spi_poll();
-
-/* CA Root certificate, device ("Thing") certificate and device
- * ("Thing") key.
-
-   Example can be configured one of three ways:
-
-   "Embedded Certs" are loaded from files in "certs/" and embedded into the app binary.
-
-   "Filesystem Certs" are loaded from the filesystem (SD card, etc.)
-
-   See example README for more details.
+/* CA Root certificate
 */
-#if defined(CONFIG_AWS_IOT_USE_HARDWARE_SECURE_ELEMENT)
-
 extern const uint8_t aws_root_ca_pem_start[] asm("_binary_aws_root_ca_pem_start");
 extern const uint8_t aws_root_ca_pem_end[] asm("_binary_aws_root_ca_pem_end");
-
-#elif defined(CONFIG_EXAMPLE_EMBEDDED_CERTS)
-
-extern const uint8_t aws_root_ca_pem_start[] asm("_binary_aws_root_ca_pem_start");
-extern const uint8_t aws_root_ca_pem_end[] asm("_binary_aws_root_ca_pem_end");
-extern const uint8_t certificate_pem_crt_start[] asm("_binary_certificate_pem_crt_start");
-extern const uint8_t certificate_pem_crt_end[] asm("_binary_certificate_pem_crt_end");
-extern const uint8_t private_pem_key_start[] asm("_binary_private_pem_key_start");
-extern const uint8_t private_pem_key_end[] asm("_binary_private_pem_key_end");
-
-#elif defined(CONFIG_EXAMPLE_FILESYSTEM_CERTS)
-
-static const char * DEVICE_CERTIFICATE_PATH = CONFIG_EXAMPLE_CERTIFICATE_PATH;
-static const char * DEVICE_PRIVATE_KEY_PATH = CONFIG_EXAMPLE_PRIVATE_KEY_PATH;
-static const char * ROOT_CA_PATH = CONFIG_EXAMPLE_ROOT_CA_PATH;
-
-#else
-#error "Invalid method for loading certs"
-#endif
 
 /**
  * @brief Default MQTT HOST URL is pulled from the aws_iot_config.h
@@ -153,28 +106,25 @@ Semaphore for sound levels
 */
 SemaphoreHandle_t xMaxNoiseSemaphore;
 
-static esp_err_t event_handler(void *ctx, system_event_t *event)
-{
-    switch(event->event_id) {
-    case SYSTEM_EVENT_STA_START:
+static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data){
+    system_event_info_t *info = &((system_event_t *) event_data)->event_info;
+
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
-        break;
-    case SYSTEM_EVENT_STA_GOT_IP:
-        xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-        display_wifi_label_update(true);
-        break;
-    case SYSTEM_EVENT_STA_DISCONNECTED:
-        /* This is a workaround as ESP32 WiFi libs don't currently
-           auto-reassociate. */
-        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        ESP_LOGE(TAG, "Wi-Fi disconnected. Reason: %d\n", info->disconnected.reason);
+        ESP_LOGI(TAG, "Wi-Fi reason codes: https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-guides/wifi.html#wi-fi-reason-code");
+        ui_textarea_add("Wi-Fi error. Attempting reconnect...\n", NULL, NULL);
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
         xEventGroupSetBits(wifi_event_group, DISCONNECTED_BIT);
-        display_wifi_label_update(false);
-        break;
-    default:
-        break;
+        ui_wifi_label_update(false);
+        esp_wifi_connect();
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ESP_LOGI(TAG, "Device IP address:" IPSTR, IP2STR(&info->got_ip.ip_info.ip));
+        xEventGroupClearBits(wifi_event_group, DISCONNECTED_BIT);
+        xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+        ui_wifi_label_update(true);
     }
-    return ESP_OK;
 }
 
 void iot_subscribe_callback_handler(AWS_IoT_Client *pClient, char *topicName, uint16_t topicNameLen,
@@ -185,7 +135,7 @@ void iot_subscribe_callback_handler(AWS_IoT_Client *pClient, char *topicName, ui
 
 void disconnect_callback_handler(AWS_IoT_Client *pClient, void *data) {
     ESP_LOGW(TAG, "MQTT Disconnect");
-    display_textarea_add("Disconnected from AWS IoT Core...", NULL, NULL);
+    ui_textarea_add("Disconnected from AWS IoT Core...", NULL, NULL);
 
     IoT_Error_t rc = FAILURE;
 
@@ -268,7 +218,6 @@ uint8_t reportedSound = STARTING_SOUNDLEVEL;
 char hvacStatus[7] = STARTING_HVACSTATUS;
 bool roomOccupancy = STARTING_ROOMOCCUPANCY;
 
-
 // helper function for working with audio data
 long map(long x, long in_min, long in_max, long out_min, long out_max) {
     long divisor = (in_max - in_min);
@@ -291,7 +240,7 @@ void microphone_task(void *arg) {
     for (;;) {
         maxSound = 0x00;
         fft_config_t *real_fft_plan = fft_init(512, FFT_REAL, FFT_FORWARD, NULL, NULL);
-        i2s_read(I2S_NUM_0, (char *)i2s_readraw_buff, 1024, &bytesread, (100 / portTICK_RATE_MS));
+        i2s_read(I2S_NUM_0, (char *)i2s_readraw_buff, 1024, &bytesread, pdMS_TO_TICKS(100));
         buffptr = (int16_t *)i2s_readraw_buff;
         for (uint16_t count_n = 0; count_n < real_fft_plan->size; count_n++) {
             real_fft_plan->input[count_n] = (float)map(buffptr[count_n], INT16_MIN, INT16_MAX, -1000, 1000);
@@ -359,7 +308,6 @@ void aws_iot_task(void *param) {
     sp.enableAutoReconnect = false;
     sp.disconnectHandler = disconnect_callback_handler;
 
-#if defined(CONFIG_AWS_IOT_USE_HARDWARE_SECURE_ELEMENT)
     sp.pRootCA = (const char *)aws_root_ca_pem_start;
     sp.pClientCRT = "#";
     sp.pClientKey = "#0";
@@ -373,48 +321,13 @@ void aws_iot_task(void *param) {
     }
     #define CLIENT_ID clientId
 
-#elif defined(CONFIG_EXAMPLE_EMBEDDED_CERTS)
-    
-    sp.pClientCRT = (const char *)certificate_pem_crt_start;
-    sp.pClientKey = (const char *)private_pem_key_start;
-    sp.pRootCA = (const char *)aws_root_ca_pem_start;
-    #define CLIENT_ID CONFIG_AWS_EXAMPLE_CLIENT_ID
-    #define CLIENT_ID_LEN strlen(CLIENT_ID)
-
-#elif defined(CONFIG_EXAMPLE_FILESYSTEM_CERTS)
-    
-    sp.pClientCRT = DEVICE_CERTIFICATE_PATH;
-    sp.pClientKey = DEVICE_PRIVATE_KEY_PATH;
-    sp.pRootCA = ROOT_CA_PATH;
-    #define CLIENT_ID CONFIG_AWS_EXAMPLE_CLIENT_ID
-    #define CLIENT_ID_LEN strlen(CLIENT_ID)
-
-#endif
-
-display_textarea_add("\n\nDevice client Id:\n>> %s <<\n", CLIENT_ID, (size_t *) CLIENT_ID_LEN);
-
-#ifdef CONFIG_EXAMPLE_SDCARD_CERTS
-    ESP_LOGI(TAG, "Mounting SD card...");
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-        .format_if_mount_failed = false,
-        .max_files = 3,
-    };
-    sdmmc_card_t* card;
-    esp_err_t ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to mount SD card VFAT filesystem. Error: %s", esp_err_to_name(ret));
-        abort();
-    }
-#endif
+    ui_textarea_add("\n\nDevice client Id:\n>> %s <<\n", CLIENT_ID, (size_t *) CLIENT_ID_LEN);
 
     /* Wait for WiFI to show as connected */
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
                         false, true, portMAX_DELAY);
 
     ESP_LOGI(TAG, "Shadow Init");
-
 
     rc = aws_iot_shadow_init(&iotCoreClient, &sp);
     if(SUCCESS != rc) {
@@ -433,6 +346,7 @@ display_textarea_add("\n\nDevice client Id:\n>> %s <<\n", CLIENT_ID, (size_t *) 
         ESP_LOGE(TAG, "aws_iot_shadow_connect returned error %d, aborting...", rc);
         abort();
     }
+    ui_textarea_add("Connected to AWS IoT Device Shadow service", NULL, NULL);
 
     xTaskCreatePinnedToCore(&microphone_task, "microphone_task", 4096, NULL, 1, NULL, 1);
 
@@ -504,7 +418,7 @@ display_textarea_add("\n\nDevice client Id:\n>> %s <<\n", CLIENT_ID, (size_t *) 
         ESP_LOGI(TAG, "*****************************************************************************************");
         ESP_LOGI(TAG, "Stack remaining for task '%s' is %d bytes", pcTaskGetTaskName(NULL), uxTaskGetStackHighWaterMark(NULL));
 
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
     if(SUCCESS != rc) {
@@ -523,61 +437,63 @@ display_textarea_add("\n\nDevice client Id:\n>> %s <<\n", CLIENT_ID, (size_t *) 
 
 static void initialise_wifi(void)
 {
-    tcpip_adapter_init();
     wifi_event_group = xEventGroupCreate();
-    ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
+    
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-    ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, NULL));
+
+    // Initialize default station as network interface instance (esp-netif)
+    esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
+    assert(sta_netif);
+    
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = EXAMPLE_WIFI_SSID,
-            .password = EXAMPLE_WIFI_PASS,
+            .ssid = CONFIG_WIFI_SSID,
+            .password = CONFIG_WIFI_PASSWORD,
         },
     };
-    ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
-    ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
-    ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
-    ESP_ERROR_CHECK( esp_wifi_start() );
+    ESP_LOGI(TAG, "Setting Wi-Fi configuration to SSID: %s", wifi_config.sta.ssid);
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
 }
 
 void app_main()
 {
-
-    // Initialize NVS.
+ // Initialize NVS
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
-    ESP_ERROR_CHECK( err );
-
+    ESP_ERROR_CHECK(err);
+    
     spi_mutex = xSemaphoreCreateMutex();
     xMaxNoiseSemaphore = xSemaphoreCreateMutex();
     Core2ForAWS_Init();
     MPU6886_Init();
     FT6336U_Init();
-    Core2ForAWS_LCD_Init();
+    Core2ForAWS_Display_Init();
     Core2ForAWS_Button_Init();
-    Core2ForAWS_Sk6812_Init();
-    Core2ForAWS_Sk6812_Clear();
-    Core2ForAWS_Sk6812_Show();
-    Core2ForAWS_LCD_SetBrightness(80);
+    Core2ForAWS_Display_SetBrightness(80);
     Core2ForAWS_LED_Enable(0x01);
     
-    display_init();
+    ui_init();
     
     initialise_wifi();
-
-    #if defined (CONFIG_AWS_IOT_USE_HARDWARE_SECURE_ELEMENT)
     
     ATCA_STATUS ret = Atecc608_Init();
     if (ret != ATCA_SUCCESS){
-        ESP_LOGE(TAG, "ATECC608 secure element initialization error");
+        ESP_LOGE(TAG, "ATECC608 secure element initialization error!");
         abort();
     }
-
-    #endif
     
     xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", 4096*2, NULL, 5, NULL, 1);
     

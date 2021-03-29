@@ -1,7 +1,4 @@
 set(SOURCES main.c)
-idf_component_register(SRCS main.c ledBarAnimation.c fft.c
-                    INCLUDE_DIRS . images sounds
-                    REQUIRES core2forAWS esp-cryptoauthlib)
-
-target_compile_definitions(${COMPONENT_LIB} PRIVATE LV_CONF_INCLUDE_SIMPLE=1)
-add_compile_definitions(FIRMWARE_VERSION="1.0.1")
+idf_component_register(SRCS main.c home.c led_bar.c mpu.c mic.c sound.c clock.c power.c touch.c wifi.c crypto.c cta.c
+                    INCLUDE_DIRS . images sounds includes
+                    REQUIRES core2forAWS esp-cryptoauthlib fft nvs_flash)

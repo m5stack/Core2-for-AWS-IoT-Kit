@@ -200,7 +200,7 @@ IoT_Error_t iot_tls_connect(Network *pNetwork, TLSConnectParams *params) {
             ESP_LOGE(TAG, "Invalid ATECC608 slot ID.");
             ret = NETWORK_PK_PRIVATE_KEY_PARSE_ERROR;
         } else {
-            ESP_LOGD(TAG, "Using ATECC608 private key from slot %d", slot_id);
+            ESP_LOGD(TAG, "Using ATECC608 key from slot %d", slot_id);
             ret = atca_mbedtls_pk_init(&(tlsDataParams->pkey), slot_id);
             if (ret != 0) {
                 ESP_LOGE(TAG, "failed !  atca_mbedtls_pk_init returned %02x", ret);

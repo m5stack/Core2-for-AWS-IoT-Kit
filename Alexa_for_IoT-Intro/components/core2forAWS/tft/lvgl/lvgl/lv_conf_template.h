@@ -1,6 +1,6 @@
 /**
  * @file lv_conf.h
- * Configuration file for v7.8.0-dev
+ * Configuration file for v7.10.1
  */
 
 /*
@@ -82,7 +82,7 @@ typedef int16_t lv_coord_t;
 /* Size of the memory used by `lv_mem_alloc` in bytes (>= 2kB)*/
 #  define LV_MEM_SIZE    (32U * 1024U)
 
-/* Complier prefix for a big array declaration */
+/* Compiler prefix for a big array declaration */
 #  define LV_MEM_ATTR
 
 /* Set an address for the memory pool instead of allocating it as an array.
@@ -127,13 +127,12 @@ typedef int16_t lv_coord_t;
 #define LV_INDEV_DEF_DRAG_THROW           10
 
 /* Long press time in milliseconds.
- * Time to send `LV_EVENT_LONG_PRESSSED`) */
+ * Time to send `LV_EVENT_LONG_PRESSED`) */
 #define LV_INDEV_DEF_LONG_PRESS_TIME      400
 
 /* Repeated trigger period in long press [ms]
  * Time between `LV_EVENT_LONG_PRESSED_REPEAT */
 #define LV_INDEV_DEF_LONG_PRESS_REP_TIME  100
-
 
 /* Gesture threshold in pixels */
 #define LV_INDEV_DEF_GESTURE_LIMIT        50
@@ -240,7 +239,7 @@ typedef void * lv_fs_drv_user_data_t;
  * (I.e. no new image decoder is added)
  * With complex image decoders (e.g. PNG or JPG) caching can save the continuous open/decode of images.
  * However the opened images might consume additional RAM.
- * LV_IMG_CACHE_DEF_SIZE must be >= 1 */
+ * Set it to 0 to disable caching */
 #define LV_IMG_CACHE_DEF_SIZE       1
 
 /*Declare the type of the user data of image decoder (can be e.g. `void *`, `int`, `struct`)*/
@@ -336,7 +335,7 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
  * If an invalid parameter is found an error log message is printed and
  * the MCU halts at the error. (`LV_USE_LOG` should be enabled)
  * If you are debugging the MCU you can pause
- * the debugger to see exactly where  the issue is.
+ * the debugger to see exactly where the issue is.
  *
  * The behavior of asserts can be overwritten by redefining them here.
  * E.g. #define LV_ASSERT_MEM(p)  <my_assert_code>
@@ -371,7 +370,7 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
  *    FONT USAGE
  *===================*/
 
-/* The built-in fonts contains the ASCII range and some Symbols with  4 bit-per-pixel.
+/* The built-in fonts contains the ASCII range and some Symbols with 4 bit-per-pixel.
  * The symbols are available via `LV_SYMBOL_...` defines
  * More info about fonts: https://docs.lvgl.io/v7/en/html/overview/font.html
  * To create a new font go to: https://lvgl.com/ttf-font-to-c-array
@@ -514,7 +513,7 @@ typedef void * lv_font_user_data_t;
 
 /* Support bidirectional texts.
  * Allows mixing Left-to-Right and Right-to-Left texts.
- * The direction will be processed according to the Unicode Bidirectioanl Algorithm:
+ * The direction will be processed according to the Unicode Bidirectional Algorithm:
  * https://www.w3.org/International/articles/inline-bidi-markup/uba-basics*/
 #define LV_USE_BIDI     0
 #if LV_USE_BIDI
@@ -730,7 +729,6 @@ typedef void * lv_obj_user_data_t;
 #  define LV_TABLE_COL_MAX    12
 #  define LV_TABLE_CELL_STYLE_CNT 4
 #endif
-
 
 /*Tab (dependencies: lv_page, lv_btnm)*/
 #define LV_USE_TABVIEW      1

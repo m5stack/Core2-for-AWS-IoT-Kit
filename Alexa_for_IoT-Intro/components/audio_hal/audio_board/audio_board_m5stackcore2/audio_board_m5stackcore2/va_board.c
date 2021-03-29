@@ -50,7 +50,6 @@
 /*I2S related */
 #define I2S_OUT_VOL_DEFAULT     60
 
-extern SemaphoreHandle_t spi_mutex;
 extern SemaphoreHandle_t xGuiSemaphore;
 xSemaphoreHandle mic_state = NULL; /* To protect I2S writes from I2S uninstall */
 
@@ -101,7 +100,7 @@ esp_err_t va_board_button_init()
 
 static void brightness_slider_event_cb(lv_obj_t * slider, lv_event_t event) {
     if(event == LV_EVENT_VALUE_CHANGED) {
-        Core2ForAWS_LCD_SetBrightness(lv_slider_get_value(slider));
+        Core2ForAWS_Display_SetBrightness(lv_slider_get_value(slider));
     }
 }
 
@@ -125,7 +124,7 @@ static esp_err_t va_board_led_init()
 
     //Initialize Alexa specific LED module layer
     va_led_init((led_pattern_config_t *)ab_led_conf);
-    ESP_LOGI(VA_TAG, "M5Stack Core2 for AWS IoT EduKit LED driver Initialized.");
+    ESP_LOGI(VA_TAG, "M5Stack Core2 for AWS IoT EduKit LED driver initialized.");
     return ESP_OK;
 }
 
@@ -187,12 +186,10 @@ int va_board_init()
     
     //Initialize all M5Stack specific device drivers
     spi_mutex = xSemaphoreCreateMutex();
-    lv_color_t *buf1 = heap_caps_malloc(DISP_BUF_SIZE * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT); //Assuming max size of lv_color_t = 16bit, DISP_BUF_SIZE calculated from max horizontal display size 480
-    lv_color_t *buf2 = heap_caps_malloc(DISP_BUF_SIZE * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT); //Assuming max size of lv_color_t = 16bit, DISP_BUF_SIZE calculated from max horizontal display size 480
-
-    Core2ForAWS_Init((void *)buf1, (void *)buf2);
+    
+    Core2ForAWS_Init();
     FT6336U_Init();
-    Core2ForAWS_LCD_Init(buf1, buf2);
+    Core2ForAWS_Display_Init();
     va_board_led_init();
     BM8563_Init();
     MPU6886_Init();

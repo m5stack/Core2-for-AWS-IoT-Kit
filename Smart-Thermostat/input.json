@@ -1,0 +1,15 @@
+{
+  "current": {
+    "state": {
+      "reported": {
+        "sound": 10,
+        "temperature": 35,
+        "roomOccupancy": false,
+        "hvacStatus": "HEATING"
+      }
+    },
+    "version": 13
+  },
+  "timestamp": 1606282489
+}
+

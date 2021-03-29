@@ -44,7 +44,7 @@ static inline size_t get_prop_size(uint8_t prop_id);
 static inline size_t get_next_prop_index(uint8_t prop_id, size_t id);
 
 /**********************
- *  GLOABAL VARIABLES
+ *  GLOBAL VARIABLES
  **********************/
 
 /**********************
@@ -93,7 +93,7 @@ void lv_style_copy(lv_style_t * style_dest, const lv_style_t * style_src)
 /**
  * Remove a property from a style
  * @param style pointer to a style
- * @param prop  a style property ORed with a state.
+ * @param prop a style property ORed with a state.
  * E.g. `LV_STYLE_BORDER_WIDTH | (LV_STATE_PRESSED << LV_STYLE_STATE_POS)`
  * @return true: the property was found and removed; false: the property wasn't found
  */
@@ -188,7 +188,7 @@ void lv_style_list_copy(lv_style_list_t * list_dest, const lv_style_list_t * lis
 
 /**
  * Add a style to a style list.
- * Only the the style pointer will be saved so the shouldn't be a local variable.
+ * Only the style pointer will be saved so the shouldn't be a local variable.
  * (It should be static, global or dynamically allocated)
  * @param list pointer to a style list
  * @param style pointer to a style to add
@@ -321,10 +321,8 @@ void _lv_style_list_reset(lv_style_list_t * list)
  */
 void lv_style_reset(lv_style_t * style)
 {
-    LV_ASSERT_STYLE(style);
-
     lv_mem_free(style->map);
-    style->map = NULL;
+    lv_style_init(style);
 }
 
 /**
@@ -340,7 +338,7 @@ uint16_t _lv_style_get_mem_size(const lv_style_t * style)
 
     size_t i = 0;
     uint8_t prop_id;
-    while((prop_id = get_style_prop_id(style, i)) != _LV_STYLE_CLOSEING_PROP) {
+    while((prop_id = get_style_prop_id(style, i)) != _LV_STYLE_CLOSING_PROP) {
         i = get_next_prop_index(prop_id, i);
     }
 
@@ -378,7 +376,7 @@ void _lv_style_set_int(lv_style_t * style, lv_style_property_t prop, lv_style_in
 
     /*Add new property if not exists yet*/
     uint8_t new_prop_size = (sizeof(lv_style_property_t) + sizeof(lv_style_int_t));
-    lv_style_property_t end_mark = _LV_STYLE_CLOSEING_PROP;
+    lv_style_property_t end_mark = _LV_STYLE_CLOSING_PROP;
     uint8_t end_mark_size = sizeof(end_mark);
 
     uint16_t size = _lv_style_get_mem_size(style);
@@ -424,7 +422,7 @@ void _lv_style_set_color(lv_style_t * style, lv_style_property_t prop, lv_color_
 
     /*Add new property if not exists yet*/
     uint8_t new_prop_size = (sizeof(lv_style_property_t) + sizeof(lv_color_t));
-    lv_style_property_t end_mark = _LV_STYLE_CLOSEING_PROP;
+    lv_style_property_t end_mark = _LV_STYLE_CLOSING_PROP;
     uint8_t end_mark_size = sizeof(end_mark);
 
     uint16_t size = _lv_style_get_mem_size(style);
@@ -471,7 +469,7 @@ void _lv_style_set_opa(lv_style_t * style, lv_style_property_t prop, lv_opa_t op
 
     /*Add new property if not exists yet*/
     uint8_t new_prop_size = (sizeof(lv_style_property_t) + sizeof(lv_opa_t));
-    lv_style_property_t end_mark = _LV_STYLE_CLOSEING_PROP;
+    lv_style_property_t end_mark = _LV_STYLE_CLOSING_PROP;
     uint8_t end_mark_size = sizeof(end_mark);
 
     uint16_t size = _lv_style_get_mem_size(style);
@@ -518,7 +516,7 @@ void _lv_style_set_ptr(lv_style_t * style, lv_style_property_t prop, const void 
 
     /*Add new property if not exists yet*/
     uint8_t new_prop_size = (sizeof(lv_style_property_t) + sizeof(const void *));
-    lv_style_property_t end_mark = _LV_STYLE_CLOSEING_PROP;
+    lv_style_property_t end_mark = _LV_STYLE_CLOSING_PROP;
     uint8_t end_mark_size = sizeof(end_mark);
 
     uint16_t size = _lv_style_get_mem_size(style);
@@ -732,7 +730,6 @@ lv_style_t * _lv_style_list_add_trans_style(lv_style_list_t * list)
     return trans_style;
 }
 
-
 /**
  * Set a local integer typed property in a style list.
  * @param list pointer to a style list where the local property should be set
@@ -796,8 +793,6 @@ void _lv_style_list_set_local_ptr(lv_style_list_t * list, lv_style_property_t pr
     lv_style_t * local = get_alloc_local_style(list);
     _lv_style_set_ptr(local, prop, value);
 }
-
-
 
 /**
  * Get an integer typed property from a style list.
@@ -1069,7 +1064,7 @@ LV_ATTRIBUTE_FAST_MEM static inline int32_t get_property_index(const lv_style_t 
     size_t i = 0;
 
     uint8_t prop_id;
-    while((prop_id = get_style_prop_id(style, i)) != _LV_STYLE_CLOSEING_PROP) {
+    while((prop_id = get_style_prop_id(style, i)) != _LV_STYLE_CLOSING_PROP) {
         if(prop_id == id_to_find) {
             lv_style_attr_t attr_i;
             attr_i = get_style_prop_attr(style, i);
@@ -1168,7 +1163,6 @@ static inline uint8_t get_style_prop_attr(const lv_style_t * style, size_t idx)
 {
     return ((get_style_prop(style, idx) >> 8) & 0xFFU);
 }
-
 
 /**
  * Get property size.

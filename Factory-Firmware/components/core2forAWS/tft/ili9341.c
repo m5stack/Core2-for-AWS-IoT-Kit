@@ -6,12 +6,13 @@
 /*********************
  *      INCLUDES
  *********************/
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "ili9341.h"
 #include "disp_spi.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "axp192.h"
 
 /*********************
@@ -87,9 +88,9 @@ void ili9341_init(void)
 
 	//Reset the display
 	Axp192_SetGPIO4Level(0);
-	vTaskDelay(100 / portTICK_RATE_MS);
+	vTaskDelay(pdMS_TO_TICKS(100));
 	Axp192_SetGPIO4Level(1);
-	vTaskDelay(100 / portTICK_RATE_MS);
+	vTaskDelay(pdMS_TO_TICKS(100));
 
 	ESP_LOGI(TAG, "Initialization.");
 
@@ -99,7 +100,7 @@ void ili9341_init(void)
 		ili9341_send_cmd(ili_init_cmds[cmd].cmd);
 		ili9341_send_data(ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes&0x1F);
 		if (ili_init_cmds[cmd].databytes & 0x80) {
-			vTaskDelay(100 / portTICK_RATE_MS);
+			vTaskDelay(pdMS_TO_TICKS(100));
 		}
 		cmd++;
 	}

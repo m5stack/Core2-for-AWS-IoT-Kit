@@ -164,6 +164,12 @@ void lv_indev_reset(lv_indev_t * indev, lv_obj_t * obj)
         if(obj == NULL || indev->proc.types.pointer.last_pressed == obj) {
             indev->proc.types.pointer.last_pressed = NULL;
         }
+        if(obj == NULL || indev->proc.types.pointer.act_obj == obj) {
+            indev->proc.types.pointer.act_obj = NULL;
+        }
+        if(obj == NULL || indev->proc.types.pointer.last_obj == obj) {
+            indev->proc.types.pointer.last_obj = NULL;
+        }
     }
     else {
         lv_indev_t * i = lv_indev_get_next(NULL);
@@ -172,6 +178,12 @@ void lv_indev_reset(lv_indev_t * indev, lv_obj_t * obj)
             if(indev_act == i) indev_obj_act = NULL;
             if(obj == NULL || i->proc.types.pointer.last_pressed == obj) {
                 i->proc.types.pointer.last_pressed = NULL;
+            }
+            if(obj == NULL || i->proc.types.pointer.act_obj == obj) {
+                i->proc.types.pointer.act_obj = NULL;
+            }
+            if(obj == NULL || i->proc.types.pointer.last_obj == obj) {
+                i->proc.types.pointer.last_obj = NULL;
             }
             i = lv_indev_get_next(i);
         }
@@ -541,7 +553,7 @@ static void indev_keypad_proc(lv_indev_t * i, lv_indev_data_t * data)
                 lv_group_focus_prev(g);
                 if(indev_reset_check(&i->proc)) return;
             }
-            /*Just send other keys again to the object (e.g. 'A' or `LV_GORUP_KEY_RIGHT)*/
+            /*Just send other keys again to the object (e.g. 'A' or `LV_GROUP_KEY_RIGHT)*/
             else {
                 lv_group_send_data(g, data->key);
                 if(indev_reset_check(&i->proc)) return;
@@ -597,7 +609,7 @@ static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data)
     }
 
     /* Save the last keys before anything else.
-     * They need to be already saved if the the function returns for any reason*/
+     * They need to be already saved if the function returns for any reason*/
     lv_indev_state_t last_state     = i->proc.types.keypad.last_state;
     i->proc.types.keypad.last_state = data->state;
     i->proc.types.keypad.last_key   = data->key;
@@ -669,7 +681,7 @@ static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data)
                 /*On enter long press toggle edit mode.*/
                 if(editable) {
                     /*Don't leave edit mode if there is only one object (nowhere to navigate)*/
-                    if(_lv_ll_is_empty(&g->obj_ll) == false) {
+                    if(_lv_ll_get_len(&g->obj_ll) > 1) {
                         lv_group_set_editing(g, lv_group_get_editing(g) ? false : true); /*Toggle edit mode on long press*/
                     }
                 }
@@ -735,7 +747,7 @@ static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data)
             /*An object is being edited and the button is released. */
             else if(g->editing) {
                 /*Ignore long pressed enter release because it comes from mode switch*/
-                if(!i->proc.long_pr_sent || _lv_ll_is_empty(&g->obj_ll)) {
+                if(!i->proc.long_pr_sent || _lv_ll_get_len(&g->obj_ll) <= 1) {
                     indev_obj_act->signal_cb(indev_obj_act, LV_SIGNAL_RELEASED, NULL);
                     if(indev_reset_check(&i->proc)) return;
 
@@ -803,7 +815,7 @@ static void indev_button_proc(lv_indev_t * i, lv_indev_data_t * data)
 {
     /* Die gracefully if i->btn_points is NULL */
     if(i->btn_points == NULL) {
-        LV_LOG_WARN("indev_button_proc: btn_points was  NULL");
+        LV_LOG_WARN("indev_button_proc: btn_points was NULL");
         return;
     }
 
@@ -834,7 +846,7 @@ static void indev_button_proc(lv_indev_t * i, lv_indev_data_t * data)
 }
 
 /**
- * Process the pressed state of LV_INDEV_TYPE_POINER input devices
+ * Process the pressed state of LV_INDEV_TYPE_POINTER input devices
  * @param indev pointer to an input device 'proc'
  * @return LV_RES_OK: no indev reset required; LV_RES_INV: indev reset is required
  */
@@ -1004,7 +1016,7 @@ static void indev_proc_press(lv_indev_proc_t * proc)
 }
 
 /**
- * Process the released state of LV_INDEV_TYPE_POINER input devices
+ * Process the released state of LV_INDEV_TYPE_POINTER input devices
  * @param proc pointer to an input device 'proc'
  */
 static void indev_proc_release(lv_indev_proc_t * proc)
@@ -1148,7 +1160,12 @@ lv_obj_t * lv_indev_search_obj(lv_obj_t * obj, lv_point_t * point)
                 hidden_i = lv_obj_get_parent(hidden_i);
             }
             /*No parent found with hidden == true*/
-            if(hidden_i == NULL && (lv_obj_get_state(obj, LV_OBJ_PART_MAIN) & LV_STATE_DISABLED) == false) found_p = obj;
+            if(lv_obj_is_protected(obj, LV_PROTECT_EVENT_TO_DISABLED) == false) {
+                if(hidden_i == NULL && (lv_obj_get_state(obj, LV_OBJ_PART_MAIN) & LV_STATE_DISABLED) == false) found_p = obj;
+            }
+            else {
+                if(hidden_i == NULL) found_p = obj;
+            }
         }
     }
 
@@ -1262,7 +1279,6 @@ static void indev_drag(lv_indev_proc_t * proc)
     if(drag_obj == NULL) return;
 
     if(lv_obj_get_drag(drag_obj) == false) return;
-
 
     lv_drag_dir_t allowed_dirs = lv_obj_get_drag_dir(drag_obj);
 
@@ -1469,7 +1485,6 @@ static void indev_drag_throw(lv_indev_proc_t * proc)
     }
 }
 
-
 /**
  * Get the really dragged object by taking `drag_parent` into account.
  * @param obj the start object
@@ -1485,7 +1500,6 @@ static lv_obj_t * get_dragged_obj(lv_obj_t * obj)
 
     return drag_obj;
 }
-
 
 /**
 * Handle the gesture of indev_proc_p->types.pointer.act_obj
@@ -1504,7 +1518,6 @@ static void indev_gesture(lv_indev_proc_t * proc)
     }
 
     if(gesture_obj == NULL) return;
-
 
     if((LV_MATH_ABS(proc->types.pointer.vect.x) < indev_act->driver.gesture_min_velocity) &&
        (LV_MATH_ABS(proc->types.pointer.vect.y) < indev_act->driver.gesture_min_velocity)) {
@@ -1540,7 +1553,6 @@ static void indev_gesture(lv_indev_proc_t * proc)
         if(indev_reset_check(proc)) return;
     }
 }
-
 
 /**
  * Checks if the reset_query flag has been set. If so, perform necessary global indev cleanup actions

@@ -2,7 +2,6 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/semphr.h"
 #include "freertos/queue.h"
 #include "driver/spi_common.h"
 #include "esp_idf_version.h"
@@ -13,8 +12,8 @@
 #include "axp192.h"
 #include "core2forAWS.h"
 
-#define LCD_BRIGHTNESS_MIN_VOLT 2200
-#define LCD_BRIGHTNESS_MAX_VOLT 3300
+#define DISPLAY_BRIGHTNESS_MIN_VOLT 2200
+#define DISPLAY_BRIGHTNESS_MAX_VOLT 3300
 #define LV_TICK_PERIOD_MS 1
 
 void Core2ForAWS_Init() {
@@ -210,7 +209,7 @@ void Core2ForAWS_Sk6812_Clear() {
 /* ==================================================================================================*/
 
 /* ==================================================================================================*/
-/* ----------------------------------------- LCD -------------------------------------------------*/
+/* ----------------------------------------- DISPLAY -------------------------------------------------*/
 #if CONFIG_SOFTWARE_ILI9342C_SUPPORT
 SemaphoreHandle_t xGuiSemaphore;
 
@@ -221,7 +220,7 @@ static void lv_tick_task(void *arg);
 static bool ft6336u_read(lv_indev_drv_t * drv, lv_indev_data_t * data);
 #endif
 
-void Core2ForAWS_LCD_Init() {
+void Core2ForAWS_Display_Init() {
     xGuiSemaphore = xSemaphoreCreateMutex();
 
     xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);
@@ -274,11 +273,11 @@ void Core2ForAWS_LCD_Init() {
     xTaskCreatePinnedToCore(guiTask, "gui", 4096*2, NULL, 2, NULL, 1);
 }
 
-void Core2ForAWS_LCD_SetBrightness(uint8_t brightness) {
+void Core2ForAWS_Display_SetBrightness(uint8_t brightness) {
     if (brightness > 100) {
         brightness = 100;
     }
-    uint16_t volt = (uint32_t)brightness * (LCD_BRIGHTNESS_MAX_VOLT - LCD_BRIGHTNESS_MIN_VOLT) / 100 + LCD_BRIGHTNESS_MIN_VOLT;
+    uint16_t volt = (uint32_t)brightness * (DISPLAY_BRIGHTNESS_MAX_VOLT - DISPLAY_BRIGHTNESS_MIN_VOLT) / 100 + DISPLAY_BRIGHTNESS_MIN_VOLT;
     Axp192_SetDCDC3Volt(volt);
 }
 

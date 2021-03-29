@@ -29,9 +29,10 @@
 #define AXP192_VOFF_VOLT_REG        0x31 // PWRON short press in here
 #define AXP192_POWEROFF_REG         0x32 // CHGLED in here
 #define AXP192_CHG_CTL1_REG         0x33 
-#define AXP192_CHG_CTL2_REG         0x34 // i don`t know how it works 
+#define AXP192_CHG_CTL2_REG         0x34
 #define AXP192_SPARE_CHG_CTL_REG    0x35
 #define AXP192_PEK_CTL_REG          0x36
+#define AXP192_CHG_BOOL_REG         0x01
 
 #define AXP192_ADC1_ENABLE_REG      0x82
 #define BAT_VOLT_BIT        (7)

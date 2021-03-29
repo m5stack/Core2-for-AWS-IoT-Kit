@@ -349,7 +349,6 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
     int16_t mask_in_id = lv_draw_mask_add(&mask_in_param, 0);
 #endif
 
-
 #if LV_LINEMETER_PRECISE > 1
     mask_area.x1 = x_ofs - r_out;
     mask_area.x2 = x_ofs + r_out - 1;
@@ -466,12 +465,12 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
     lv_draw_mask_remove_id(mask_out_id);
 #endif
 
-    if(part == LV_LINEMETER_PART_MAIN && level < ext->line_cnt - 1) {
+    if(part == LV_LINEMETER_PART_MAIN && level + 1 < ext->line_cnt - 1) {
         lv_style_int_t border_width = lv_obj_get_style_scale_border_width(lmeter, part);
         lv_style_int_t end_border_width = lv_obj_get_style_scale_end_border_width(lmeter, part);
 
         if(border_width || end_border_width) {
-            int16_t end_angle = ((level) * ext->scale_angle) / (ext->line_cnt - 1) + angle_ofs;
+            int16_t end_angle = ((level + 1) * ext->scale_angle) / (ext->line_cnt - 1) + angle_ofs;
             lv_draw_line_dsc_t arc_dsc;
             lv_draw_line_dsc_init(&arc_dsc);
             lv_obj_init_draw_line_dsc(lmeter, part, &arc_dsc);
@@ -489,7 +488,6 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
             }
         }
     }
-
 
 }
 
