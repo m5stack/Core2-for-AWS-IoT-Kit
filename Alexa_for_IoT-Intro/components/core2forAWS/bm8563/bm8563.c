@@ -21,7 +21,7 @@ static void I2CWriteByte(uint8_t addr, uint8_t data) {
 }
 
 static void I2CRead(uint8_t addr, uint8_t* buf, uint8_t len) {
-    i2c_read_bytes(bm8563_device, addr, buf, len);
+    i2c_read_bytes_no_stop(bm8563_device, addr, buf, len);
 }
 
 static uint8_t byte2BCD(uint8_t data) {

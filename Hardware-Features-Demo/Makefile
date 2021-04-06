@@ -4,7 +4,7 @@
 #
 
 PROJECT_NAME := M5Core2ForAWSDemo
-PROJECT_VER := 1.0.0
+PROJECT_VER := 1.0.1
 
 include $(IDF_PATH)/make/project.mk
 

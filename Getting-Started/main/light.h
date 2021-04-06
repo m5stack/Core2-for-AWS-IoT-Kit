@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Getting Started v1.0.0
+ * AWS IoT EduKit - Getting Started v1.0.1
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -20,21 +20,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#ifndef LIGHT_H
+#define LIGHT_H
 
-void display_init();
-void display_fan_init();
-void display_house_init();
-void display_temperature_init(void);
+#include <stdbool.h>
+#include <stdint.h>
 
-void display_lights_off(void);
-void display_lights_on(int h, int s, int v);
+#include <esp_rmaker_core.h>
 
-void display_fan_speed(int s);
-void display_fan_off(void);
-void display_fan_on(void);
+void light_init(esp_rmaker_node_t *node);
 
-void display_temperature(float c);
+void light_set_on(bool on);
+void light_set_hue(int hue);
+void light_set_saturation(int hue);
+void light_set_brightness(int brightness);
+
+bool light_is_on(void);
+int light_get_hue(void);
+int light_get_saturation(void);
+int light_get_brightness(void);
 
 #endif

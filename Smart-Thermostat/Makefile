@@ -4,7 +4,7 @@
 #
 
 PROJECT_NAME := AWS_IoT_EduKit-Smart-Thermostat
-PROJECT_VER := 1.1.0
+PROJECT_VER := 1.1.1
 
 include $(IDF_PATH)/make/project.mk
 

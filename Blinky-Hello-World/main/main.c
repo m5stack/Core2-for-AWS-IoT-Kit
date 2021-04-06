@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Cloud Connected Blinky v1.1.0
+ * AWS IoT EduKit - Cloud Connected Blinky v1.2.1
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * Additions Copyright 2016 Espressif Systems (Shanghai) PTE LTD
  *

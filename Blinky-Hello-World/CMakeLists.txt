@@ -4,4 +4,4 @@ cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-project(AWS_IoT_EduKit-Cloud_Connected_Blinky VERSION 1.2.0)
+project(AWS_IoT_EduKit-Cloud_Connected_Blinky VERSION 1.2.1)

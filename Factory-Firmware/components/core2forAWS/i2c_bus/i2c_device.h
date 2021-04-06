@@ -46,6 +46,8 @@ esp_err_t i2c_read_bits(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data,
 
 esp_err_t i2c_write_bytes(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data, uint16_t length);
 
+esp_err_t i2c_read_bytes_no_stop(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data, uint16_t length);
+
 esp_err_t i2c_write_byte(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t data);
 
 esp_err_t i2c_write_bit(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t data, uint8_t bit_pos);

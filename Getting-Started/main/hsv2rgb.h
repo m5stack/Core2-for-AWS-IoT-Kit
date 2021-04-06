@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Getting Started v1.0.0
+ * AWS IoT EduKit - Getting Started v1.0.1
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -20,15 +20,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef FAN_H
-#define FAN_H
+#ifndef HSV2RGB_H
+#define HSV2RGB_H
 
-#include <esp_rmaker_core.h>
+#include <stdint.h>
 
-void fan_init(esp_rmaker_node_t *node);
-void fan_set_speed(int speed);
-void fan_set_power(bool power);
-void fan_power_report(void);
-void fan_speed_report(void);
+uint32_t hsv2rgb(uint32_t h, uint32_t s, uint32_t v);
 
 #endif

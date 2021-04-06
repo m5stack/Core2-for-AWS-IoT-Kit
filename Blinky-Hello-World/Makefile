@@ -4,7 +4,7 @@
 #
 
 PROJECT_NAME := AWS_IoT_EduKit-Cloud_Connected_Blinky
-PROJECT_VER := 1.2.0
+PROJECT_VER := 1.2.1
 
 include $(IDF_PATH)/make/project.mk
 
