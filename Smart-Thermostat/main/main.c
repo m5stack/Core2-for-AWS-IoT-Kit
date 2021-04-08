@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Smart Thermostat v1.1.1
+ * AWS IoT EduKit - Smart Thermostat v1.1.2
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * Additions Copyright 2016 Espressif Systems (Shanghai) PTE LTD
  *
@@ -482,6 +482,9 @@ void app_main()
     FT6336U_Init();
     Core2ForAWS_Display_Init();
     Core2ForAWS_Button_Init();
+    Core2ForAWS_Sk6812_Init();
+    Core2ForAWS_Sk6812_Clear();
+    Core2ForAWS_Sk6812_Show();
     Core2ForAWS_Display_SetBrightness(80);
     Core2ForAWS_LED_Enable(0x01);
     
