@@ -12,4 +12,3 @@ pyOpenSSL==20.0.1
 requests-aws4auth==1.0.1
 hexrec==0.2.2
 hidapi==0.10.1
-boto3>=1.16.43
