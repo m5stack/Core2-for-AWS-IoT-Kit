@@ -50,9 +50,9 @@ float Core2ForAWS_PMU_GetBatCurrent();
 void Core2ForAWS_LCD_Init();
 
 void Core2ForAWS_LCD_SetBrightness(uint8_t brightness);
+#endif
 
 void Core2ForAWS_LED_Enable(uint8_t enable);
-#endif
 
 void Core2ForAWS_Motor_SetStrength(uint8_t strength);
 
