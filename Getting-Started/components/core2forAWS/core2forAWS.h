@@ -6,9 +6,11 @@
 #endif
 
 #if CONFIG_SOFTWARE_ILI9342C_SUPPORT
+#include "freertos/semphr.h"
 #include "lvgl/lvgl.h"
 #include "disp_driver.h"
 #include "disp_spi.h"
+extern SemaphoreHandle_t xGuiSemaphore;
 #endif
 
 #if CONFIG_SOFTWARE_FT6336U_SUPPORT
@@ -47,9 +49,9 @@ float Core2ForAWS_PMU_GetBatVolt();
 float Core2ForAWS_PMU_GetBatCurrent();
 
 #if CONFIG_SOFTWARE_ILI9342C_SUPPORT
-void Core2ForAWS_LCD_Init();
+void Core2ForAWS_Display_Init();
 
-void Core2ForAWS_LCD_SetBrightness(uint8_t brightness);
+void Core2ForAWS_Display_SetBrightness(uint8_t brightness);
 #endif
 
 void Core2ForAWS_LED_Enable(uint8_t enable);

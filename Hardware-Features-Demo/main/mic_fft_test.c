@@ -6,13 +6,12 @@
 #include "freertos/queue.h"
 
 #include "math.h"
-#include "freertos/queue.h"
 #include "fft.h"
+#include "core2foraws.h"
 #include "lvgl/lvgl.h"
 #include "driver/i2s.h"
 #include "microphone.h"
 
-extern SemaphoreHandle_t xGuiSemaphore;
 
 const unsigned char ImageData[768] = { 
  0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x01 , 0x00 , 0x00 , 0x04 , 0x00 , 

@@ -2,6 +2,10 @@
  * @file disp_driver.c
  */
 
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+
 #include "disp_driver.h"
 #include "disp_spi.h"
 

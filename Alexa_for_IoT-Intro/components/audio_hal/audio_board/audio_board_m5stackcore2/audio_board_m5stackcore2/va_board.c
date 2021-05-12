@@ -50,7 +50,6 @@
 /*I2S related */
 #define I2S_OUT_VOL_DEFAULT     60
 
-extern SemaphoreHandle_t xGuiSemaphore;
 xSemaphoreHandle mic_state = NULL; /* To protect I2S writes from I2S uninstall */
 
 bool ab_but_mute = false;

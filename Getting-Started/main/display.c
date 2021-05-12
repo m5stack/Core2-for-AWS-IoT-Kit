@@ -20,22 +20,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "display.h"
-
 #include <esp_log.h>
-
 #include <esp_rmaker_core.h>
-
 #include "core2forAWS.h"
-
 #include "lvgl/lvgl.h"
-
 #include "ft6336u.h"
-
 #include "fan.h"
 
 #define TAG "display"
-
-extern SemaphoreHandle_t xGuiSemaphore;
 
 LV_IMG_DECLARE(house_on);
 LV_IMG_DECLARE(house_off);
@@ -122,8 +114,8 @@ static void sw1_event_handler(lv_obj_t * obj, lv_event_t event)
 void display_init()
 {
     FT6336U_Init();
-    Core2ForAWS_LCD_Init();
-    Core2ForAWS_LCD_SetBrightness(100);
+    Core2ForAWS_Display_Init();
+    Core2ForAWS_Display_SetBrightness(100);
 }
 
 void display_fan_init()

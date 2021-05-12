@@ -25,15 +25,15 @@ static int configure_mbedtls_rng(void) {
     int ret;
     mbedtls_ctr_drbg_init(&ctr_drbg);
 
-    ESP_LOGI(TAG, " Seeding the random number generator...");
+    ESP_LOGI(TAG, "Seeding the random number generator...");
 
     mbedtls_entropy_init(&entropy);
     ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
         (const unsigned char *) TAG, strlen(TAG));
     if (ret != 0) {
-        ESP_LOGI(TAG, " failed  ! mbedtls_ctr_drbg_seed returned %d", ret);
+        ESP_LOGI(TAG, "failed  ! mbedtls_ctr_drbg_seed returned %d", ret);
     } else {
-        ESP_LOGI(TAG, " ok");
+        ESP_LOGI(TAG, "ok");
     }
     return ret;
 }
@@ -57,8 +57,10 @@ ATCA_STATUS Atecc608_GetSerialString(char * sn) {
     int ret;
     uint8_t serial[ATCA_SERIAL_NUM_SIZE];
     
+    i2c_take_port(ATECC608_I2C_PORT, portMAX_DELAY);    
     ret = atcab_read_serial_number(serial);
-
+    i2c_free_port(ATECC608_I2C_PORT);
+    
     if (ret != ATCA_SUCCESS) {
         ESP_LOGI(TAG, "*FAILED* atcab_read_serial_number returned %02x", ret);
         handleErr();

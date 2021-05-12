@@ -38,7 +38,6 @@ static void ateccTask(void *arg);
 static void sdcardTest();
 
 // in disp_spi.c
-extern SemaphoreHandle_t xGuiSemaphore;
 extern SemaphoreHandle_t spi_mutex;
 
 extern void spi_poll();

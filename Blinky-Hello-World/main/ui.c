@@ -37,8 +37,6 @@
 #include "lvgl/lvgl.h"
 #include "ui.h"
 
-extern SemaphoreHandle_t xGuiSemaphore;
-
 static lv_obj_t *out_txtarea;
 static lv_obj_t *wifi_label;
 
