@@ -7,7 +7,7 @@
 
 #include "math.h"
 #include "fft.h"
-#include "core2foraws.h"
+#include "core2forAWS.h"
 #include "lvgl/lvgl.h"
 #include "driver/i2s.h"
 #include "microphone.h"
