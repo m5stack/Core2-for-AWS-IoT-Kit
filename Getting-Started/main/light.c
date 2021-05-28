@@ -1,6 +1,6 @@
 
 /*
- * AWS IoT EduKit - Getting Started v1.0.1
+ * AWS IoT EduKit - Getting Started v1.0.2
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -89,8 +89,6 @@ void light_init(esp_rmaker_node_t *node)
 {
     display_house_init();
 
-    Core2ForAWS_Sk6812_Init();
-
     Core2ForAWS_Sk6812_SetBrightness(255);
 
     light_set_on(false);
@@ -107,7 +105,6 @@ void light_init(esp_rmaker_node_t *node)
     esp_rmaker_device_add_attribute(light_device, "MAC", "xx:yy:zz:aa:bb:cc");
 
     esp_rmaker_node_add_device(node, light_device);
-
 }
 
 void light_set_on(bool on)

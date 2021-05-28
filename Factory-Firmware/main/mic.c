@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.0.1
+ * Factory Firmware v2.0.2
  * mic.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -33,9 +33,7 @@
 
 #include "driver/i2s.h"
 
-#include "lvgl/lvgl.h"
 #include "core2forAWS.h"
-#include "microphone.h"
 
 #include "mic.h"
 #include "fft.h"

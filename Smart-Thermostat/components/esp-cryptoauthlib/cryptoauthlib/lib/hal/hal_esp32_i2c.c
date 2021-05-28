@@ -36,7 +36,7 @@
 
 I2CDevice_t i2c_device_bus = NULL;
 
-const char* TAG = "HAL_I2C";
+static const char *TAG = "HAL_I2C";
 
 void hal_i2c_change_baud(ATCAIface iface, uint32_t speed) {
     i2c_device_change_freq(i2c_device_bus, speed);

@@ -29,19 +29,14 @@
 
 static const char *TAG = "app_main";
 
-extern SemaphoreHandle_t spi_mutex;
-
 void app_main()
 {
     /* Initialize Application specific hardware drivers and
      * set initial state.
      */
-    spi_mutex = xSemaphoreCreateMutex();
 
     Core2ForAWS_Init();
-    Core2ForAWS_PMU_Init(3300, 0, 0, 2700);   
     display_init();
-    Core2ForAWS_Button_Init();
 
     /* Initialize NVS. */
     esp_err_t err = nvs_flash_init();

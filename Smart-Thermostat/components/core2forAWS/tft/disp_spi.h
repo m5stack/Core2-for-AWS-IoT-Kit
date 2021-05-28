@@ -10,20 +10,10 @@
 extern "C" {
 #endif
 
-/*********************
- *      INCLUDES
- *********************/
 #include <stdint.h>
 #include <stdbool.h>
 #include <driver/spi_master.h>
 
-/*********************
- *      DEFINES
- *********************/
-
-/**********************
- *      TYPEDEFS
- **********************/
 typedef enum _disp_spi_send_flag_t {
     DISP_SPI_SEND_QUEUED        = 0x00000000,
     DISP_SPI_SEND_POLLING       = 0x00000001,
@@ -50,14 +40,16 @@ typedef struct _disp_spi_read_data {
     } __attribute__((packed));
 } disp_spi_read_data __attribute__((aligned(4)));
 
-/*************************
- *      GLOBAL VARIABLES
- ***********************/
+/**
+ * @brief Semaphore for the shared SPI bus.
+ * 
+ * This semaphore helps protect the usage of the SPI bus. The implementation of the 
+ * ILI9342C library uses this mutex to write to the display controller.
+ */
+/* @[declare_spi_mutex] */
 extern SemaphoreHandle_t spi_mutex;
+/* @[declare_spi_mutex] */
 
-/**********************
- * GLOBAL PROTOTYPES
- **********************/
 void disp_spi_add_device(spi_host_device_t host);
 void disp_spi_add_device_config(spi_host_device_t host, spi_device_interface_config_t *devcfg);
 void disp_spi_transaction(const uint8_t *data, size_t length,
@@ -74,12 +66,24 @@ static inline void disp_spi_send_colors(uint8_t *data, size_t length) {
         NULL, 0);
 }
 
+/**
+ * @brief Polls the SPI bus for a pending SPI transaction to complete.
+ * 
+ * This function blocks until a pending SPI transaction has finished.
+ * Once that transaction is complete, execution of code continues.
+ * Useful for using more than one peripheral on the same SPI bus without
+ * conflicts.
+ * 
+ * @note This function is necessary when accessing the SD card on the shared SPI bus. 
+ * Uses [spi_device_polling_transmit](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/spi_master.html#_CPPv427spi_device_polling_transmit19spi_device_handle_tP17spi_transaction_t).
+ * to repeatedly poll the SPI bus until the transaction completes.
+ */
+/* @[declare_spi_poll] */
 void spi_poll();
+/* @[declare_spi_poll] */
 
-/**********************
- *      MACROS
- **********************/
-/* Receive data helpers */
+
+/* @brief Receive data helpers */
 #define member_size(type, member)   sizeof(((type *)0)->member)
 
 #define SPI_READ_DUMMY_LEN  member_size(disp_spi_read_data, _dummy_byte)

@@ -8,7 +8,7 @@ extern "C" {
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 
-// Konw reg update value
+// Know reg update value
 // #define I2C_DEVICE_DEBUG_REG
 
 // Know write or read success and now i2c device status 

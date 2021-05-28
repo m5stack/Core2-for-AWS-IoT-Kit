@@ -6,7 +6,6 @@
 
 #define I2S_LRCK_PIN 0
 #define I2S_DATA_IN_PIN 34
-#define MIC_I2S_NUMBER I2S_NUM_0
 
 void Microphone_Init() {
     i2s_config_t i2s_config = {

@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.0.1
+ * Factory Firmware v2.0.2
  * wifi.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include "esp_event.h"
 
 #include "core2forAWS.h"
-#include "lvgl/lvgl.h"
+
 #include "wifi.h"
 
 #define DEFAULT_SCAN_LIST_SIZE 6

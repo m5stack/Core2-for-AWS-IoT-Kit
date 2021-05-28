@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.0.1
+ * Factory Firmware v2.0.2
  * led_bar.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -33,7 +33,6 @@
 #include "esp_log.h"
 
 #include "core2forAWS.h"
-#include "lvgl/lvgl.h"
 #include "led_bar.h"
 
 #define RED_AMAZON_ORANGE 255
@@ -218,6 +217,7 @@ void sk6812_solid_task(void* pvParameters){
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     };
+    
     vTaskDelete(NULL);
 }
 

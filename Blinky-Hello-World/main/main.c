@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Cloud Connected Blinky v1.2.1
+ * AWS IoT EduKit - Cloud Connected Blinky v1.2.2
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * Additions Copyright 2016 Espressif Systems (Shanghai) PTE LTD
  *
@@ -44,12 +44,6 @@
 #include "nvs_flash.h"
 
 #include "core2forAWS.h"
-#include "lvgl/lvgl.h"
-#include "ft6336u.h"
-#include "axp192.h"
-#include "cryptoauthlib.h"
-#include "i2c_device.h"
-#include "atecc608.h"
 
 #include "aws_iot_config.h"
 #include "aws_iot_log.h"
@@ -59,7 +53,7 @@
 #include "blink.h"
 #include "ui.h"
 
-static const char *TAG = "Blinky";
+static const char *TAG = "MAIN";
 
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t wifi_event_group;
@@ -86,12 +80,12 @@ char HostAddress[255] = AWS_IOT_MQTT_HOST;
 uint32_t port = AWS_IOT_MQTT_PORT;
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data){
-    system_event_info_t *info = &((system_event_t *) event_data)->event_info;
 
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGE(TAG, "Wi-Fi disconnected. Reason: %d\n", info->disconnected.reason);
+        wifi_event_sta_disconnected_t* event = (wifi_event_sta_disconnected_t*) event_data;
+        ESP_LOGE(TAG, "Wi-Fi disconnected. Reason: %d\n", event->reason);
         ESP_LOGI(TAG, "Wi-Fi reason codes: https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-guides/wifi.html#wi-fi-reason-code");
         ui_textarea_add("Wi-Fi error. Attempting reconnect...\n", NULL, NULL);
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
@@ -99,7 +93,8 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         ui_wifi_label_update(false);
         esp_wifi_connect();
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ESP_LOGI(TAG, "Device IP address:" IPSTR, IP2STR(&info->got_ip.ip_info.ip));
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "Device IP address: " IPSTR, IP2STR(&event->ip_info.ip));
         xEventGroupClearBits(wifi_event_group, DISCONNECTED_BIT);
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
         ui_wifi_label_update(true);
@@ -332,25 +327,13 @@ void app_main()
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
-    
-    spi_mutex = xSemaphoreCreateMutex();
 
     Core2ForAWS_Init();
-    FT6336U_Init();
-    Core2ForAWS_Display_Init();
-    Core2ForAWS_Button_Init();
-    Core2ForAWS_Sk6812_Init();
     Core2ForAWS_Display_SetBrightness(80);
     
     ui_init();
     
     initialise_wifi();
-
-    ATCA_STATUS ret = Atecc608_Init();
-    if (ret != ATCA_SUCCESS){
-        ESP_LOGE(TAG, "ATECC608 secure element initialization error!");
-        abort();
-    }
 
     xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", 4096 * 2, NULL, 5, NULL, 1);
     xTaskCreatePinnedToCore(&blink_task, "blink_task", 4096 * 1, NULL, 2, &xBlink, 1);

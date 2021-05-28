@@ -21,7 +21,7 @@
 #include <audio_board.h>
 #include "esp_intr_alloc.h"
 #include <m5stackcore2_init.h>
-#include "axp192.h"
+#include "core2forAWS.h"
 #include "media_hal_playback.h"
 
 #define PLAT_TAG "AUDIO_BOARD"
@@ -165,11 +165,11 @@ esp_err_t audio_board_i2s_set_spk_mic_mode(int mode)
 
     if(mode == MODE_SPK)
     {
-        Axp192_SetGPIO2Level(1);
+        Core2ForAWS_Speaker_Enable(1);
     }
     else
     {
-        Axp192_SetGPIO2Level(0);
+        Core2ForAWS_Speaker_Enable(0);
     }
 
     return err;

@@ -68,7 +68,7 @@ void BM8563_GetTime(rtc_date_t* data) {
 }
 
 // -1 :disable
-void BM8563_SetDateIRQ(int8_t minute, int8_t hour, int8_t day, int8_t week) {
+void BM8563_SetAlarmIRQ(int8_t minute, int8_t hour, int8_t day, int8_t week) {
     uint8_t irq_enable = false;
     uint8_t out_buf[4] = { 0x80, 0x80, 0x80, 0x80 };
     if(minute >= 0) {

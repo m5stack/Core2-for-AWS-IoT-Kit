@@ -11,3 +11,10 @@
 
 /components/esp-cryptoauthlib/esp_cryptoauth_utility/output_files/*
 /utilities/device_registration_helper/output_files/*
+
+**/account.info
+**/device.cert
+**/device.info
+**/server.cert
+**/endpoint.info
+**/device.key

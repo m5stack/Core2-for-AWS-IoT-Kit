@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.0.1
+ * Factory Firmware v2.0.2
  * power.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -33,8 +33,6 @@
 #include "esp_log.h"
 
 #include "core2forAWS.h"
-#include "lvgl/lvgl.h"
-#include "axp192.h"
 
 #include "power.h"
 

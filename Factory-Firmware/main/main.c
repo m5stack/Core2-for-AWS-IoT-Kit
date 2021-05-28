@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.0.1
+ * Factory Firmware v2.0.2
  * main.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -46,17 +46,8 @@
 #include "nvs_flash.h"
 
 #include "core2forAWS.h"
-#include "lvgl/lvgl.h"
-#include "ft6336u.h"
-#include "speaker.h"
-#include "bm8563.h"
-#include "mpu6886.h"
-#include "axp192.h"
-#include "cryptoauthlib.h"
-#include "i2c_device.h"
-#include "music.c"
-#include "atecc608.h"
 
+#include "music.c"
 #include "powered_by_aws_logo.c"
 #include "sound.h"
 #include "home.h"
@@ -70,7 +61,7 @@
 #include "crypto.h"
 #include "cta.h"
 
-static const char* TAG = "Core2ForAWS";
+static const char* TAG = "MAIN";
 
 static void ui_start(void);
 static void tab_event_cb(lv_obj_t* slider, lv_event_t event);
@@ -92,16 +83,7 @@ void app_main(void)
     esp_log_level_set("gpio", ESP_LOG_NONE);
     esp_log_level_set("ILI9341", ESP_LOG_NONE);
 
-    spi_mutex = xSemaphoreCreateMutex();
-
     Core2ForAWS_Init();
-    FT6336U_Init();
-    Core2ForAWS_Display_Init();
-    Core2ForAWS_Button_Init();
-    Core2ForAWS_Sk6812_Init();
-    MPU6886_Init();
-    BM8563_Init();
-    Atecc608_Init();
     Core2ForAWS_Display_SetBrightness(80); // Last since the display first needs time to finish initializing.
     
     ui_start();

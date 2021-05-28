@@ -18,6 +18,7 @@ static xTaskHandle ft6336_task_handle;
 static SemaphoreHandle_t thread_mutex;
 
 static void IRAM_ATTR FT6336U_ISRHandler(void* arg);
+static void FT6336U_UpdateTask(void *arg);
 
 void FT6336U_Init() {
     ft6336u_i2c = i2c_malloc_device(I2C_NUM_1, 21, 22, 400000, FT6336U_I2C_ADDR);
@@ -41,7 +42,7 @@ static void IRAM_ATTR FT6336U_ISRHandler(void* arg) {
     xTaskResumeFromISR(task_handle);
 }
 
-void FT6336U_UpdateTask(void *arg) {
+static void FT6336U_UpdateTask(void *arg) {
     uint8_t buff[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
     bool press_stash;
     for (;;) {

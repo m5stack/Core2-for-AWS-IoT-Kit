@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Getting Started v1.0.1
+ * AWS IoT EduKit - Getting Started v1.0.2
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -27,11 +27,11 @@
 #include <esp_rmaker_standard_params.h>
 #include <esp_rmaker_standard_devices.h>
 
+#include "core2forAWS.h"
+
 #include "user_parameters.h"
 
 #include "display.h"
-
-#include "mpu6886.h"
 
 static esp_rmaker_device_t *temp_sensor_device;
 static esp_timer_handle_t sensor_timer;
@@ -78,7 +78,6 @@ static void temperature_sensor_update(void *priv)
 
 void temperature_init(esp_rmaker_node_t *node)
 {
-    MPU6886_Init();
     /* Create a Temperature Sensor device and add the relevant parameters to it */
     temp_sensor_device = esp_rmaker_temp_sensor_device_create("Temperature Sensor", NULL, DEFAULT_TEMPERATURE);
     esp_rmaker_node_add_device(node, temp_sensor_device);

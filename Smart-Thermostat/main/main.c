@@ -45,14 +45,6 @@
 #include "nvs_flash.h"
 
 #include "core2forAWS.h"
-#include "lvgl/lvgl.h"
-#include "ft6336u.h"
-#include "microphone.h"
-#include "mpu6886.h"
-#include "axp192.h"
-#include "cryptoauthlib.h"
-#include "i2c_device.h"
-#include "atecc608.h"
 
 #include "aws_iot_config.h"
 #include "aws_iot_log.h"
@@ -107,12 +99,11 @@ Semaphore for sound levels
 SemaphoreHandle_t xMaxNoiseSemaphore;
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data){
-    system_event_info_t *info = &((system_event_t *) event_data)->event_info;
-
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGE(TAG, "Wi-Fi disconnected. Reason: %d\n", info->disconnected.reason);
+        wifi_event_sta_disconnected_t* event = (wifi_event_sta_disconnected_t*) event_data;
+        ESP_LOGE(TAG, "Wi-Fi disconnected. Reason: %d\n", event->reason);
         ESP_LOGI(TAG, "Wi-Fi reason codes: https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-guides/wifi.html#wi-fi-reason-code");
         ui_textarea_add("Wi-Fi error. Attempting reconnect...\n", NULL, NULL);
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
@@ -120,7 +111,8 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         ui_wifi_label_update(false);
         esp_wifi_connect();
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ESP_LOGI(TAG, "Device IP address:" IPSTR, IP2STR(&info->got_ip.ip_info.ip));
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "Device IP address: " IPSTR, IP2STR(&event->ip_info.ip));
         xEventGroupClearBits(wifi_event_group, DISCONNECTED_BIT);
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
         ui_wifi_label_update(true);
@@ -475,16 +467,9 @@ void app_main()
     }
     ESP_ERROR_CHECK(err);
     
-    spi_mutex = xSemaphoreCreateMutex();
     xMaxNoiseSemaphore = xSemaphoreCreateMutex();
+    
     Core2ForAWS_Init();
-    MPU6886_Init();
-    FT6336U_Init();
-    Core2ForAWS_Display_Init();
-    Core2ForAWS_Button_Init();
-    Core2ForAWS_Sk6812_Init();
-    Core2ForAWS_Sk6812_Clear();
-    Core2ForAWS_Sk6812_Show();
     Core2ForAWS_Display_SetBrightness(80);
     Core2ForAWS_LED_Enable(0x01);
     
@@ -492,12 +477,5 @@ void app_main()
     
     initialise_wifi();
     
-    ATCA_STATUS ret = Atecc608_Init();
-    if (ret != ATCA_SUCCESS){
-        ESP_LOGE(TAG, "ATECC608 secure element initialization error!");
-        abort();
-    }
-    
     xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", 4096*2, NULL, 5, NULL, 1);
-    
 }

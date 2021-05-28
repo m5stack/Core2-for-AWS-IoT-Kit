@@ -34,7 +34,7 @@
 #include "esp_log.h"
 
 #include "core2forAWS.h"
-#include "lvgl/lvgl.h"
+
 #include "ui.h"
 
 static lv_obj_t *out_txtarea;

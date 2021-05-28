@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.0.1
+ * Factory Firmware v2.0.2
  * sound.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -30,7 +30,7 @@
 #include "freertos/semphr.h"
 
 #include "core2forAWS.h"
-#include "speaker.h"
+
 #include "sound.h"
 
 void sound_task(void* arg) {

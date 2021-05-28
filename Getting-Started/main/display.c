@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Smart Thermostat v1.0.1
+ * AWS IoT EduKit - Getting Started v1.0.2
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -23,8 +23,6 @@
 #include <esp_log.h>
 #include <esp_rmaker_core.h>
 #include "core2forAWS.h"
-#include "lvgl/lvgl.h"
-#include "ft6336u.h"
 #include "fan.h"
 
 #define TAG "display"
@@ -40,7 +38,7 @@ LV_IMG_DECLARE(fan_4);
 LV_IMG_DECLARE(fan_5);
 LV_IMG_DECLARE(fan_6);
 
-static const lv_img_dsc_t* fanImages[] = {&fan_1,&fan_2,&fan_3,&fan_4,&fan_5,&fan_6};
+static const lv_img_dsc_t *fanImages[] = {&fan_1,&fan_2,&fan_3,&fan_4,&fan_5,&fan_6};
 
 #define CANVAS_WIDTH 100
 #define CANVAS_HEIGHT 60
@@ -66,7 +64,7 @@ static bool g_fan_power = false;
 static void spin_update(void *priv)
 {
     int fan_index = 0;
-    int speed_skip=0;
+    int speed_skip = 0;
     while(1)
     {
         vTaskDelay(pdMS_TO_TICKS(50));
@@ -113,14 +111,11 @@ static void sw1_event_handler(lv_obj_t * obj, lv_event_t event)
 
 void display_init()
 {
-    FT6336U_Init();
-    Core2ForAWS_Display_Init();
     Core2ForAWS_Display_SetBrightness(100);
 }
 
 void display_fan_init()
 {
-
     xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);
 
     ESP_LOGI(TAG,"configuring the fan");
@@ -149,7 +144,7 @@ void display_fan_init()
 
     xSemaphoreGive(xGuiSemaphore);
 
-    xTaskCreatePinnedToCore(spin_update, "fan", 4096, NULL, 2, NULL, 1);
+    xTaskCreatePinnedToCore(spin_update, "fan", 4096, NULL, 1, NULL, 1);
 
     ESP_LOGI(TAG,"fan configured");
 }

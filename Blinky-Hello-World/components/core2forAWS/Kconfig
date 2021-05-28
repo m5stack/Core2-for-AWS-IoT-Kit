@@ -2,7 +2,6 @@ menu "Core2 for AWS hardware enable"
     config SOFTWARE_ILI9342C_SUPPORT
         bool "Screen-ILI9342C" 
         default y
-        select SOFTWARE_FT6336U_SUPPORT
     config SOFTWARE_FT6336U_SUPPORT
         bool "Screen touch-FT6336U"
         default y
@@ -15,6 +14,7 @@ menu "Core2 for AWS hardware enable"
     config SOFTWARE_BUTTON_SUPPORT
         bool "BUTTON-Touch screen virtual"
         default y
+        select SOFTWARE_FT6336U_SUPPORT
     config SOFTWARE_MPU6886_SUPPORT
         bool "IMU-MPU6886"
         default y
