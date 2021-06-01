@@ -174,18 +174,6 @@ void app_wifi_start_station()
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MIN_MODEM));
 }
 
-/**
- * Newer WiFi libs introduce cases where we get spurious interrupts on pins GPIO36/39.
- * For our case we get into trouble because we use GPIO36 pins to get WW interrupts.
- * Coordinate ADC power with other modules. This overrides the function from PHY lib.
- *
- * This is completely a dumb functions.
- */
-void set_xpd_sar(bool en)
-{
-
-}
-
 void app_wifi_init()
 {
     /**

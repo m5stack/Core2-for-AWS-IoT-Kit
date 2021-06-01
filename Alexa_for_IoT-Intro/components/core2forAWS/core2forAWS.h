@@ -18,7 +18,7 @@
  * 
  * To avoid conflicts with multiple threads attempting to
  * write to the display, take this FreeRTOS semaphore first,
- * use the [LVGL widget](https://docs.lvgl.io/v7/en/html/widgets/index.html) 
+ * use the [LVGL widget](https://docs.lvgl.io/7.11/widgets/index.html) 
  * API of choice, and then give the semaphore.
  * The FreeRTOS task, guiTask(), will write to the ILI9342C display 
  * controller to update the display.

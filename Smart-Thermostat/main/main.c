@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Smart Thermostat v1.1.2
+ * AWS IoT EduKit - Smart Thermostat v1.1.3
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * Additions Copyright 2016 Espressif Systems (Shanghai) PTE LTD
  *

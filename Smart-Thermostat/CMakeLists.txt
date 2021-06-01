@@ -3,4 +3,4 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(AWS_IoT_EduKit-Smart-Thermostat VERSION 1.1.2)
+project(AWS_IoT_EduKit-Smart-Thermostat VERSION 1.1.3)

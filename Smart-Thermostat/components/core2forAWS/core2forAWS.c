@@ -343,10 +343,10 @@ static void lv_tick_task(void *arg) {
 /**
  * @brief The FreeRTOS task that periodically calls lv_task_handler
  * 
- * A FreeRTOS task function that calls [lv_task_handler](https://docs.lvgl.io/v7/en/html/porting/task-handler.html)
+ * A FreeRTOS task function that calls [lv_task_handler](https://docs.lvgl.io/7.11/g/task-handler.html)
  * after a tick (depends on task prioritization), which executes 
  * LVGL tasks to then pass to the display controller. Learn more 
- * about LVGL Tasks[https://docs.lvgl.io/v7/en/html/overview/task.html].
+ * about LVGL Tasks[https://docs.lvgl.io/7.11/ew/task.html].
  */
 static void guiTask(void *pvParameter) {
     

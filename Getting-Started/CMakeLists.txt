@@ -3,4 +3,4 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(AWS_IoT_EduKit-Getting_Started VERSION 1.0.2)
+project(AWS_IoT_EduKit-Getting_Started VERSION 1.0.3)

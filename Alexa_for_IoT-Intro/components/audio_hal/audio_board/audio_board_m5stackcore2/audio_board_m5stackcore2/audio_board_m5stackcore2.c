@@ -54,46 +54,21 @@ esp_err_t audio_board_i2s_pin_config(int port_num, i2s_pin_config_t *pf_i2s_pin)
             ESP_LOGE(PLAT_TAG, "Entered i2s port number is wrong");
             return ESP_FAIL;
     }
-    //Set MCLK
-    //PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
-    //SET_PERI_REG_BITS(PIN_CTRL, CLK_OUT1, 0, CLK_OUT1_S);
 
     return ESP_OK; 
 }
 
-/*
-esp_err_t audio_board_i2c_pin_config(int port_num, i2c_config_t *pf_i2c_pin)
-{   
-    PLAT_ASSERT(pf_i2c_pin, "Error assigning i2c pins", -1);
-    
-    switch(port_num) {
-        case 0:
-            pf_i2c_pin->sda_io_num = GPIO_NUM_19;
-            pf_i2c_pin->scl_io_num = GPIO_NUM_32;
-            pf_i2c_pin->sda_pullup_en = GPIO_PULLUP_ENABLE;
-            pf_i2c_pin->scl_pullup_en = GPIO_PULLUP_ENABLE;
-            break;
-        case 1:
-            pf_i2c_pin->sda_io_num = GPIO_NUM_19;
-            pf_i2c_pin->scl_io_num = GPIO_NUM_32;
-            pf_i2c_pin->sda_pullup_en = GPIO_PULLUP_ENABLE;
-            pf_i2c_pin->scl_pullup_en = GPIO_PULLUP_ENABLE;
-            break;
-        default:
-            ESP_LOGE(PLAT_TAG, "Entered i2c port number is wrong");
-            return ESP_FAIL;
-    }
-    
-    return ESP_OK;
-}
-*/
 esp_err_t audio_board_i2s_init_default(i2s_config_t *i2s_cfg_dft)
 {
     i2s_cfg_dft->mode = I2S_MODE_MASTER | I2S_MODE_TX; /*| I2S_MODE_RX | I2S_MODE_PDM;*/
     i2s_cfg_dft->sample_rate = SAMPLE_RATE_DAC;
     i2s_cfg_dft->bits_per_sample = M5STACKCORE2_BITS_PER_SAMPLE;
     i2s_cfg_dft->channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT;
+#if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(4, 1, 0)
+    i2s_cfg_dft->communication_format = I2S_COMM_FORMAT_STAND_I2S,
+#else
     i2s_cfg_dft->communication_format = I2S_COMM_FORMAT_I2S;
+#endif
     i2s_cfg_dft->dma_buf_count = 3;                   /*!< number of dma buffer */
     i2s_cfg_dft->dma_buf_len = 300;                   /*!< size of each dma buffer (Byte) */
     i2s_cfg_dft->intr_alloc_flags = ESP_INTR_FLAG_LEVEL1;
