@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.0.3
+ * Factory Firmware v2.1.0
  * mpu.h
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.

@@ -199,7 +199,7 @@ static void sdcardTest() {
     sdmmc_card_t* card;
     esp_err_t ret;
 
-    ret = Core2ForAWS_Sdcard_Init(MOUNT_POINT, &card);
+    ret = Core2ForAWS_SDcard_Mount(MOUNT_POINT, &card);
 
     if (ret != ESP_OK) {
         ESP_LOGE("sdcard", "Failed to initialize the sd card");

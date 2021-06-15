@@ -53,7 +53,7 @@ if(DEFINED DSP_EN_SPI_FFS)
         "${CMAKE_CURRENT_SOURCE_DIR}/build/spiffs-alexa-img.bin")
 endif()
 
-project(AWS_IoT_EduKit-Intro_to_Alexa VERSION 1.0.3)
+project(AWS_IoT_EduKit-Intro_to_Alexa VERSION 1.1.0)
 
 if (DEFINED DSP_EN_SPI_FFS)
     esptool_py_custom_target(spiffs_flash spiffs_flash "spiffs_make")

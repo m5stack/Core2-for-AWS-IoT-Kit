@@ -3,4 +3,4 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(M5Core2ForAWSDemo VERSION 1.0.3)
+project(M5Core2ForAWSDemo VERSION 1.1.0)

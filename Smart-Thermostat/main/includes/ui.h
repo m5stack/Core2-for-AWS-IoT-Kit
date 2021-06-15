@@ -1,5 +1,8 @@
 /*
- * AWS IoT EduKit - Smart Thermostat v1.1.3
+ * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * Smart Thermostat v1.2.0
+ * ui.h
+ * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -22,6 +25,6 @@
 
 #pragma once
 
-void ui_textarea_add(char *txt, char *param, size_t *paramLen);
+void ui_textarea_add(char *txt, char *param, size_t paramLen);
 void ui_wifi_label_update(bool state);
 void ui_init();

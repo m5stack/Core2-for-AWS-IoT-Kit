@@ -1,5 +1,8 @@
 /*
- * AWS IoT EduKit - Cloud Connected Blinky v1.2.3
+ * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * Cloud Connected Blinky v1.3.0
+ * blink.c
+ * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of

@@ -30,6 +30,9 @@ menu "Core2 for AWS hardware enable"
     config SOFTWARE_SDCARD_SUPPORT
         bool "SDcard"
         default y
+    config SOFTWARE_EXPPORTS_SUPPORT
+        bool "Expansion Ports A, B, C"
+        default y
 endmenu
 
 menu "LVGL TFT Display controller"

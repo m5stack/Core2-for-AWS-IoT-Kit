@@ -8,16 +8,28 @@
 
 #include "esp_system.h"
 #include "esp_err.h"
+#include "esp_log.h"
 
 #include "core2forAWS.h"
 
-#define DISPLAY_BRIGHTNESS_MIN_VOLT 2200
-#define DISPLAY_BRIGHTNESS_MAX_VOLT 3300
-#define LV_TICK_PERIOD_MS 1
+#if CONFIG_SOFTWARE_EXPPORTS_SUPPORT
+#include <driver/adc.h>
+#include <driver/dac.h>
+#include "esp_adc_cal.h"
+#include "soc/dac_channel.h"
+
+#define DEFAULT_VREF    1100
+static esp_adc_cal_characteristics_t *adc_characterization;
+
+#define ADC_CHANNEL ADC1_CHANNEL_0
+#define ADC_WIDTH ADC_WIDTH_BIT_12
+#define ADC_ATTENUATION ADC_ATTEN_DB_11
+#define DAC_CHANNEL DAC_GPIO26_CHANNEL
+#endif
 
 static const char *TAG = "Core2forAWS";
 
-void Core2ForAWS_Init() {    
+void Core2ForAWS_Init(void) {    
 #if CONFIG_SOFTWARE_ILI9342C_SUPPORT || CONFIG_SOFTWARE_SDCARD_SUPPORT
     spi_mutex = xSemaphoreCreateMutex();
     spi_bus_config_t bus_cfg = {
@@ -56,7 +68,7 @@ void Core2ForAWS_Init() {
 
 #if CONFIG_SOFTWARE_RTC_SUPPORT
     BM8563_Init();
-    #endif
+#endif
 
 #if CONFIG_SOFTWARE_ATECC608_SUPPORT
     ATCA_STATUS ret = Atecc608_Init();
@@ -67,27 +79,27 @@ void Core2ForAWS_Init() {
 #endif
 }
 
-/* ==================================================================================================*/
-/* ----------------------------------------- BUTTON -------------------------------------------------*/
+/* ===================================================================================================*/
+/* --------------------------------------------- BUTTON ----------------------------------------------*/
 #if CONFIG_SOFTWARE_BUTTON_SUPPORT
 Button_t* button_left;
 Button_t* button_middle;
 Button_t* button_right;
 
-void Core2ForAWS_Button_Init() {
+void Core2ForAWS_Button_Init(void) {
     Button_Init();
     button_left = Button_Attach(0, 240, 106, 60);
     button_middle = Button_Attach(106, 240, 106, 60);
     button_right = Button_Attach(212, 240, 106, 60);
 }
 #endif
-/* ----------------------------------------- End ----------------------------------------------------*/
-/* ==================================================================================================*/
+/* ----------------------------------------------- End -----------------------------------------------*/
+/* ===================================================================================================*/
 
-/* ==================================================================================================*/
-/* ----------------------------------------- SDCARD -------------------------------------------------*/
+/* ===================================================================================================*/
+/* --------------------------------------------- SDCARD ----------------------------------------------*/
 #if CONFIG_SOFTWARE_SDCARD_SUPPORT
-esp_err_t Core2ForAWS_Sdcard_Init(const char* mount, sdmmc_card_t** out_card) {
+esp_err_t Core2ForAWS_SDcard_Mount(const char *mount_path, sdmmc_card_t **out_card) {
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
         .format_if_mount_failed = false,
@@ -107,18 +119,22 @@ esp_err_t Core2ForAWS_Sdcard_Init(const char* mount, sdmmc_card_t** out_card) {
     slot_config.gpio_cs = 4;
     esp_err_t ret;
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(4, 1, 0)
-    ret = esp_vfs_fat_sdspi_mount(mount, &host, &slot_config, &mount_config, &card);
+    ret = esp_vfs_fat_sdspi_mount(mount_path, &host, &slot_config, &mount_config, &card);
 #else
-    ret = esp_vfs_fat_sdmmc_mount(mount, &host, &slot_config, &mount_config, &card);
+    ret = esp_vfs_fat_sdmmc_mount(mount_path, &host, &slot_config, &mount_config, &card);
 #endif
     if (ret == ESP_OK && out_card != NULL) {
         *out_card = card;
     }
     return ret;
 }
+
+esp_err_t Core2ForAWS_SDcard_Unmount(const char *mount_path, sdmmc_card_t *out_card){
+    return esp_vfs_fat_sdcard_unmount(mount_path, out_card);
+}
 #endif
-/* ----------------------------------------- End ----------------------------------------------------*/
-/* ==================================================================================================*/
+/* ----------------------------------------------- End -----------------------------------------------*/
+/* ===================================================================================================*/
 
 void Core2ForAWS_Motor_SetStrength(uint8_t strength) {
     if (strength > 100) {
@@ -140,12 +156,12 @@ void Core2ForAWS_Speaker_Enable(uint8_t state) {
 }
 
 /* ==================================================================================================*/
-/* ----------------------------------------- PMU ---------------------------------------------------*/
-float Core2ForAWS_PMU_GetBatVolt() {
+/* ---------------------------------------------- PMU -----------------------------------------------*/
+float Core2ForAWS_PMU_GetBatVolt(void) {
     return Axp192_GetBatVolt();
 }
 
-float Core2ForAWS_PMU_GetBatCurrent() {
+float Core2ForAWS_PMU_GetBatCurrent(void) {
     return Axp192_GetBatCurrent();
 }
 
@@ -190,15 +206,15 @@ void Core2ForAWS_PMU_Init(uint16_t ldo2_volt, uint16_t ldo3_volt, uint16_t dc2_v
     Axp192_SetGPIO1Mode(1);
     Core2ForAWS_PMU_SetPowerIn(0);
 }
-/* ----------------------------------------- End ----------------------------------------------------*/
-/* ==================================================================================================*/
+/* ----------------------------------------------- End -----------------------------------------------*/
+/* ===================================================================================================*/
 
-/* ==================================================================================================*/
-/* ----------------------------------------- SK6812 -------------------------------------------------*/
+/* ===================================================================================================*/
+/* --------------------------------------------- SK6812 ----------------------------------------------*/
 #if CONFIG_SOFTWARE_SK6812_SUPPORT
 pixel_settings_t px;
 
-void Core2ForAWS_Sk6812_Init() {
+void Core2ForAWS_Sk6812_Init(void) {
     px.pixel_count = 10;
     px.brightness = 20;
     sprintf(px.color_order, "GRBW");
@@ -233,20 +249,25 @@ void Core2ForAWS_Sk6812_SetBrightness(uint8_t brightness) {
     px.brightness = brightness;
 }
 
-void Core2ForAWS_Sk6812_Show() {
+void Core2ForAWS_Sk6812_Show(void) {
     np_show(&px, RMT_CHANNEL_0);
 }
 
-void Core2ForAWS_Sk6812_Clear() {
+void Core2ForAWS_Sk6812_Clear(void) {
     np_clear(&px);
 }
 #endif
-/* ----------------------------------------- End -------------------------------------------------*/
-/* ==================================================================================================*/
+/* ----------------------------------------------- End -----------------------------------------------*/
+/* ===================================================================================================*/
 
-/* ==================================================================================================*/
-/* ----------------------------------------- DISPLAY -------------------------------------------------*/
+/* ===================================================================================================*/
+/* --------------------------------------------- DISPLAY ---------------------------------------------*/
 #if CONFIG_SOFTWARE_ILI9342C_SUPPORT
+
+#define DISPLAY_BRIGHTNESS_MIN_VOLT 2200
+#define DISPLAY_BRIGHTNESS_MAX_VOLT 3300
+#define LV_TICK_PERIOD_MS 1
+
 SemaphoreHandle_t xGuiSemaphore;
 
 static void guiTask(void *pvParameter);
@@ -256,7 +277,7 @@ static void lv_tick_task(void *arg);
 static bool ft6336u_read(lv_indev_drv_t * drv, lv_indev_data_t * data);
 #endif
 
-void Core2ForAWS_Display_Init() {
+void Core2ForAWS_Display_Init(void) {
     xGuiSemaphore = xSemaphoreCreateMutex();
 
     xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);
@@ -343,10 +364,10 @@ static void lv_tick_task(void *arg) {
 /**
  * @brief The FreeRTOS task that periodically calls lv_task_handler
  * 
- * A FreeRTOS task function that calls [lv_task_handler](https://docs.lvgl.io/7.11/-handler.html)
+ * A FreeRTOS task function that calls [lv_task_handler](https://docs.lvgl.io/7.11/porting/task-handler.html)
  * after a tick (depends on task prioritization), which executes 
  * LVGL tasks to then pass to the display controller. Learn more 
- * about LVGL Tasks[https://docs.lvgl.io/7.11/k.html].
+ * about LVGL Tasks[https://docs.lvgl.io/7.11/overview/task.html].
  */
 static void guiTask(void *pvParameter) {
     
@@ -368,5 +389,170 @@ static void guiTask(void *pvParameter) {
     vTaskDelete(NULL);
 }
 #endif
-/* ----------------------------------------- END -------------------------------------------------*/
-/* ==================================================================================================*/
+/* ----------------------------------------------- End -----------------------------------------------*/
+/* ===================================================================================================*/
+
+/* ===================================================================================================*/
+/* ----------------------------------------- Expansion Ports -----------------------------------------*/
+#if CONFIG_SOFTWARE_EXPPORTS_SUPPORT
+
+
+static esp_err_t check_pins(gpio_num_t pin, pin_mode_t mode){
+    if (pin != PORT_B_ADC_PIN && pin != PORT_B_DAC_PIN && pin != PORT_C_UART_RX_PIN && pin != PORT_C_UART_TX_PIN){
+        ESP_LOGE(TAG, "Only Port B (GPIO 26 and 36) is supported. Pin selected: %d", pin);
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    if (mode == DAC && pin != PORT_B_DAC_PIN){
+        ESP_LOGE(TAG, "DAC is only supported on GPIO 26.");
+        return ESP_ERR_NOT_SUPPORTED;
+    } 
+    else if (mode == ADC && pin != PORT_B_ADC_PIN){
+        ESP_LOGE(TAG, "ADC is only supported on GPIO 36.");
+        return ESP_ERR_NOT_SUPPORTED;
+    } else if (mode == UART && (pin != PORT_C_UART_TX_PIN && pin != PORT_C_UART_RX_PIN)){
+        ESP_LOGE(TAG, "UART is only supported on GPIO 13 (receive) and GPIO 14 (transmit).");
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    return ESP_OK;
+}
+
+esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode){
+    esp_err_t err = check_pins(pin, mode);
+    if (err != ESP_OK){
+        return err;
+    }
+
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
+    io_conf.pin_bit_mask = (1ULL<<PORT_B_DAC_PIN);
+
+    if (mode == OUTPUT){
+        io_conf.mode = GPIO_MODE_OUTPUT; 
+        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    }
+    else if (mode == INPUT){
+        io_conf.mode = GPIO_MODE_INPUT;
+        io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+        io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    }
+    else if (mode == ADC){
+        err = adc1_config_width(ADC_WIDTH);
+        if(err != ESP_OK){
+            ESP_LOGE(TAG, "Error configuring ADC width on pin %d. Error code: %d", pin, err);
+            return err;
+        }
+        
+        err = adc1_config_channel_atten(ADC_CHANNEL, ADC_ATTENUATION);
+        if(err != ESP_OK){
+            ESP_LOGE(TAG, "Error configuring ADC channel attenuation on pin %d. Error code: %d", pin, err);
+        }
+        
+        adc_characterization = calloc(1, sizeof(esp_adc_cal_characteristics_t));
+        esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTENUATION, ADC_WIDTH, DEFAULT_VREF, adc_characterization);
+    }
+    else if (mode == DAC){
+        dac_output_enable(DAC_CHANNEL);
+    }
+    else if (mode == UART){
+        err = uart_driver_install(PORT_C_UART_NUM, UART_RX_BUF_SIZE, 0, 0, NULL, 0);
+        if(err != ESP_OK){
+            ESP_LOGE(TAG, "UART driver installation failed for UART num %d", PORT_C_UART_NUM);
+            return err;
+        }
+
+        err = uart_set_pin(PORT_C_UART_NUM, PORT_C_UART_TX_PIN, PORT_C_UART_RX_PIN, 
+        UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+        if(err != ESP_OK){
+            ESP_LOGE(TAG, "Failed to set pins %d, %d, to  UART %d.", PORT_C_UART_RX_PIN, PORT_C_UART_TX_PIN, PORT_C_UART_NUM);
+        }
+    }
+    else if (mode == NONE){
+        dac_output_disable(DAC_CHANNEL);
+        gpio_reset_pin(pin);
+        uart_driver_delete(UART_NUM_2);
+    }
+    else {
+        ESP_LOGE(TAG, "Invalid mode selected for GPIO %d", PORT_B_DAC_PIN);
+        return err;
+    }
+    err = gpio_config(&io_conf);//configure GPIO with the given settings
+    if (err != ESP_OK){
+        ESP_LOGE(TAG, "Error configuring GPIO %d", PORT_B_DAC_PIN);
+    }
+    return err;
+}
+
+bool Core2ForAWS_Port_Read(gpio_num_t pin){
+    ESP_ERROR_CHECK_WITHOUT_ABORT(check_pins(pin, INPUT));
+
+    return gpio_get_level(PORT_B_DAC_PIN);
+}
+
+esp_err_t Core2ForAWS_Port_Write(gpio_num_t pin, bool level){
+    esp_err_t err = check_pins(pin, OUTPUT);
+    
+    err = gpio_set_level(PORT_B_DAC_PIN, level);
+    if (err != ESP_OK){
+        ESP_LOGE(TAG, "Error setting GPIO %d state", PORT_B_DAC_PIN);
+    }
+    return err;
+}
+
+uint32_t Core2ForAWS_Port_B_ADC_ReadRaw(void){
+    return adc1_get_raw(ADC_CHANNEL);
+}
+
+uint32_t Core2ForAWS_Port_B_ADC_ReadMilliVolts(void){
+    uint32_t voltage;
+    ESP_ERROR_CHECK_WITHOUT_ABORT(esp_adc_cal_get_voltage(ADC_CHANNEL, adc_characterization, &voltage));
+    return voltage;
+}
+
+esp_err_t Core2ForAWS_Port_B_DAC_WriteMilliVolts(uint16_t mvolts){
+    esp_err_t err = dac_output_voltage(DAC_CHANNEL, mvolts);
+    return err;
+}
+
+esp_err_t Core2ForAWS_Port_C_UART_Begin(uint32_t baud){
+    const uart_config_t uart_config = {
+        .baud_rate = baud,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .rx_flow_ctrl_thresh = 122,
+    };
+    
+    esp_err_t err = uart_param_config(PORT_C_UART_NUM, &uart_config);
+    if(err != ESP_OK){
+        ESP_LOGE(TAG, "Failed to configure UART %d with the provided configuration.", PORT_C_UART_NUM);
+        return err;
+    }    
+
+    return err;
+}
+
+int Core2ForAWS_Port_C_UART_Send(const char *message, size_t len){
+    return uart_write_bytes(PORT_C_UART_NUM, message, len);
+}
+
+int Core2ForAWS_Port_C_UART_Receive(uint8_t *message_buffer){
+    int rxBytes = 0;
+    int cached_buffer_length = 0;
+
+    esp_err_t err = uart_get_buffered_data_len(PORT_C_UART_NUM, (size_t*)&cached_buffer_length);
+    if (err != ESP_OK){
+        ESP_LOGE(TAG, "Failed to get UART ring buffer length. Check if pins were set to UART and has been configured.");
+        abort();
+    }
+
+    if (cached_buffer_length) {
+        rxBytes = uart_read_bytes(PORT_C_UART_NUM, message_buffer, (size_t)&cached_buffer_length, pdMS_TO_TICKS(1000));
+    }
+    return rxBytes;
+}
+
+#endif
+/* ----------------------------------------------- End -----------------------------------------------*/
+/* ===================================================================================================*/

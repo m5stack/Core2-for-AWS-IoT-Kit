@@ -1,5 +1,8 @@
 /*
- * AWS IoT EduKit - Cloud Connected Blinky v1.1.0
+ * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * Cloud Connected Blinky v1.3.0
+ * blink.h
+ * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -19,5 +22,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+TaskHandle_t xBlink;
 
 void blink_task(void *arg);
