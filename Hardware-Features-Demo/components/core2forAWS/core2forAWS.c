@@ -101,10 +101,10 @@ void Core2ForAWS_Button_Init(void) {
 #if CONFIG_SOFTWARE_SDCARD_SUPPORT
 esp_err_t Core2ForAWS_SDcard_Mount(const char *mount_path, sdmmc_card_t **out_card) {
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+    esp_vfs_fat_mount_config_t mount_config = {
         .format_if_mount_failed = false,
         .max_files = 5,
-        .allocation_unit_size = 16 * 1024
+        .allocation_unit_size = 512
     };
     sdmmc_card_t* card;
 

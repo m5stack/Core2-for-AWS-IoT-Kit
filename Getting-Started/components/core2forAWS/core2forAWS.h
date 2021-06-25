@@ -5,9 +5,9 @@
 
 #pragma once
 #include "axp192.h"
-
-#if CONFIG_SOFTWARE_ILI9342C_SUPPORT
 #include "freertos/FreeRTOS.h"
+
+#if CONFIG_SOFTWARE_ILI9342C_SUPPORT || CONFIG_SOFTWARE_SDCARD_SUPPORT
 #include "freertos/semphr.h"
 #include "lvgl/lvgl.h"
 #include "disp_driver.h"
@@ -95,6 +95,7 @@ extern SemaphoreHandle_t xGuiSemaphore;
 #endif
 
 #if CONFIG_SOFTWARE_SDCARD_SUPPORT
+#include "driver/gpio.h"
 #include "esp_freertos_hooks.h"
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
@@ -319,6 +320,7 @@ void Core2ForAWS_Button_Init(void);
 /* @[declare_core2foraws_button_init] */
 #endif
 
+#if CONFIG_SOFTWARE_SPEAKER_SUPPORT
 /**
  * @brief Enables or disables the NS4168 speaker amplifier.
  *
@@ -333,6 +335,8 @@ void Core2ForAWS_Button_Init(void);
 /* @[declare_core2foraws_speaker_enable] */
 void Core2ForAWS_Speaker_Enable(uint8_t state);
 /* @[declare_core2foraws_speaker_enable] */
+
+#endif
 
 /**
  * @brief Initializes the AXP192 Power Management Unit (PMU).
@@ -393,7 +397,6 @@ float Core2ForAWS_PMU_GetBatCurrent(void);
 /* @[declare_core2foraws_pmu_getbatcurrent] */
 
 #if CONFIG_SOFTWARE_ILI9342C_SUPPORT
-
 /**
  * @brief Initializes the display.
  *
