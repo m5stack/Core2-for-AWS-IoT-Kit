@@ -30,6 +30,7 @@ menu "Core2 for AWS hardware enable"
     config SOFTWARE_SDCARD_SUPPORT
         bool "SDcard"
         default y
+        select SOFTWARE_ILI9342C_SUPPORT
     config SOFTWARE_EXPPORTS_SUPPORT
         bool "Expansion Ports A, B, C"
         default y
