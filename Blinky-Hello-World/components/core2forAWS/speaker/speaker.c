@@ -21,7 +21,7 @@ void Speaker_Init() {
 #else
         .communication_format = I2S_COMM_FORMAT_I2S,
 #endif
-        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL2,
         .dma_buf_count = 2,
         .dma_buf_len = 128,
     };
