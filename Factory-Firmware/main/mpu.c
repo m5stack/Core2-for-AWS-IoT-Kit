@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.1.0
+ * Factory Firmware v2.1.1
  * mpu.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -37,7 +37,6 @@
 #include "core2forAWS.h"
 
 #include "mpu.h"
-#include "gauge_hand.c"
 
 /* 
 If you want to use Sebastian Madgwick's algorithym to calculate roll, pitch, yaw, add the libs from: 
@@ -57,6 +56,8 @@ Note: Sebastian Madgwick's algorithym implementation library is GPL licensed.
 // #define RADIANS_TO_DEGREES 180/M_PI
 
 static const char* TAG = MPU_TAB_NAME;
+
+LV_IMG_DECLARE(gauge_hand);
 
 void display_mpu_tab(lv_obj_t* tv){
     xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);   // Takes (blocks) the xGuiSemaphore mutex from being read/written by another task.

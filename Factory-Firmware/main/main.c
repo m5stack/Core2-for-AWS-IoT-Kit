@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.1.0
+ * Factory Firmware v2.1.1
  * main.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -47,8 +47,6 @@
 
 #include "core2forAWS.h"
 
-#include "music.c"
-#include "powered_by_aws_logo.c"
 #include "sound.h"
 #include "home.h"
 #include "wifi.h"
@@ -67,6 +65,8 @@ static void ui_start(void);
 static void tab_event_cb(lv_obj_t* slider, lv_event_t event);
 
 static lv_obj_t* tab_view;
+
+LV_IMG_DECLARE(powered_by_aws_logo);
 
 void app_main(void)
 {

@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Factory Firmware v2.1.0
+ * Factory Firmware v2.1.1
  * mic.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -37,12 +37,12 @@
 
 #include "mic.h"
 #include "fft.h"
-#include "color_map.c"
 
-#define CANVAS_WIDTH 240
-#define CANVAS_HEIGHT 60
+
 
 static const char *TAG = MICROPHONE_TAB_NAME;
+#define CANVAS_WIDTH 240
+#define CANVAS_HEIGHT 60
 
 static long map(long x, long in_min, long in_max, long out_min, long out_max) {
     long divisor = (in_max - in_min);
@@ -144,6 +144,8 @@ void fft_show_task(void* pvParameters) {
     lv_canvas_fill_bg(canvas, LV_COLOR_BLACK, LV_OPA_COVER);
     lv_obj_align(canvas, (lv_obj_t*)pvParameters, LV_ALIGN_IN_BOTTOM_MID, 0, -18);
     xSemaphoreGive(xGuiSemaphore);
+
+    extern const unsigned char color_map[768];
     
     for (;;) {
         if(mic_queue != NULL){
