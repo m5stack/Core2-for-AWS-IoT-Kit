@@ -4,6 +4,6 @@
 #
 
 PROJECT_NAME := AWS_IoT_EduKit-Getting_Started
-PROJECT_VER := 1.0.1
+PROJECT_VER := 1.2.0
 
 include $(IDF_PATH)/make/project.mk
