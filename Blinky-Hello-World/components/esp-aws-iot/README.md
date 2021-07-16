@@ -13,9 +13,9 @@ This framework enables AWS IoT cloud connectivity with ESP32 based platforms usi
   - ESP-IDF v3.1 and above is recommended version
 - Please refer to [example README](examples/README.md) for more information on setting up examples
 
-## Using an ATECC608 with the ESP-AWS-IoT
-   The `esp-aws-iot` contains the support for using a `secure element` chip from microchip i.e. `ATECC608`. This will store the private key used for the TLS communication in the `secure element` which has the hardware security. The module [ESP32-WROOM-32SE](https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32se_datasheet_en.pdf) which integrates the `ATECC608`, can be readily used for this purpose. To use the `secure element` for the TLS, configure the project with help of the following steps.
-> To use the `secure element`(ATECC608) for the TLS connection, it must be already configured. Please refer to the [eps_cryptoauth_utility](https://github.com/espressif/esp-cryptoauthlib/tree/master/esp_cryptoauth_utility) for more details.
+## Using an ATECC608A with the ESP-AWS-IoT
+   The `esp-aws-iot` contains the support for using a `secure element` chip from microchip i.e. `ATECC608A`. This will store the private key used for the TLS communication in the `secure element` which has the hardware security. The module [ESP32-WROOM-32SE](https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32se_datasheet_en.pdf) which integrates the `ATECC608A`, can be readily used for this purpose. To use the `secure element` for the TLS, configure the project with help of the following steps.
+> To use the `secure element`(ATECC608A) for the TLS connection, it must be already configured. Please refer to the [eps_cryptoauth_utility](https://github.com/espressif/esp-cryptoauthlib/tree/master/esp_cryptoauth_utility) for more details.
 ### Project Configuration
 
 1. Add [esp-cryptoauthlib](https://github.com/espressif/esp-cryptoauthlib) as a component to your project with the help of following commands,
@@ -35,7 +35,7 @@ This framework enables AWS IoT cloud connectivity with ESP32 based platforms usi
 
 5. Project TLS configuration -
 
-    i) If you have the `Trust&GO` type of ATECC608 chip then you can set `mqttInitParams.pDeviceCertLocation = "#"` in your project. It will make the `esp-aws-iot` read the certificate from `ATECC608` and use it for the TLS. For the other types of ATECC608 chips, you will need to provide the certificate externally (embed the certificate).
+    i) If you have the `Trust&GO` type of ATECC608A chip then you can set `mqttInitParams.pDeviceCertLocation = "#"` in your project. It will make the `esp-aws-iot` read the certificate from `ATECC608A` and use it for the TLS. For the other types of ATECC608A chips, you will need to provide the certificate externally (embed the certificate).
 
-    ii) Tell the `esp-aws-iot` to find the client private key in a slot by setting `mqttInitParams.pDevicePrivateKeyLocation = “#0”` in your project, where the digit 0 indicates the slot in the ATECC608 in which the private key is stored.  In most circumstances, the key will be stored in slot 0.
+    ii) Tell the `esp-aws-iot` to find the client private key in a slot by setting `mqttInitParams.pDevicePrivateKeyLocation = “#0”` in your project, where the digit 0 indicates the slot in the ATECC608A in which the private key is stored.  In most circumstances, the key will be stored in slot 0.
 > Along with the secure element configurations you will have to perform additional example specific configurations (if required).

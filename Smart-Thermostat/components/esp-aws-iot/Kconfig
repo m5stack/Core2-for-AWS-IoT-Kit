@@ -47,7 +47,6 @@ config AWS_IOT_MQTT_RX_BUF_LEN
         Longer messages are dropped.
 
 
-
 config AWS_IOT_MQTT_NUM_SUBSCRIBE_HANDLERS
     int "Maximum MQTT Topic Filters"
     default 5
@@ -77,7 +76,6 @@ config AWS_IOT_USE_HARDWARE_SECURE_ELEMENT
     depends on ATCA_MBEDTLS_ECDSA
     select ATCA_MBEDTLS_ECDSA_SIGN
     select ATCA_MBEDTLS_ECDSA_VERIFY
-    select CONFIG_EXAMPLE_EMBEDDED_CERTS
     help
         Enable this option to use the hardware secure element for the TLS. If you have added the
         esp-cryptoauthlib (https://github.com/espressif/esp-cryptoauthlib) as a component in your project.
@@ -156,4 +154,11 @@ menu "Thing Shadow"
             Maximum length of a Thing Name.
 
 endmenu  # Thing Shadow
+
+config AWS_IOT_SSL_SOCKET_NON_BLOCKING
+    bool "Set socket as non blocking"
+    default n
+    help
+        Allow setting the ssl socket to non blocking mode
+
 endmenu  # AWS IoT
