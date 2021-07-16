@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Smart Thermostat v1.2.0
+ * Smart Thermostat v1.2.1
  * main.c
  * 
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -276,7 +276,7 @@ void aws_iot_task(void *param) {
         abort();
     }
 
-    ui_textarea_add("\n\nDevice client Id:\n>> %s <<\n", client_id, CLIENT_ID_LEN);
+    ui_textarea_add("\nDevice client Id:\n>> %s <<\n", client_id, CLIENT_ID_LEN);
 
     /* Wait for WiFI to show as connected */
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
@@ -301,7 +301,7 @@ void aws_iot_task(void *param) {
         ESP_LOGE(TAG, "aws_iot_shadow_connect returned error %d, aborting...", rc);
         abort();
     }
-    ui_textarea_add("Connected to AWS IoT Device Shadow service", NULL, 0);
+    ui_textarea_add("\nConnected to AWS IoT Core and pub/sub to the device shadow state\n", NULL, 0);
 
     xTaskCreatePinnedToCore(&microphone_task, "microphone_task", 4096, NULL, 1, NULL, 1);
 

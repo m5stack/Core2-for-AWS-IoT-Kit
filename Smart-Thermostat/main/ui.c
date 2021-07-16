@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Smart Thermostat v1.2.0
+ * Smart Thermostat v1.2.1
  * ui.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -29,18 +29,15 @@
 #include <string.h>
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/semphr.h"
-#include "freertos/queue.h"
-#include "freertos/event_groups.h"
 
 #include "esp_log.h"
-
 #include "core2forAWS.h"
 #include "ui.h"
 
 #define MAX_TEXTAREA_LENGTH 1024
 
+static lv_obj_t *active_screen;
 static lv_obj_t *out_txtarea;
 static lv_obj_t *wifi_label;
 
@@ -94,17 +91,18 @@ void ui_wifi_label_update(bool state){
 
 void ui_init() {
     xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);
-    wifi_label = lv_label_create(lv_scr_act(), NULL);
+    active_screen = lv_scr_act();
+    wifi_label = lv_label_create(active_screen, NULL);
     lv_obj_align(wifi_label,NULL,LV_ALIGN_IN_TOP_RIGHT, 0, 6);
     lv_label_set_text(wifi_label, LV_SYMBOL_WIFI);
     lv_label_set_recolor(wifi_label, true);
-    
-    out_txtarea = lv_textarea_create(lv_scr_act(), NULL);
+
+    out_txtarea = lv_textarea_create(active_screen, NULL);
     lv_obj_set_size(out_txtarea, 300, 180);
     lv_obj_align(out_txtarea, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, -12);
     lv_textarea_set_max_length(out_txtarea, MAX_TEXTAREA_LENGTH);
     lv_textarea_set_text_sel(out_txtarea, false);
     lv_textarea_set_cursor_hidden(out_txtarea, true);
-    lv_textarea_set_text(out_txtarea, "Starting Cloud Connected Blinky\n");
+    lv_textarea_set_text(out_txtarea, "Starting Smart Thermostat\n");
     xSemaphoreGive(xGuiSemaphore);
 }

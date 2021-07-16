@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Cloud Connected Blinky v1.3.0
+ * Cloud Connected Blinky v1.3.1
  * main.c
  * 
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -208,6 +208,7 @@ void aws_iot_task(void *param) {
     } while(SUCCESS != rc);
     ui_textarea_add("Successfully connected!\n", NULL, 0);
     ESP_LOGI(TAG, "Successfully connected to AWS IoT Core!");
+
     /*
      * Enable Auto Reconnect functionality. Minimum and Maximum time for exponential backoff for retries.
      *  #AWS_IOT_MQTT_MIN_RECONNECT_WAIT_INTERVAL

@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Smart Thermostat v1.2.0
+ * Smart Thermostat v1.2.1
  * wifi.h
  * 
  * AWS IoT EduKit - Smart Thermostat v1.2.0
