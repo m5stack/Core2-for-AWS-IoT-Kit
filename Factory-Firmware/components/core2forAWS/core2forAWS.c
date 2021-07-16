@@ -38,7 +38,7 @@ void Core2ForAWS_Init(void) {
         .sclk_io_num = 18,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-        .max_transfer_sz = 320 * 64 * 3,
+        .max_transfer_sz = 320 * 32 * 3,
     };
     spi_bus_initialize(SPI_HOST_USE, &bus_cfg, SPI_DMA_CHAN);
 #endif
