@@ -226,10 +226,8 @@ class Config:
         if self.__is_valid_token() is False:
             print('Previous Session expired. Initialising new session...')
             log.info('Previous Session expired. Initialising new session...')
-            username = self.get_token_attribute('email')
             refresh_token = self.get_refresh_token()
-            access_token, id_token = self.__get_new_token(username,
-                                                          refresh_token)
+            access_token, id_token = self.__get_new_token(refresh_token)
             self.update_config(access_token, id_token)
             print('Previous Session expired. Initialising new session...'
                   'Success')
@@ -324,7 +322,7 @@ class Config:
                 return True
         return False
 
-    def __get_new_token(self, username, refresh_token):
+    def __get_new_token(self, refresh_token):
         """
         Get new token for User Login Session
 
@@ -341,7 +339,6 @@ class Config:
         log.info("Extending user login session.")
         path = 'login'
         request_payload = {
-            'user_name':  username,
             'refreshtoken': refresh_token
             }
 

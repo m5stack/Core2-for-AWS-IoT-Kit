@@ -31,14 +31,7 @@ LV_IMG_DECLARE(house_on);
 LV_IMG_DECLARE(house_off);
 LV_IMG_DECLARE(thermometer);
 LV_IMG_DECLARE(fan_off);
-LV_IMG_DECLARE(fan_1);
-LV_IMG_DECLARE(fan_2);
-LV_IMG_DECLARE(fan_3);
-LV_IMG_DECLARE(fan_4);
-LV_IMG_DECLARE(fan_5);
-LV_IMG_DECLARE(fan_6);
-
-static const lv_img_dsc_t *fanImages[] = {&fan_1,&fan_2,&fan_3,&fan_4,&fan_5,&fan_6};
+LV_IMG_DECLARE(fan_spinning);
 
 #define CANVAS_WIDTH 100
 #define CANVAS_HEIGHT 60
@@ -63,28 +56,22 @@ static bool g_fan_power = false;
 
 static void spin_update(void *priv)
 {
-    int fan_index = 0;
-    int speed_skip = 0;
+    int angle = 0;
     while(1)
     {
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(200));
         if(pdTRUE == xSemaphoreTake(xGuiSemaphore, 0))
         {
             if(g_fan_speed && g_fan_power)
             {
-                if(speed_skip == 0)
-                {
-                    lv_img_set_src(fan_object, fanImages[fan_index++]);
-                    if(fan_index >= (sizeof(fanImages)/sizeof(*fanImages))) fan_index = 0;
-                    speed_skip = 5 - g_fan_speed;
-                }
-                else
-                {
-                    speed_skip --;
-                }
+                angle += g_fan_speed * 90;
+                if(angle >= 3600) angle = 0;
+                lv_img_set_angle(fan_object, angle);
+                lv_img_set_src(fan_object, &fan_spinning);
             }
             else
             {
+                lv_img_set_angle(fan_object, 0);
                 lv_img_set_src(fan_object, &fan_off);
             }
             xSemaphoreGive(xGuiSemaphore);
@@ -112,6 +99,9 @@ static void sw1_event_handler(lv_obj_t * obj, lv_event_t event)
 void display_init()
 {
     Core2ForAWS_Display_SetBrightness(100);
+    
+    lv_obj_set_style_local_bg_color (lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_local_bg_opa( lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_COVER);
 }
 
 void display_fan_init()
@@ -123,6 +113,8 @@ void display_fan_init()
     fan_object = lv_img_create(lv_scr_act(), NULL);
     lv_img_set_src(fan_object, &fan_off);
     lv_obj_align(fan_object, lv_scr_act(), LV_ALIGN_IN_TOP_RIGHT, -20, 0);
+
+
     ESP_LOGI(TAG,"configured fan_object");
 
     fan_strength_slider = lv_slider_create(lv_scr_act(), NULL);
@@ -144,7 +136,7 @@ void display_fan_init()
 
     xSemaphoreGive(xGuiSemaphore);
 
-    xTaskCreatePinnedToCore(spin_update, "fan", 4096, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(spin_update, "fan", 2048, NULL, 1, NULL, 1);
 
     ESP_LOGI(TAG,"fan configured");
 }
@@ -237,7 +229,7 @@ void display_lights_on(int h, int s, int v)
 void display_fan_speed(int s)
 {
     lv_slider_set_value(fan_strength_slider,s,LV_ANIM_OFF);
-    ESP_LOGI(TAG,"fan spinning %d",s);
+    ESP_LOGI(TAG,"fan speed %d",s);
     g_fan_speed = s;
 }
 
@@ -250,7 +242,7 @@ void display_fan_off()
 
 void display_fan_on()
 {
-    ESP_LOGI(TAG,"switch on");
+    ESP_LOGI(TAG,"fan on");
     lv_switch_on(fan_sw1, LV_ANIM_OFF);
     g_fan_power = true;
 }

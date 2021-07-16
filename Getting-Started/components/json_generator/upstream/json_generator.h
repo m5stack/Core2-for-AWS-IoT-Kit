@@ -68,6 +68,8 @@ typedef struct {
 	bool comma_req;
     /** (For Internal use only) */
 	char *free_ptr;
+    /** Total length */
+    int total_len;
 } json_gen_str_t;
 
 /** Start a JSON String
@@ -98,8 +100,10 @@ void json_gen_str_start(json_gen_str_t *jstr, char *buf, int buf_size,
  *
  * \param[in] jstr Pointer to the \ref json_gen_str_t structure initialised by
  * json_gen_str_start()
+ *
+ * \return Total length of the JSON created, including the NULL termination byte.
  */
-void json_gen_str_end(json_gen_str_t *jstr);
+int json_gen_str_end(json_gen_str_t *jstr);
 
 /** Start a JSON object
  *

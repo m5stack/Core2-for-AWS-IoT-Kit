@@ -4,12 +4,7 @@ idf_component_register(SRCS
                        ./fan.c
                        ./temperature.c
                        ./display.c
-                       ./fan_1.c
-                       ./fan_2.c
-                       ./fan_3.c
-                       ./fan_4.c
-                       ./fan_5.c
-                       ./fan_6.c
+                       ./fan_spinning.c
                        ./fan_off.c
                        ./house_off.c
                        ./house_on.c

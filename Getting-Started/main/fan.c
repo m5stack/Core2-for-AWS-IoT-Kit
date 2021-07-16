@@ -116,4 +116,3 @@ void fan_set_power(bool power)
         display_fan_off();
     }
 }
-

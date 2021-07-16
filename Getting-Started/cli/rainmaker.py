@@ -25,7 +25,7 @@ from rmaker_lib.logger import log
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.set_defaults(func=None)
     subparsers = parser.add_subparsers(help='Functions')
 
@@ -59,8 +59,8 @@ def main():
     forgot_password_parser.set_defaults(func=forgot_password)
 
     getnodes_parser = subparsers.add_parser('getnodes',
-                                            help='List all nodes associated\
-                                                  with the user')
+                                            help='List all nodes associated'
+                                                  ' with the user')
     getnodes_parser.set_defaults(func=get_nodes)
 
     # Node Config
@@ -73,8 +73,8 @@ def main():
     getnodeconfig_parser.set_defaults(func=get_node_config)
 
     getnodestatus_parser = subparsers.add_parser('getnodestatus',
-                                                 help='Get online/offline\
-                                                       status of the node')
+                                                 help='Get online/offline'
+                                                       ' status of the node')
     getnodestatus_parser.add_argument('nodeid',
                                       type=str,
                                       metavar='<nodeid>',
@@ -82,9 +82,9 @@ def main():
     getnodestatus_parser.set_defaults(func=get_node_status)
 
     setparams_parser = subparsers.add_parser('setparams',
-                                             help='Set node parameters.\
-                                                   Note: Enter JSON data in\
-                                                   single quotes')
+                                             help='Set node parameters'
+                                                   ' \nNote: Enter JSON data in'
+                                                   ' single quotes')
     setparams_parser.add_argument('nodeid',
                                   metavar='<nodeid>',
                                   help='Node ID for the node')
@@ -117,8 +117,8 @@ def main():
     remove_node_parser.set_defaults(func=remove_node)
 
     provision_parser = subparsers.add_parser('provision',
-                                             help='Provision the node\
-                                                   to join Wi-Fi network')
+                                             help='Provision the node'
+                                                   ' to join Wi-Fi network')
     provision_parser.add_argument('pop',
                                   type=str,
                                   metavar='<pop>',
@@ -126,15 +126,14 @@ def main():
     provision_parser.set_defaults(func=provision)
 
     getmqtthost_parser = subparsers.add_parser('getmqtthost',
-                                               help='Get the MQTT Host URL\
-                                                     to be used in the\
-                                                     firmware')
+                                               help='Get the MQTT Host URL'
+                                                     ' to be used in the'
+                                                     ' firmware')
     getmqtthost_parser.set_defaults(func=get_mqtt_host)
 
     claim_parser = subparsers.add_parser('claim',
-                                         help='Claim the node connected to the given serial port\
-                                              (Get cloud credentials)',
-                                         formatter_class=argparse.RawTextHelpFormatter)
+                                         help='Claim the node connected to the given serial port'
+                                              ' \n(Get cloud credentials)')
 
     claim_parser.add_argument("port", metavar='<port>',
                               default=None,
@@ -156,8 +155,8 @@ def main():
     claim_parser.set_defaults(func=claim_node, parser=claim_parser)
 
     test_parser = subparsers.add_parser('test',
-                                        help='Test commands to check\
-                                              user node mapping')
+                                        help='Test commands to check'
+                                              ' user node mapping')
     test_parser.add_argument('--addnode',
                              metavar='<nodeid>',
                              help='Add user node mapping')
@@ -178,63 +177,160 @@ def main():
     user_info_parser = subparsers.add_parser("getuserinfo",
                                          help="Get details of current (logged-in) user")
     user_info_parser.set_defaults(func=get_user_details)
+    
     # Node Sharing
-    shared_node_parser = subparsers.add_parser('sharing',
-                                               help='Node Sharing Operations')
+    sharing_parser = subparsers.add_parser('sharing',
+                                            help='Node Sharing Operations',
+                                            formatter_class=argparse.RawTextHelpFormatter,
+                                            epilog="\nUser Login: \n\tCurrent (logged-in) user must be "
+                                                 "a primary or secondary user to the node(s)\n\t"
+                                                 "while performing the sharing operations")
 
-    shared_node_subparser = shared_node_parser.add_subparsers(dest="sharing_ops")
+    sharing_parser.set_defaults(func=node_sharing_ops, parser=sharing_parser)
+
+    sharing_subparser = sharing_parser.add_subparsers(dest="sharing_ops")
+
+    # Share node with user
+    add_op_parser = sharing_subparser.add_parser('add_user',
+                                                 help='Request to add user for sharing the node(s)',
+                                                 formatter_class=argparse.RawTextHelpFormatter,
+                                                 description="Send request to add user for the node(s)")
+
+    add_op_parser.add_argument('--user',
+                               type=str,
+                               metavar='<user_name>',
+                               help='User Name (Email) of secondary user',
+                               required=True)
     
-    get_shared_node_parser = shared_node_subparser.add_parser('list',
-                                                              help='List shared nodes details '
-                                                              'for current (logged in) user',
-                                                              formatter_class=argparse.RawTextHelpFormatter)
-
-    get_shared_node_parser.add_argument('--node',
-                                    type=str,
-                                    metavar='<node_id>',
-                                    help='Node Id of the node')
-    get_shared_node_parser.set_defaults(func=list_shared_nodes)
-
-    set_shared_node_parser = shared_node_subparser.add_parser('add',
-                                                              help='Add nodes for sharing with '
-                                                              'a particular user',
-                                                              formatter_class=argparse.RawTextHelpFormatter)
-
-    set_shared_node_parser.add_argument('--email',
-                                    type=str,
-                                    metavar='<email>',
-                                    help='Email address of secondary user',
-                                    required=True)
+    add_op_parser.add_argument('--nodes',
+                               type=str,
+                               metavar='<node_ids>',
+                               help="Node Id's of node(s)\n"
+                               "format: <nodeid1>,<nodeid2>,...",
+                               required=True)
     
-    set_shared_node_parser.add_argument('--nodes',
-                                    type=str,
-                                    metavar='<node_ids>',
-                                    help="Node Id's of nodes to share\n"
-                                    "format: <nodeid1>,<nodeid2>,...",
-                                    required=True)
-    
-    set_shared_node_parser.set_defaults(func=add_shared_nodes)
+    add_op_parser.set_defaults(func=node_sharing_ops, parser=add_op_parser)
 
-    remove_shared_node_parser = shared_node_subparser.add_parser('remove',
-                                                              help='Remove nodes shared with '
-                                                              'a particular user',
-                                                              formatter_class=argparse.RawTextHelpFormatter)
 
-    remove_shared_node_parser.add_argument('--email',
-                                    type=str,
-                                    metavar='<email>',
-                                    help='Email address of secondary user',
-                                    required=True)
-    
-    remove_shared_node_parser.add_argument('--nodes',
-                                    type=str,
-                                    metavar='<node_ids>',
-                                    help="Node Id's of nodes to remove sharing\n"
-                                    "format: <nodeid1>,<nodeid2>,...",
-                                    required=True)
-    
-    remove_shared_node_parser.set_defaults(func=remove_shared_nodes)
+    # Remove shared nodes with user
+    remove_user_op_parser = sharing_subparser.add_parser('remove_user',
+                                                            help='Remove user from shared node(s)',
+                                                            formatter_class=argparse.RawTextHelpFormatter,
+                                                            description='Remove user from shared node(s)')
 
+    remove_user_op_parser.add_argument('--user',
+                                       type=str,
+                                       metavar='<user_name>',
+                                       help='User Name (Email) of secondary user',
+                                       required=True)
+
+    remove_user_op_parser.add_argument('--nodes',
+                                       type=str,
+                                       metavar='<node_ids>',
+                                       help="Node Id's of shared node(s)\n"
+                                       "format: <nodeid1>,<nodeid2>,...",
+                                       required=True)
+
+    remove_user_op_parser.set_defaults(func=node_sharing_ops, parser=remove_user_op_parser)
+
+
+    # Accept sharing request
+    add_accept_op_parser = sharing_subparser.add_parser('accept',
+                                                         help='Accept sharing request(s)',
+                                                         formatter_class=argparse.RawTextHelpFormatter,
+                                                         description="Accept request for sharing node(s) received by "
+                                                         "current (logged-in) user")
+
+    add_accept_op_parser.add_argument('--id',
+                                       type=str,
+                                       metavar='<request_id>',
+                                       required=True,
+                                       help='Id of the sharing request'
+                                       '\nYou can use {list_requests} command to list pending request(s)')
+
+    add_accept_op_parser.set_defaults(func=node_sharing_ops, parser=add_accept_op_parser)
+
+    # Decline sharing request
+    add_decline_op_parser = sharing_subparser.add_parser('decline',
+                                                         help='Decline sharing request(s)',
+                                                         formatter_class=argparse.RawTextHelpFormatter,
+                                                         description="Decline request to share node(s) received by "
+                                                         "current (logged-in) user")
+
+    add_decline_op_parser.add_argument('--id',
+                                       type=str,
+                                       metavar='<request_id>',
+                                       required=True,
+                                       help='Id of the sharing request'
+                                       '\nYou can use {list_requests} command to list pending request(s)')
+    
+    add_decline_op_parser.set_defaults(func=node_sharing_ops, parser=add_decline_op_parser)
+
+    # Cancel pending requests
+    cancel_request_op_parser = sharing_subparser.add_parser('cancel',
+                                                            help='Cancel sharing request(s)',
+                                                            formatter_class=argparse.RawTextHelpFormatter,
+                                                            description='Cancel request to share node(s) '
+                                                            'sent by current (logged-in) user')
+
+    cancel_request_op_parser.add_argument('--id',
+                                            type=str,
+                                            metavar='<request_id>',
+                                            help='Id of the sharing request\nYou can use {list_requests} command to list pending request(s)',
+                                            required=True)
+
+    cancel_request_op_parser.set_defaults(func=node_sharing_ops, parser=cancel_request_op_parser)
+
+    # List sharing details for node(s) associated with user
+    list_nodes_op_parser = sharing_subparser.add_parser('list_nodes',
+                                                        help='List node(s) sharing details',
+                                                        formatter_class=argparse.RawTextHelpFormatter,
+                                                        description='Get sharing details of node(s) associated with current (logged-in) user'
+                                                        )
+
+    list_nodes_op_parser.add_argument('--node',
+                                     type=str,
+                                     metavar='<node_id>',
+                                     help='Node Id of the node.\nIf provided, will list sharing details of a particular node'
+                                     '\nDefault: List details of all node(s)')
+
+    list_nodes_op_parser.set_defaults(func=node_sharing_ops, parser=list_nodes_op_parser)
+
+    # List details of sharing request(s)
+    list_request_op_parser = sharing_subparser.add_parser('list_requests',
+                                                          help='List pending request(s)',
+                                                          formatter_class=argparse.RawTextHelpFormatter,
+                                                          description='Get details of pending request(s) ',
+                                                          epilog="primary user:\n\tGet details of pending request(s) "
+                                                          "sent by current (logged-in) user"
+                                                          "\nsecondary user:\n\tGet details of pending request(s) "
+                                                          "received by current (logged-in) user"
+                                                          )
+
+    list_request_op_parser.add_argument('--primary_user',
+                                       action='store_true',
+                                       help='If provided, current (logged-in) user is set as primary user\n'
+                                            'Default: User is set as secondary user')
+
+    list_request_op_parser.add_argument('--id',
+                                       type=str,
+                                       metavar='<request_id>',
+                                       help='Id of the sharing request\nIf provided, will list details of a particular request'
+                                       '\nDefault: List details of all request(s)')
+
+    list_request_op_parser.set_defaults(func=node_sharing_ops, parser=list_request_op_parser)
+
+    # Set parsers to print help for associated commands
+    PARSER_HELP_PRINT = {
+        'sharing_ops': sharing_parser,
+        'add_user': add_op_parser,
+        'accept': add_accept_op_parser,
+        'decline': add_decline_op_parser,
+        'cancel': cancel_request_op_parser,
+        'remove_user': remove_user_op_parser,
+        'list_nodes': list_nodes_op_parser,
+        'list_requests': list_request_op_parser
+        }
 
     args = parser.parse_args()
 
@@ -247,13 +343,7 @@ def main():
         except Exception as err:
             log.error(err)
     else:
-        try:
-            if 'sharing_ops' in vars(args):
-                shared_node_parser.print_help()
-            else:
-                parser.print_help()
-        except AttributeError:
-            parser.print_help()
+        parser.print_help()
 
 
 if __name__ == '__main__':

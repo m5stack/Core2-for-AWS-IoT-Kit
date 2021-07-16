@@ -5,15 +5,13 @@ set(core_srcs "src/core/esp_rmaker_core.c"
         "src/core/esp_rmaker_param.c"
         "src/core/esp_rmaker_node_config.c"
         "src/core/esp_rmaker_client_data.c"
-        "src/core/esp_rmaker_time_sync.c"
-        "src/core/esp_rmaker_timezone.c"
-        "src/core/esp_rmaker_storage.c"
+        "src/core/esp_rmaker_time_service.c"
+        "src/core/esp_rmaker_system_service.c"
         "src/core/esp_rmaker_user_mapping.pb-c.c"
-        "src/core/esp_rmaker_utils.c"
         "src/core/esp_rmaker_user_mapping.c"
         "src/core/esp_rmaker_schedule.c")
 
-set(priv_req protobuf-c json_parser json_generator wifi_provisioning nvs_flash esp_http_client app_update esp-tls mbedtls mqtt esp_https_ota console esp_local_ctrl esp_https_server mdns esp_schedule)
+set(priv_req protobuf-c json_parser json_generator wifi_provisioning nvs_flash esp_http_client app_update esp-tls mbedtls esp_https_ota console esp_local_ctrl esp_https_server mdns esp_schedule)
 
 
 if(CONFIG_ESP_RMAKER_ASSISTED_CLAIM)
@@ -55,12 +53,12 @@ set(standard_types_srcs "src/standard_types/esp_rmaker_standard_params.c"
 idf_component_register(SRCS ${core_srcs} ${mqtt_srcs} ${ota_srcs} ${standard_types_srcs} ${console_srcs}
                        INCLUDE_DIRS "include"
                        PRIV_INCLUDE_DIRS ${core_priv_includes} ${ota_priv_includes} ${console_priv_includes}
-                       REQUIRES
+                       REQUIRES rmaker_common
                        PRIV_REQUIRES ${priv_req})
 
-target_add_binary_data(${COMPONENT_TARGET} "server_certs/mqtt_server.crt" TEXT)
-target_add_binary_data(${COMPONENT_TARGET} "server_certs/claim_service_server.crt" TEXT)
-target_add_binary_data(${COMPONENT_TARGET} "server_certs/ota_server.crt" TEXT)
+target_add_binary_data(${COMPONENT_TARGET} "server_certs/rmaker_mqtt_server.crt" TEXT)
+target_add_binary_data(${COMPONENT_TARGET} "server_certs/rmaker_claim_service_server.crt" TEXT)
+target_add_binary_data(${COMPONENT_TARGET} "server_certs/rmaker_ota_server.crt" TEXT)
 
 # Added just to automatically trigger re-runs of CMake
 git_describe(RMAKER_VERSION ${COMPONENT_DIR})

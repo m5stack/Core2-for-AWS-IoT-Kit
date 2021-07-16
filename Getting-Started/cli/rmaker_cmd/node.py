@@ -17,6 +17,7 @@ import re
 import os
 import sys
 import time
+import datetime
 import requests
 import base64
 import re
@@ -60,53 +61,6 @@ def get_nodes(vars=None):
             print(nodes[key].get_nodeid())
     return
 
-
-def _display_dict(data):
-    log.debug("Display dict....")
-    log.debug("Data: {}".format(data))
-    
-    # Display dictionary
-    for key, val in data.items():
-        log.debug("key: {}, val: {}".format(key, val))
-        if isinstance(val, str):
-            # The string data is displayed
-            log.debug("val is str")
-            print("{}: {}".format(key, val), end='')
-        elif isinstance(val, list):
-            # If val is a list
-            # values are displayed one after the other
-            log.debug("val is list")
-            print("\n{}: ".format(key), end='')
-            first_item = val.pop(0)
-            print("{}".format(first_item), end='')
-            for i in val:
-                print(", {}".format(i), end='')
-        elif isinstance(val, dict):
-            # If val is a dict
-            # only the val(dict) is dislayed
-            # key(of val) is not displayed
-            log.debug("val is dict")
-            _display_dict(val)
-        else:
-            log.debug("in else")
-            print("{}: {}".format(key, str(val), end=''))
-
-
-def _display_json(node_info):
-    log.debug("Display json....")
-    # Set to type list
-    log.debug("Node info received: {}".format(node_info))
-    if not isinstance(node_info, list):
-        node_info = [ node_info ]
-    log.debug("Node info set: {}".format(node_info))
-    print("-"*40)
-    # Display json
-    for data in node_info:
-        _display_dict(data)
-        print("\n", end='')
-        print("-"*40)
-
-
 def _check_user_input(node_ids_str):
     log.debug("Check user input....")
     # Check user input format
@@ -114,187 +68,408 @@ def _check_user_input(node_ids_str):
     result = input_pattern.match(node_ids_str)
     log.debug("User input result: {}".format(result))
     if result is None:
-        sys.exit("Invalid format. Expected: <nodeid>,<nodeid>,...")
+        sys.exit("Invalid format. Expected: <nodeid>,<nodeid>,... (no spaces)")
     return True         
 
+def _print_api_error(node_json_resp):
+    print("{:<7} ({}):  {}".format(
+        node_json_resp['status'].capitalize(),
+        node_json_resp['error_code'],
+        node_json_resp['description'])
+        )
 
-def _display_status(json_resp):
-    log.debug("Displaying status....")
-    resp_keys = json_resp.keys()
-    log.debug("Response keys: {}".format(resp_keys))
-    # Print status
-    if 'status' in resp_keys:
-        print("Status:", json_resp['status'])
-    # Print error code
-    if 'error_code' in resp_keys:
-        print("Error", json_resp['error_code'], ": ", end='')
-    # Print description
-    if 'description' in resp_keys:
-        print(json_resp['description'])
+def _set_node_ids_list(node_ids):
+    # Create list from node ids string
+    node_id_list = node_ids.split(',')
+    node_id_list = [ item.strip() for item in node_id_list ]
+    log.debug("Node ids list: {}".format(node_id_list))
+    return node_id_list
 
-
-def list_shared_nodes(vars=None):
+def sharing_request_op(accept_request=False, request_id=None):
     """
-    List shared nodes
+    Accept or decline sharing request
     
-    :param vars: `node` as key - Node Id for the node
-                 (if provided)
-    :type vars: dict
+    :param vars: `accept_request` as key
+                  If true, accept sharing request
+                  If false, decline sharing request
+    :type vars: bool
+
+    :param vars: `request_id` as key - Id of sharing request
+    :type vars: str
 
     :raises Exception: If there is an issue
-                       while getting shared nodes
+                       accepting or declining request
 
-    :return: None on Success
-    :rtype: None
+    :return: API response
+    :rtype: dict
     """
-    try:
-        log.debug("Get shared nodes")
+    log.debug("Accept sharing request")
 
-        n = node.Node(vars['node'], session.Session())
-        log.debug("Node id received from user: {}".format(vars['node']))
+    print('\nPlease make sure current (logged-in) user is Secondary user\n')
 
+    if accept_request:
+        print("Accepting request")
+    else:
+        print("Declining request")
+
+    # Create API data dictionary
+    api_data = {}
+    api_data['accept'] = accept_request
+    api_data['request_id'] = request_id
+
+    node_obj = node.Node(None, session.Session())
+    log.debug("API data set: {}".format(api_data))
+    
+    # API to accept or decline node sharing request
+    node_json_resp = node_obj.request_op(api_data)
+    log.debug("Sharing request API response: {}".format(node_json_resp))
+
+    return node_json_resp
+
+def list_sharing_details(node_id=None, primary_user=False, request_id=None, list_requests=False):
+    """
+    List sharing details of all nodes associated with user
+    or List pending requests
+    
+    :param vars: `node_id` as key - Node Id of the node(s)
+                 (if not provided, is set to all nodes associated with user)
+    :type vars: str
+
+    :param vars: `primary_user` as key - User is primary or secondary
+                 (if provided, user is primary user)
+    :type vars: bool
+
+    :param vars: `request_id` as key - Id of sharing request
+    :type vars: str
+
+    :param vars: `list_requests` as key -
+                 If True, list pending requests
+                 If False, list sharing details of nodes
+    :type vars: bool
+
+    :raises Exception: If there is an issue
+                       while listing details
+
+    :return: API response
+    :rtype: dict
+    """
+    node_obj = node.Node(node_id, session.Session())
+    log.debug("Node id received from user: {}".format(node_id))
+
+    # Set data for listing pending requests
+    if list_requests:
+        # Create API query params
+        api_params = {}
+        if request_id:
+            api_params['id'] = request_id
+        api_params['primary_user'] = "{}".format(primary_user)
+
+        node_json_resp = node_obj.get_shared_nodes_request(api_params)
+        log.debug("List sharing request response: {}".format(node_json_resp))
+    else:
+        # Get sharing details of all nodes associated with user
         # API
-        node_json_resp = n.get_shared_nodes()
+        node_json_resp = node_obj.get_sharing_details_of_nodes()
         log.debug("Get shared nodes response: {}".format(node_json_resp))
-    
-    except Exception as get_node_status_err:
-        log.error(get_node_status_err)
-    else:
-        try:
-            # Display result
-            log.debug("Displaying status")
-            _display_status(node_json_resp)
-        except AttributeError as err:
-            log.debug("Error: {}".format(err))
-            _display_json(node_json_resp)
-    
-    log.debug("Get shared nodes successful")
-    
-    return
 
+    return node_json_resp
 
-def add_shared_nodes(vars=None):
+def add_user_to_share_nodes(nodes=None, user=None):
     """
-    Add shared nodes
+    Add user to share nodes
     
-    :param vars: `nodes` as key - Node Id for the node
-    :type vars: dict
+    :param vars: `nodes` as key - Node Id of the node(s)
+    :type vars: str
 
-    :param vars: `email` as key - Email address of the user
-    :type vars: dict
+    :param vars: `user` as key - User name
+    :type vars: str
 
     :raises Exception: If there is an issue
-                       while setting nodes to share
+                       while adding user to share nodes
 
-    :return: None on Success
-    :rtype: None
+    :return: API response
+    :rtype: dict
     """
-    try:
-        log.debug("Set shared nodes")
+    log.debug("Adding user to share nodes")
 
+    # Remove any spaces if exist
+    nodes = nodes.strip()
+    # Check user input format
+    ret_status = _check_user_input(nodes)
+    # Create list from node ids string
+    node_id_list = _set_node_ids_list(nodes)
+    log.debug("Node ids list: {}".format(node_id_list))
+
+    log.debug("User name is set: {}".format(user))
+    
+    # Create API input info
+    api_input = {}
+    api_input['nodes'] = node_id_list
+    api_input['user_name'] = user
+    log.debug("API data set: {}".format(api_input))
+
+    # API
+    node_obj = node.Node(None, session.Session())
+    node_json_resp = node_obj.add_user_for_sharing(api_input)
+    log.debug("Set shared nodes response: {}".format(node_json_resp))
+
+    return node_json_resp
+
+def remove_sharing(nodes=None, user=None, request_id=None):
+    """
+    Remove user from shared nodes or
+    Remove sharing request
+
+    :param vars: `nodes` as key - Node Id for the node
+    :type vars: str
+
+    :param vars: `user` as key - User name
+    :type vars: str
+
+    :param vars: `request_id` as key - Id of sharing request
+    :type vars: str
+
+    :raises Exception: If there is an issue
+                       while remove operation
+
+    :return: API response
+    :rtype: dict
+    """
+    print('\nPlease make sure current (logged-in) user is Primary user\n')
+
+    node_json_resp = None
+    node_obj = node.Node(None, session.Session())
+    if request_id:
+        # API call to remove the shared nodes request
+        node_json_resp = node_obj.remove_shared_nodes_request(request_id)
+        log.debug("Remove sharing request response: {}".format(node_json_resp))
+    else:
         # Remove any spaces if exist
-        node_ids = vars['nodes'].strip()
-        
+        node_ids = nodes.strip()
+
         # Check user input format
         ret_status = _check_user_input(node_ids)
         
-        # Create list from node ids string
-        node_id_list = node_ids.split(',')
-        log.debug("Node ids list: {}".format(node_id_list))
-        
-        # Get email-id
-        email_id = vars['email']
-        log.debug("Email-id set: {}".format(email_id))
-        
-        # Create API data dictionary
-        api_data = {}
-        api_data['nodes'] = node_id_list
-        api_data['email'] = email_id
-        n = node.Node(None, session.Session())
-        log.debug("API data set: {}".format(api_data))
-        
-        # API
-        node_json_resp = n.set_shared_nodes(api_data)
-        log.debug("Set shared nodes response: {}".format(node_json_resp))
-    
-    except Exception as get_node_status_err:
-        log.error(get_node_status_err)
-    else:
-        try:
-            # Display result
-            log.debug("Displaying status")
-            if not isinstance(node_json_resp, dict):
-                print(node_json_resp)
-            else:
-                _display_status(node_json_resp)
-        except AttributeError as err:
-            log.debug("Error: {}".format(err))
-            log.debug("Displaying status")
-            _display_json(node_json_resp) 
-    
-    log.debug("Set shared nodes successful")
-    
-    return
-
-
-def remove_shared_nodes(vars=None):
-    """
-    Remove shared nodes
-    
-    :param vars: `nodes` as key - Node Id for the node
-    :type vars: dict
-
-    :param vars: `email` as key - Email address of the user
-    :type vars: dict
-
-    :raises Exception: If there is an issue
-                       while removing shared nodes
-
-    :return: None on Success
-    :rtype: None
-    """
-    try:
-        log.debug("Removing shared nodes")
-
-        # Remove any spaces if exist
-        node_ids = vars['nodes'].strip()
-        
-        # Check user input format
-        ret_status = _check_user_input(node_ids)
-        
-        # Get email-id
-        email_id = vars['email']
-        log.debug("Email-id set to: {}".format(email_id))
-        
-        # Create API data dictionary
-        api_data = {}
-        api_data['nodes'] = node_ids
-        api_data['email'] = email_id
-        n = node.Node(None, session.Session())
-        log.debug("API data set to: {}".format(api_data))
+        # Create API query params dictionary
+        api_params = {}
+        api_params['nodes'] = node_ids
+        api_params['user_name'] = user
+        log.debug("API data set to: {}".format(api_params))
         
         # API call to remove the shared nodes
-        node_json_resp = n.remove_shared_nodes(api_data)
-        log.debug("Remove shared nodes response: {}".format(node_json_resp))
+        node_json_resp = node_obj.remove_user_from_shared_nodes(api_params)
+        log.debug("Remove user from shared nodes response: {}".format(node_json_resp))
     
+    return node_json_resp
+
+def _get_status(resp):
+    return(resp['status'].capitalize())
+
+def _get_description(resp):
+    return(resp['description'])
+
+def _get_request_id(resp):
+    return(resp['request_id'])
+
+def _get_request_expiration(request):
+    total_expiry_days = 7
+    expiration_str = ""
+
+    curr_time = datetime.datetime.now()
+    log.debug("Current time is set to: {}".format(curr_time))
+
+    creation_time = datetime.datetime.fromtimestamp(request['request_timestamp'])
+    log.debug("Creation timestamp received : {}".format(creation_time))
+
+    timedelta = curr_time - creation_time
+    log.debug("Timedelta is : {}".format(timedelta))
+    days_left = total_expiry_days - timedelta.days
+    log.debug("Days left for request to expire: {}".format(days_left))
+    if days_left <= 0:
+        expiration_str = "** Request expired **"
+    elif days_left == 1:
+        expiration_str = "** Request will expire today **"
+    else:
+        expiration_str = "** Request will expire in {} day(s) **".format(days_left)
+    log.debug("Expiration is: {}".format(expiration_str))
+    return expiration_str
+
+def _print_request_details(resp, is_primary_user=False):
+    try:
+        log.debug("Printing request details")
+        requests_in_resp = resp['sharing_requests']
+        request_exists = False
+        if not requests_in_resp:
+            print("No pending requests")
+            return
+        for request in requests_in_resp:
+            nodes_str = ""
+            if request['request_status'].lower() == 'declined':
+                continue
+            request_exists = True
+            print("\n{:<12}: {}".format('Request Id',request['request_id']))
+            for n_id in request['node_ids']:
+                nodes_str += "{},".format(n_id)
+            nodes_str = nodes_str.rstrip(',')
+            print("{:<12}: {}".format('Node Id(s)', nodes_str))
+            if is_primary_user:
+                print("{:<12}: {}".format('Shared with', request['user_name']))
+            else:
+                print("{:<12}: {}".format('Shared by', request['primary_user_name']))
+            expiration_msg = _get_request_expiration(request)
+            print(expiration_msg)
+
+        if not request_exists:
+            print("No pending requests")
+
+    except KeyError as err:
+        print(err)
+        log.debug("Key Error while printing request details: {}".format(err))
+        print("Error in displaying details...Please check API Json...Exiting...")
+        sys.exit(0)
+    log.debug("Done printing request details")
+
+def _print_sharing_details(resp):
+    try:
+        log.debug("Printing sharing details of nodes")
+        nodes_in_resp = resp['node_sharing']
+        for nodes in nodes_in_resp:
+            primary_users = ""
+            secondary_users = ""
+            print("\nNode Id: {}".format(nodes['node_id']))
+
+            for user in nodes['users']['primary']:
+                primary_users += "{},".format(user)
+            primary_users = primary_users.rstrip(',')
+            print("{:<7}: {:<9}: {}".format('Users', 'Primary', primary_users), end='')
+
+            if 'secondary' in nodes['users'].keys():
+                for user in nodes['users']['secondary']:
+                    secondary_users += "{},".format(user)
+                secondary_users = secondary_users.rstrip(',')
+                print("\n{:>18}: {}".format('Secondary', secondary_users), end='')
+            print()
+
+    except KeyError as err:
+        log.debug("Key Error while printing sharing details of nodes: {}".format(err))
+        print("Error in displaying details...Please check API Json...Exiting...")
+        sys.exit(0)
+    log.debug("Done printing sharing details of nodes")
+
+'''
+Node Sharing operations based on user input
+'''
+def node_sharing_ops(vars=None):
+    try:
+        op = ""
+
+        log.debug("Performing Node Sharing operations")
+
+        # Set action if given
+        try:
+            action = vars['sharing_ops'].lower()
+        except AttributeError:
+            print(vars['parser'].format_help())
+            sys.exit(0)
+        
+        # Set operation to base action
+        op = action
+
+        if action == 'add_user':
+            # Share nodes with user
+            print("Adding user to share node(s)")
+            node_json_resp = add_user_to_share_nodes(nodes=vars['nodes'], user=vars['user'])
+            
+            # Print success response
+            if 'status' in node_json_resp and node_json_resp['status'].lower() == 'success':
+                print("{:<11}: {}\n{:<11}: {}".format(
+                    _get_status(node_json_resp),
+                    _get_description(node_json_resp),
+                    'Request Id',
+                    _get_request_id(node_json_resp))
+                    )
+        elif action == "accept":
+            # Accept sharing request
+            node_json_resp = sharing_request_op(accept_request=True, request_id=vars['id'])
+
+            # Print success response
+            if 'status' in node_json_resp and node_json_resp['status'].lower() == 'success':
+                print("{:<11}: {}".format(
+                    _get_status(node_json_resp),
+                    _get_description(node_json_resp))
+                    )
+        elif action == "decline":
+            # Decline sharing request
+            node_json_resp = sharing_request_op(accept_request=False, request_id=vars['id'])
+
+            # Print success response
+            if 'status' in node_json_resp and node_json_resp['status'].lower() == 'success':
+                print("{:<11}: {}".format(
+                    _get_status(node_json_resp),
+                    _get_description(node_json_resp))
+                    )
+        elif action == "cancel":
+            log.debug("Performing action: {}".format(action))
+            # Cancel sharing request
+            print("Cancelling request")
+            node_json_resp = remove_sharing(request_id=vars['id'])
+
+            # Print success response
+            if 'status' in node_json_resp and node_json_resp['status'].lower() == 'success':
+                print("{}: {}".format(
+                    _get_status(node_json_resp),
+                    _get_description(node_json_resp))
+                    )
+        elif action == "remove_user":
+            log.debug("Performing action: {}".format(action))
+            # Remove nodes shared with user
+            print("Removing user from shared nodes")
+            node_json_resp = remove_sharing(nodes=vars['nodes'], user=vars['user'])
+            
+            # Print success response
+            if 'status' in node_json_resp and node_json_resp['status'].lower() == 'success':
+                print("{}: {}".format(
+                    _get_status(node_json_resp),
+                    _get_description(node_json_resp))
+                    )
+        elif action == "list_nodes":
+            log.debug("Performing action: {}".format(action))
+
+            log.debug("List sharing details of nodes associated with user")
+            print("Displaying sharing details")
+            # List sharing details of all nodes associated with user
+            node_json_resp = list_sharing_details(node_id=vars['node'])
+
+            # Print success response
+            if 'node_sharing' in node_json_resp:
+                _print_sharing_details(node_json_resp)
+        elif action == "list_requests":
+            log.debug("Performing action: {}".format(action))
+
+            log.debug("List pending requests")
+            print("Displaying pending requests")
+            if vars['primary_user']:
+                print("Current (logged-in) user is set as Primary user")
+            else:
+                print("Current (logged-in) user is set as Secondary user")
+            # List pending sharing requests
+            node_json_resp = list_sharing_details(primary_user=vars['primary_user'],
+                                                    request_id=vars['id'],
+                                                    list_requests=True
+                                                    )
+            # Print success response
+            if 'sharing_requests' in node_json_resp:
+                _print_request_details(node_json_resp, is_primary_user=vars['primary_user'])
+
     except Exception as get_node_status_err:
         log.error(get_node_status_err)
+        return
     else:
-        try:
-            log.debug("Displaying status")
-            # Display result
-            if not isinstance(node_json_resp, dict):
-                print(node_json_resp)
-            else:
-                _display_status(node_json_resp)
-        except AttributeError as err:
-            log.debug("Error: {}".format(err))
-            _display_json(node_json_resp) 
-    
-    log.debug("Removing shared nodes successful")
-    
-    return
-
+        if 'status' in node_json_resp and node_json_resp['status'].lower() != 'success':
+            log.debug("Operation {} failed\nresp: {}".format(op, node_json_resp))
+            _print_api_error(node_json_resp)
+            return
+    log.debug("Operation `{}` was successful".format(op))
 
 def get_node_config(vars=None):
     """

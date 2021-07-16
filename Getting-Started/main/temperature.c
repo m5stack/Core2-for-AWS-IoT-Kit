@@ -89,9 +89,8 @@ void temperature_init(esp_rmaker_node_t *node)
         .name = "temperature_sensor_update_tm"
     };
     if (esp_timer_create(&sensor_timer_conf, &sensor_timer) == ESP_OK) {
-        esp_timer_start_periodic(sensor_timer, 250000U);
+        esp_timer_start_periodic(sensor_timer, 1000000U);
     }
 
     display_temperature_init();
 }
-

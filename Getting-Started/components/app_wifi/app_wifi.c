@@ -49,6 +49,49 @@ static EventGroupHandle_t wifi_event_group;
 #define CREDENTIALS_NAMESPACE   "rmaker_creds"
 #define RANDOM_NVS_KEY          "random"
 
+#ifdef CONFIG_APP_WIFI_SHOW_DEMO_INTRO_TEXT
+
+#define ESP_RAINMAKER_GITHUB_EXAMPLES_PATH  "https://github.com/espressif/esp-rainmaker/blob/master/examples"
+#define ESP_RAINMAKER_INTRO_LINK    "https://rainmaker.espressif.com"
+#define ESP_RMAKER_PHONE_APP_LINK   "http://bit.ly/esp-rmaker"
+char esp_rainmaker_ascii_art[] = \
+"  ______  _____ _____    _____            _____ _   _ __  __          _  ________ _____\n"\
+" |  ____|/ ____|  __ \\  |  __ \\     /\\   |_   _| \\ | |  \\/  |   /\\   | |/ /  ____|  __ \\\n"\
+" | |__  | (___ | |__) | | |__) |   /  \\    | | |  \\| | \\  / |  /  \\  | ' /| |__  | |__) |\n"\
+" |  __|  \\___ \\|  ___/  |  _  /   / /\\ \\   | | | . ` | |\\/| | / /\\ \\ |  < |  __| |  _  /\n"\
+" | |____ ____) | |      | | \\ \\  / ____ \\ _| |_| |\\  | |  | |/ ____ \\| . \\| |____| | \\ \\\n"\
+" |______|_____/|_|      |_|  \\_\\/_/    \\_\\_____|_| \\_|_|  |_/_/    \\_\\_|\\_\\______|_|  \\_\\\n";
+
+static void intro_print(bool provisioned)
+{
+    printf("####################################################################################################\n");
+    printf("%s\n", esp_rainmaker_ascii_art);
+    printf("Welcome to ESP RainMaker %s demo application!\n", RMAKER_DEMO_PROJECT_NAME);
+    if (!provisioned) {
+        printf("Follow these steps to get started:\n");
+        printf("1. Download the ESP RainMaker phone app by visiting this link from your phone's browser:\n\n");
+        printf("   %s\n\n", ESP_RMAKER_PHONE_APP_LINK);
+        printf("2. Sign up and follow the steps on screen to add the device to your Wi-Fi network.\n");
+        printf("3. You are now ready to use the device and control it locally as well as remotely.\n");
+        printf("   You can also use the Boot button on the board to control your device.\n");
+    }
+    printf("\nIf you want to reset Wi-Fi credentials, or reset to factory, press and hold the Boot button.\n");
+    printf("\nThis application uses ESP RainMaker, which is based on ESP IDF.\n");
+    printf("Check out the source code for this application here:\n   %s/%s\n",
+            ESP_RAINMAKER_GITHUB_EXAMPLES_PATH, RMAKER_DEMO_PROJECT_NAME);
+    printf("\nPlease visit %s for additional information.\n\n", ESP_RAINMAKER_INTRO_LINK);
+    printf("####################################################################################################\n");
+}
+
+#else
+
+static void intro_print(bool provisioned)
+{
+    /* Do nothing */
+}
+
+#endif /* !APP_WIFI_SHOW_DEMO_INTRO_TEXT */
+
 static void app_wifi_print_qr(const char *name, const char *pop, const char *transport)
 {
     if (!name || !pop || !transport) {
@@ -60,15 +103,15 @@ static void app_wifi_print_qr(const char *name, const char *pop, const char *tra
                     ",\"pop\":\"%s\",\"transport\":\"%s\"}",
                     PROV_QR_VERSION, name, pop, transport);
 #ifdef CONFIG_APP_WIFI_PROV_SHOW_QR
-    ESP_LOGI(TAG, "Scan this QR code from the phone app for Provisioning.");
+    ESP_LOGI(TAG, "Scan this QR code from the ESP RainMaker phone app for Provisioning.");
     qrcode_display(payload);
 #endif /* CONFIG_APP_WIFI_PROV_SHOW_QR */
-    ESP_LOGI(TAG, "If QR code is not visible, copy paste the below URL in a browser.\n\n%s?data=%s\n\n", QRCODE_BASE_URL, payload);
+    ESP_LOGI(TAG, "If QR code is not visible, copy paste the below URL in a browser.\n%s?data=%s", QRCODE_BASE_URL, payload);
 }
 
 /* Event handler for catching system events */
 static void event_handler(void* arg, esp_event_base_t event_base,
-                          int event_id, void* event_data)
+                          int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_PROV_EVENT) {
         switch (event_id) {
@@ -120,7 +163,7 @@ static void wifi_init_sta()
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-/* free the return value after use. */
+/* Free random_bytes after use only if function returns ESP_OK */
 static esp_err_t read_random_bytes_from_nvs(uint8_t **random_bytes, size_t *len)
 {
     nvs_handle handle;
@@ -151,7 +194,7 @@ static esp_err_t read_random_bytes_from_nvs(uint8_t **random_bytes, size_t *len)
 
 static esp_err_t get_device_service_name(char *service_name, size_t max)
 {
-    uint8_t *nvs_random;
+    uint8_t *nvs_random = NULL;
     const char *ssid_prefix = "PROV_";
     size_t nvs_random_size = 0;
     if ((read_random_bytes_from_nvs(&nvs_random, &nvs_random_size) != ESP_OK) || nvs_random_size < 3) {
@@ -259,7 +302,6 @@ esp_err_t app_wifi_start(app_wifi_pop_type_t pop_type)
     bool provisioned = false;
     /* Let's find out if the device is provisioned */
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
-
     /* If device is not yet provisioned start provisioning service */
     if (!provisioned) {
         ESP_LOGI(TAG, "Starting provisioning");
@@ -331,10 +373,11 @@ esp_err_t app_wifi_start(app_wifi_pop_type_t pop_type)
 #else /* CONFIG_APP_WIFI_PROV_TRANSPORT_SOFTAP */
         app_wifi_print_qr(service_name, pop, PROV_TRANSPORT_SOFTAP);
 #endif /* CONFIG_APP_WIFI_PROV_TRANSPORT_BLE */
+        intro_print(provisioned);
         ESP_LOGI(TAG, "Provisioning Started. Name : %s, POP : %s", service_name, pop);
     } else {
         ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
-
+        intro_print(provisioned);
         /* We don't need the manager as device is already provisioned,
          * so let's release it's resources */
         wifi_prov_mgr_deinit();

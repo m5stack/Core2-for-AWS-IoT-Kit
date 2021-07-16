@@ -40,6 +40,10 @@ static int json_gen_add_to_str(json_gen_str_t *jstr, char *str)
         return 0;
     }
 	int len = strlen(str);
+    jstr->total_len += len;
+    if (jstr->buf == NULL) {
+        return 0;
+    }
 	char *cur_ptr = str;
 	while (1) {
 		int len_remaining = json_gen_get_empty_len(jstr);
@@ -76,12 +80,16 @@ void json_gen_str_start(json_gen_str_t *jstr, char *buf, int buf_size,
 	jstr->priv = priv;
 }
 
-void json_gen_str_end(json_gen_str_t *jstr)
+int json_gen_str_end(json_gen_str_t *jstr)
 {
-	*jstr->free_ptr = '\0';
-	if (jstr->flush_cb)
-		jstr->flush_cb(jstr->buf, jstr->priv);
+    int total_len = jstr->total_len;
+    if (jstr->buf) {
+	    *jstr->free_ptr = '\0';
+	    if (jstr->flush_cb)
+		    jstr->flush_cb(jstr->buf, jstr->priv);
+    }
 	memset(jstr, 0, sizeof(json_gen_str_t));
+    return total_len + 1; /* +1 for the NULL termination */
 }
 
 static inline void json_gen_handle_comma(json_gen_str_t *jstr)

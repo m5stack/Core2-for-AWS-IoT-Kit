@@ -13,7 +13,6 @@
 #include <esp_rmaker_standard_types.h> 
 #include <esp_rmaker_standard_params.h> 
 
-#include <app_reset.h>
 #include "app_priv.h"
 
 #include "display.h"

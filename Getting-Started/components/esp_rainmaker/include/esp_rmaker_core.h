@@ -26,8 +26,10 @@ extern "C"
 
 #define MAX_VERSION_STRING_LEN  16
 
+/** @cond **/
 /** ESP RainMaker Event Base */
 ESP_EVENT_DECLARE_BASE(RMAKER_EVENT);
+/** @endcond **/
 
 /** ESP RainMaker Events */
 typedef enum {
@@ -39,20 +41,6 @@ typedef enum {
     RMAKER_EVENT_CLAIM_SUCCESSFUL,
     /** Self Claiming Failed */
     RMAKER_EVENT_CLAIM_FAILED,
-    /** Node reboot has been triggered. The associated event data is the time in seconds
-     * (type: uint8_t) after which the node will reboot. Note that this time may not be
-     * accurate as the events are received asynchronously.*/
-    RMAKER_EVENT_REBOOT,
-    /** Wi-Fi credentials reset. Triggered after calling esp_rmaker_wifi_reset() */
-    RMAKER_EVENT_WIFI_RESET,
-    /** Node reset to factory defaults. Triggered after calling esp_rmaker_factory_reset() */
-    RMAKER_EVENT_FACTORY_RESET,
-    /** Connected to MQTT Broker */
-    RMAKER_EVENT_MQTT_CONNECTED,
-    /** Disconnected from MQTT Broker */
-    RMAKER_EVENT_MQTT_DISCONNECTED,
-    /** MQTT message published successfully */
-    RMAKER_EVENT_MQTT_PUBLISHED,
 } esp_rmaker_event_t;
 
 /** ESP RainMaker Node information */
@@ -122,6 +110,18 @@ typedef enum {
     PROP_FLAG_PERSIST = (1 << 3)
 } esp_param_property_flags_t;
 
+/** System Service Reboot Flag */
+#define SYSTEM_SERV_FLAG_REBOOT         (1 << 0)
+
+/** System Service Factory Reset Flag */
+#define SYSTEM_SERV_FLAG_FACTORY_RESET  (1 << 1)
+
+/** System Service Wi-Fi Reset Flag */
+#define SYSTEM_SERV_FLAG_WIFI_RESET     (1 << 2)
+
+/** System Service All Flags */
+#define SYSTEM_SERV_FLAGS_ALL   (SYSTEM_SERV_FLAG_REBOOT | SYSTEM_SERV_FLAG_FACTORY_RESET | SYSTEM_SERV_FLAG_WIFI_RESET)
+
 /** Generic ESP RainMaker handle */
 typedef size_t esp_rmaker_handle_t;
 
@@ -163,6 +163,32 @@ typedef struct {
     /** Source of request */
     esp_rmaker_req_src_t src;
 } esp_rmaker_read_ctx_t;
+
+/** System service configuration */
+typedef struct {
+    /** Logical OR of system service flags (SYSTEM_SERV_FLAG_REBOOT,
+     * SYSTEM_SERV_FLAG_FACTORY_RESET, SYSTEM_SERV_FLAG_WIFI_RESET) as required
+     * or SYSTEM_SERV_FLAGS_ALL.
+     */
+    uint16_t flags;
+    /** Time in seconds after which the device should reboot.
+     * Value of zero would trigger an immediate reboot if a write is received for
+     * the Reboot parameter.
+     * Recommended value: 2
+     */
+    int8_t reboot_seconds;
+    /** Time in seconds after which the device should reset (Wi-Fi or factory).
+     * Value of zero would trigger an immediate action if a write is received for
+     * the Wi-Fi reset or Factory reset parameter.
+     * Recommended value: 2
+     */
+    int8_t reset_seconds;
+    /** Time in seconds after which the device should reboot after it has been reset.
+     * Value of zero would mean that there won't be any reboot after the reset.
+     * Recommended value: 2
+     */
+    int8_t reset_reboot_seconds;
+} esp_rmaker_system_serv_config_t;
 
 /** Callback for parameter value write requests.
  *
@@ -507,6 +533,19 @@ esp_err_t esp_rmaker_node_remove_device(const esp_rmaker_node_t *node, const esp
  */
 esp_err_t esp_rmaker_device_add_attribute(const esp_rmaker_device_t *device, const char *attr_name, const char *val);
 
+/** Add a Device subtype
+ *
+ * This can be something like esp.subtype.rgb-light for a device of type esp.device.lightbulb.
+ * This would primarily be used by the phone apps to render different icons for the same device type.
+ *
+ * @param[in] device Device handle.
+ * @param[in] subtype String describing the sub type.
+ *
+ * @return ESP_OK if the subtype was added successfully.
+ * @return error in case of failure.
+ */
+esp_err_t esp_rmaker_device_add_subtype(const esp_rmaker_device_t *device, const char *subtype);
+
 /** Get device name from handle
  *
  * @param[in] device Device handle.
@@ -703,11 +742,18 @@ char *esp_rmaker_param_get_name(const esp_rmaker_param_t *param);
  */
 char *esp_rmaker_param_get_type(const esp_rmaker_param_t *param);
 
-/** Prototype for ESP RainMaker Work Queue Function
+/** Get parameter value
  *
- * @param[in] priv_data The private data associated with the work function.
+ * This gives the parameter value that is stored in the RainMaker core.
+ *
+ * @note This does not call any explicit functions to read value from hardware/driver.
+ *
+ * @param[in] param Parameter handle
+ *
+ * @return Pointer to parameter value on success.
+ * @return NULL in case of failure.
  */
-typedef void (*esp_rmaker_work_fn_t)(void *priv_data);
+esp_rmaker_param_val_t *esp_rmaker_param_get_val(esp_rmaker_param_t *param);
 
 /** Report the node details to the cloud
  *
@@ -723,17 +769,31 @@ typedef void (*esp_rmaker_work_fn_t)(void *priv_data);
  */
 esp_err_t esp_rmaker_report_node_details(void);
 
-/** Queue execution of a function in ESP RainMaker's context
+/** Enable Timezone Service
  *
- * This API queues a work function for execution in the ESP RainMaker Task's context.
+ * This enables the ESP RainMaker standard timezone service which can be used to set
+ * timezone, either in POSIX or location string format. Please refer the specifications
+ * for additional details.
  *
- * @param[in] work_fn The Work function to be queued.
- * @param[in] priv_data Private data to be passed to the work function.
- *
- * @return ESP_OK on success.
- * @return error in case of failure.
+ * @return ESP_OK on success
+ * @return error on failure
  */
-esp_err_t esp_rmaker_queue_work(esp_rmaker_work_fn_t work_fn, void *priv_data);
+esp_err_t esp_rmaker_timezone_service_enable(void);
+
+/** Enable System Service
+ *
+ * This enables the ESP RainMaker standard system service which can be
+ * used for operations like reboot, factory reset and Wi-Fi reset.
+ *
+ * Please refer the specifications for additional details.
+ *
+ * @param[in] config Configuration for the system service.
+ *
+ * @return ESP_OK on success
+ * @return error on failure
+ */
+esp_err_t esp_rmaker_system_service_enable(esp_rmaker_system_serv_config_t *config);
+
 
 #ifdef __cplusplus
 }

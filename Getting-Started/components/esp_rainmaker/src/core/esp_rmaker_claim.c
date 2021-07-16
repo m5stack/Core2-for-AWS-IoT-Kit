@@ -27,6 +27,9 @@
 #include <freertos/task.h>
 #include <freertos/event_groups.h>
 
+#include <esp_rmaker_work_queue.h>
+#include <esp_rmaker_factory.h>
+
 #include <wifi_provisioning/manager.h>
 #include <esp_event.h>
 #include <esp_tls.h>
@@ -39,7 +42,6 @@
 #include <json_parser.h>
 
 #include "esp_rmaker_internal.h"
-#include "esp_rmaker_storage.h"
 #include "esp_rmaker_client_data.h"
 #include "esp_rmaker_claim.h"
 
@@ -57,8 +59,8 @@ static const char *TAG = "esp_claim";
 #define CLAIM_INIT_PATH     "claim/initiate"
 #define CLAIM_VERIFY_PATH   "claim/verify"
 
-extern uint8_t claim_service_server_root_ca_pem_start[] asm("_binary_claim_service_server_crt_start");
-extern uint8_t claim_service_server_root_ca_pem_end[] asm("_binary_claim_service_server_crt_end");
+extern uint8_t claim_service_server_root_ca_pem_start[] asm("_binary_rmaker_claim_service_server_crt_start");
+extern uint8_t claim_service_server_root_ca_pem_end[] asm("_binary_rmaker_claim_service_server_crt_end");
 #endif /* CONFIG_ESP_RMAKER_SELF_CLAIM */
 
 #define CLAIM_PK_SIZE       2048
@@ -224,7 +226,7 @@ static esp_err_t handle_claim_verify_response(esp_rmaker_claim_data_t *claim_dat
             json_obj_get_string(&jctx, "certificate", certificate, required_len);
             json_parse_end(&jctx);
             unescape_new_line(certificate);
-            esp_err_t err = esp_rmaker_storage_set(ESP_RMAKER_CLIENT_CERT_NVS_KEY, certificate, strlen(certificate));
+            esp_err_t err = esp_rmaker_factory_set(ESP_RMAKER_CLIENT_CERT_NVS_KEY, certificate, strlen(certificate));
             free(certificate);
             return err;
         } else {
@@ -479,7 +481,7 @@ static esp_err_t _esp_rmaker_claim_generate_csr(esp_rmaker_claim_data_t *claim_d
 
 #define ESP_RMAKER_CLAIM_CSR_TASK_STACK_SIZE (10 * 1024)
     if (xTaskCreate(&esp_rmaker_claim_csr_task, "claim_csr_task", ESP_RMAKER_CLAIM_CSR_TASK_STACK_SIZE,
-                    claim_data, (CONFIG_ESP_RMAKER_TASK_PRIORITY + 1), NULL) != pdPASS) {
+                    claim_data, (CONFIG_ESP_RMAKER_WORK_QUEUE_TASK_PRIORITY + 1), NULL) != pdPASS) {
         ESP_LOGE(TAG, "Couldn't create CSR generation task");
         vEventGroupDelete(claim_csr_event_group);
         return ESP_ERR_NO_MEM;
@@ -509,7 +511,7 @@ static esp_err_t handle_assisted_claim_init_response(esp_rmaker_claim_data_t *cl
         int ret = json_obj_get_string(&jctx, "node_id", node_id, sizeof(node_id));
         json_parse_end(&jctx);
         if (ret == 0) {
-            esp_rmaker_storage_set("node_id", node_id, strlen(node_id));
+            esp_rmaker_factory_set("node_id", node_id, strlen(node_id));
             esp_rmaker_change_node_id(node_id, strlen(node_id));
             /* We use _esp_rmaker_claim_generate_csr instead of esp_rmaker_claim_generate_csr()
              * because the thread in whose context this function is called doesn't have
@@ -763,7 +765,7 @@ esp_err_t esp_rmaker_claiming_handler(uint32_t session_id, const uint8_t *inbuf,
 }
 #define CLAIM_ENDPOINT      "rmaker_claim"
 static void event_handler(void* arg, esp_event_base_t event_base,
-                          int event_id, void* event_data)
+                          int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_PROV_EVENT) {
         switch (event_id) {
@@ -807,21 +809,21 @@ esp_err_t __esp_rmaker_claim_init(esp_rmaker_claim_data_t *claim_data)
             ESP_LOGE(TAG, "Failed to generate private key.");
             return err;
         }
-        err = esp_rmaker_storage_set(ESP_RMAKER_CLIENT_KEY_NVS_KEY, claim_data->payload, strlen((char *)claim_data->payload));
+        err = esp_rmaker_factory_set(ESP_RMAKER_CLIENT_KEY_NVS_KEY, claim_data->payload, strlen((char *)claim_data->payload));
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Failed to save private key to storage.");
             return err;
         }
     }
     /* Check if the general purpose random bytes are already present in the storage */
-    char *stored_random_bytes = esp_rmaker_storage_get(ESP_RMAKER_CLIENT_RANDOM_NVS_KEY);
+    char *stored_random_bytes = esp_rmaker_factory_get(ESP_RMAKER_CLIENT_RANDOM_NVS_KEY);
     if (stored_random_bytes == NULL) {
         /* Generate random bytes for general purpose use */
         uint8_t random_bytes[ESP_RMAKER_RANDOM_NUMBER_LEN];
         esp_fill_random(&random_bytes, sizeof(random_bytes));
 
-        /* Store the PoP in the storage */
-        err = esp_rmaker_storage_set(ESP_RMAKER_CLIENT_RANDOM_NVS_KEY, random_bytes, sizeof(random_bytes));
+        /* Store the random bytes in the factory storage */
+        err = esp_rmaker_factory_set(ESP_RMAKER_CLIENT_RANDOM_NVS_KEY, random_bytes, sizeof(random_bytes));
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Failed to store random bytes to storage.");
             return err;
@@ -830,7 +832,6 @@ esp_err_t __esp_rmaker_claim_init(esp_rmaker_claim_data_t *claim_data)
         /* Free the copy of the random bytes as it isn't required here. */
         free(stored_random_bytes);
     }
-    
 #ifdef CONFIG_ESP_RMAKER_SELF_CLAIM
     err = esp_rmaker_claim_generate_csr(claim_data, esp_rmaker_get_node_id());
     if (err != ESP_OK) {
