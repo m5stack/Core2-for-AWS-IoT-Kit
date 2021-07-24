@@ -7,7 +7,10 @@
 #include "stdint.h"
 
 /**
- * @brief Initializes the speaker over I2S.
+ * @brief Initializes the speaker over I2S. The I2S bus is initialized
+ * for output with a sample rate of 44100Hz, with a 16-bit depth, and 
+ * right channel audio. Other configurations requires using the 
+ * ESP-IDF I2S driver directly.
  * 
  * @note You must enable the speaker after initializing it with @ref Core2ForAWS_Speaker_Enable().
  * The speaker cannot be initialized at the same time
@@ -21,9 +24,7 @@ void Speaker_Init();
 /* @[declare_speaker_init] */
 
 /**
- * @brief Plays buffer through the speaker. The sound must
- * have a sample rate of 44100Hz with a 16-bit depth. Other
- * configurations requires using the ESP-IDF I2S driver directly.
+ * @brief Plays buffer through the speaker.
  * 
  * @note The speaker cannot be used at the same time
  * as the microphone since they both share a common pin (GPIO0).
