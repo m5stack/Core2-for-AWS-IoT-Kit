@@ -21,7 +21,9 @@ void Speaker_Init();
 /* @[declare_speaker_init] */
 
 /**
- * @brief Plays buffer through the speaker.
+ * @brief Plays buffer through the speaker. The sound must
+ * have a sample rate of 44100Hz with a 16-bit depth. Other
+ * configurations requires using the ESP-IDF I2S driver directly.
  * 
  * @note The speaker cannot be used at the same time
  * as the microphone since they both share a common pin (GPIO0).
