@@ -104,6 +104,27 @@ extern SemaphoreHandle_t xGuiSemaphore;
 #if CONFIG_SOFTWARE_EXPPORTS_SUPPORT
 #include "driver/gpio.h"
 #include "driver/uart.h"
+#include "i2c_device.h"
+
+/**
+ * @brief The I2C SDA pin on expansion port A.
+ *
+ * This maps to GPIO 32 and can be used as the Serial DAta Line (SDA) pin for I2C bus communication.
+ * Read more about [I2C capabilities of the ESP32 microcontroller and available APIs in the ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/i2c.html).
+ */
+/* @[declare_port_a_sda_pin] */
+#define PORT_A_SDA_PIN GPIO_NUM_32
+/* @[declare_port_a_sda_pin] */
+
+/**
+ * @brief The I2C SCL pin on expansion port A.
+ *
+ * This maps to GPIO 33 and can be used as the Serial CLock Line (SCL) pin to synchronize I2C bus communication.
+ * Read more about [I2C capabilities of the ESP32 microcontroller and available APIs in the ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/i2c.html).
+ */
+/* @[declare_port_a_scl_pin] */
+#define PORT_A_SCL_PIN GPIO_NUM_33
+/* @[declare_port_a_scl_pin] */
 
 /**
  * @brief The ADC pin on expansion port B.
@@ -160,6 +181,17 @@ extern SemaphoreHandle_t xGuiSemaphore;
 /* @[declare_port_c_uart_num] */
 
 /**
+ * @brief The standard baud rate for I2C peripherals connected to Port A.
+ *
+ * This is the standard baud rate for I2C peripherals that are connected 
+ * on Port A, which is 100KHz.
+ * Read more about [UART communications with the ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html).
+ */
+/* @[declare_port_a_i2c_standard_baud] */
+#define PORT_A_I2C_STANDARD_BAUD 100000
+/* @[declare_port_a_i2c_standard_baud] */
+
+/**
  * @brief The default UART RX ring buffer size.
  *
  * This is the default size of the UART interface's receiver ring
@@ -181,12 +213,14 @@ typedef enum {
     NONE,   /**< @brief Reset GPIO to default state. */
     OUTPUT, /**< @brief Set GPIO to output mode. */
     INPUT,  /**< @brief Set GPIO to input mode. */
-    ADC,    /**< @brief Enable ADC mode. Only available on GPIO 36 */
-    DAC,    /**< @brief Enable DAC mode. Only available on GPIO 26 */
-    UART    /**< @brief Enable UART RX/TX mode. UART TX only available
-                        on GPIO 14 and UART RX is only available on GPIO 13.
-                        Only supports full-duplex UART so setting one pin to
-                        UART mode will also set the other pin to UART mode.*/
+    I2C,    /**< @brief Enable I2C mode. Only available on Port A—GPIO 
+                        32(SDA) and Port A—GPIO 33 (SCL). */
+    ADC,    /**< @brief Enable ADC mode. Only available on Port B—GPIO 36 */
+    DAC,    /**< @brief Enable DAC mode. Only available on Port B—GPIO 26 */
+    UART    /**< @brief Enable UART RX/TX mode. UART TX only available on Port 
+                        C—GPIO 14 and UART RX is only available on Port C—GPIO 
+                        13. Only supports full-duplex UART so setting one pin 
+                        to UART mode will also set the other pin to UART mode.*/
 } pin_mode_t;
 /* @[declare_pin_mode_t] */
 #endif
@@ -691,10 +725,20 @@ esp_err_t Core2ForAWS_SDcard_Unmount(const char *mount_path, sdmmc_card_t *out_c
  *
  * This function sets the mode of the pin. The available modes
  * are defined by pin_mode_t. All pins support digital input/ouput
- * of high/low. Only specified pins support ADC, DAC, or UART. View
- * the hardware schematic or [pinmap](https://docs.m5stack.com/en/core/core2_for_aws?id=pinmap)
+ * of high/low. Only specified pins support I2C, ADC, DAC, or UART. 
+ * View the hardware schematic or [pinmap](https://docs.m5stack.com/en/core/core2_for_aws?id=pinmap)
  * for pin features.
  *
+ * **I2C** checks to ensure the pin you're planning to use is meant
+ * for I2C communications. You must use PORT_A_SDA_PIN (same as GPIO 
+ * 32) for the I2C data pin and PORT_A_SCL_PIN (same as GPIO 33) for
+ * the I2C clock line pin. Peripherals attached to expansion port A 
+ * will use I2C port number 0 (I2C_NUM_0) as the on-board peripherals 
+ * are on I2C port number 1 (I2C_NUM_1). The APIs provided utilize the
+ * built-in pullup resistors on the SDA and SCL lines with the Core2
+ * for AWS IoT EduKit as the I2C controller, and all attached devices
+ * as the peripheral.
+ *  
  * **ADC** sets the pin to analog single read mode. Single read mode is
  * suitable for low-frequency sampling operations. Must use
  * PORT_B_ADC_PIN (same as GPIO_NUM_36) since it is the only
@@ -751,6 +795,11 @@ esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode);
  * @note pin_mode_t for a GPIO pin must be set to INPUT before using
  * Core2ForAWS_Port_Read for that pin.
  * @note Reads high when connected to Vcc.
+ * @note The AXP192 PMU is configured to output 5v on the expansion 
+ * port's VCC pin. Some peripherals require 3.3V and requires adjusting 
+ * the output from the AXP192. This is currently unsupported, but can be 
+ * acheived using the AXP192 driver (located in the **core2forAWS/axp192**
+ * folder) for advanced developers.
  *
  * This function reads if the specified pin is high (1) or low (0). In
  * order for the pin to read high, the connected peripheral must use the
@@ -800,6 +849,12 @@ bool Core2ForAWS_Port_Read(gpio_num_t pin);
  * @note pin_mode_t for a GPIO pin must be set to OUTPUT before using
  * Core2ForAWS_Port_Write for that pin.
  *
+ * @note The AXP192 PMU is configured to output 5v on the expansion 
+ * port's VCC pin. Some peripherals require 3.3V and requires adjusting 
+ * the output from the AXP192. This is currently unsupported, but can be 
+ * acheived using the AXP192 driver (located in the **core2forAWS/axp192**
+ * folder) for advanced developers.
+ * 
  * This function sets the specified pin to either high(1) or low(0)
  * digital level.
  *
@@ -847,6 +902,244 @@ esp_err_t Core2ForAWS_Port_Write(gpio_num_t pin, bool level);
 /* @[declare_core2foraws_port_write] */
 
 /**
+ * @brief Allocates a peripheral connected to expansion port A.
+ *
+ * This function allocates configuration of an attached I2C peripheral 
+ * on expansion port A with a minimum baud rate of 100,000Hz. The macro
+ * @ref PORT_A_I2C_STANDARD_BAUD can used for a generally compatible 
+ * baud rate for most peripherals. The maximum rate supported by the 
+ * ESP32-D0WD is 5MHz.
+ * 
+ * Read more about [I2C capabilities of the ESP32 microcontroller and 
+ * available APIs in the ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/i2c.html).
+ *
+ * @note The AXP192 PMU is configured to output 5v on the expansion 
+ * port's VCC pin. Some peripherals require 3.3V and requires adjusting 
+ * the output from the AXP192. This is currently unsupported, but can be 
+ * acheived using the AXP192 driver (located in the **core2forAWS/axp192**
+ * folder) for advanced developers.
+ * 
+ * The example code allocates a I2C heart rate sensor peripheral in the 
+ * variable port_A_peripheral of type I2CDevice_t that has an 8-bit 
+ * device address of 0xA0 (right-shifted by 1-bit to be a 7-bit address) 
+ * and using the standard baud rate. It then waits 10 seconds before 
+ * looping to read from the peripheral, and since the device doesn't 
+ * take a register address, it uses the macro @ref I2C_NO_REG. The reading 
+ * is printed every 10 seconds to the serial output.
+ *
+ * **Example:**
+ * @code{c}
+ *  #include <stdio.h>
+ *  #include <stdlib.h>
+ *  #include <freertos/FreeRTOS.h>
+ *  #include <freertos/task.h>
+ *  #include "esp_log.h"
+ *  #include "core2forAWS.h"
+ *  
+ *  #define DEVICE_ADDRESS 0xA0 >> 1
+ *  
+ *  static const char *TAG = "MAIN";
+ *  
+ *  void i2c_test_task(void * param){
+ *      I2CDevice_t port_A_peripheral = Core2ForAWS_Port_A_I2C_Begin(DEVICE_ADDRESS, PORT_A_I2C_STANDARD_BAUD);
+ *      
+ *      vTaskDelay(pdMS_TO_TICKS(10000));
+ *      for(;;){
+ *          uint8_t heart_rate = 255;
+ *          esp_err_t err = Core2ForAWS_Port_A_I2C_Read(port_A_peripheral, I2C_NO_REG, &heart_rate, 1);
+ *          if(!err){
+ *              ESP_LOGI(TAG, "Heart Rate — %ubpm", heart_rate);    
+ *          }
+ *          vTaskDelay(pdMS_TO_TICKS(10000));
+ *      }
+ *      Core2ForAWS_Port_A_I2C_Close(port_A_peripheral);
+ *      vTaskDelete(NULL);
+ *  }
+ *  
+ *  void app_main()
+ *  {
+ *      Core2ForAWS_Init();
+ *      xTaskCreatePinnedToCore(&i2c_test_task, "i2c_test_task", 4096, NULL, 5, NULL, 1);
+ *  }
+ * @endcode
+ * 
+ * @param[in] device_address The 7-bit I2C device address.
+ * @param[in] baud The baud rate of I2C communications.
+ * @return A pointer to the I2C device configuration.
+ *
+ */
+/* @[declare_core2foraws_port_a_i2c_begin] */
+I2CDevice_t Core2ForAWS_Port_A_I2C_Begin(uint8_t device_address, uint32_t baud);
+/* @[declare_core2foraws_port_a_i2c_begin] */
+
+/**
+ * @brief Reads from I2C peripheral connected to expansion port A.
+ *
+ * This function reads a specified number of bytes starting from the
+ * specified register on the peripheral.
+ * 
+ * @note Some peripherals do not support specifying a register address to
+ * read from. In this scenario, input the @ref I2C_NO_REG macro as the 
+ * register_address.
+ *  
+ * Read more about [I2C capabilities of the ESP32 microcontroller and 
+ * available APIs in the ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/i2c.html).
+ *
+ * The example code allocates a I2C heart rate sensor peripheral called 
+ * port_A_peripheral of type I2CDevice_t that has an 8-bit device address 
+ * of 0xA0 (right-shifted by 1-bit to be a 7-bit address) and using the 
+ * standard baud rate. It then waits 10 seconds before looping to read 
+ * from the peripheral, and since the device doesn't take a register 
+ * address, it uses the macro @ref I2C_NO_REG. The reading is printed every 
+ * 10 seconds to the serial output.
+ *
+ * **Example:**
+ * @code{c}
+ *  #include <stdio.h>
+ *  #include <stdlib.h>
+ *  #include <freertos/FreeRTOS.h>
+ *  #include <freertos/task.h>
+ *  #include "esp_log.h"
+ *  #include "core2forAWS.h"
+ *  
+ *  #define DEVICE_ADDRESS 0xA0 >> 1
+ *  
+ *  static const char *TAG = "MAIN";
+ *  
+ *  void i2c_test_task(void * param){
+ *      I2CDevice_t port_A_peripheral = Core2ForAWS_Port_A_I2C_Begin(DEVICE_ADDRESS, PORT_A_I2C_STANDARD_BAUD);
+ *      
+ *      vTaskDelay(pdMS_TO_TICKS(10000));
+ *      for(;;){
+ *          uint8_t heart_rate = 255;
+ *          esp_err_t err = Core2ForAWS_Port_A_I2C_Read(port_A_peripheral, I2C_NO_REG, &heart_rate, 1);
+ *          if(!err){
+ *              ESP_LOGI(TAG, "Heart Rate — %ubpm", heart_rate);    
+ *          }
+ *          vTaskDelay(pdMS_TO_TICKS(10000));
+ *      }
+ *      Core2ForAWS_Port_A_I2C_Close(port_A_peripheral);
+ *      vTaskDelete(NULL);
+ *  }
+ *  
+ *  void app_main()
+ *  {
+ *      Core2ForAWS_Init();
+ *      xTaskCreatePinnedToCore(&i2c_test_task, "i2c_test_task", 4096, NULL, 5, NULL, 1);
+ *  }
+ * @endcode
+ * 
+ * @param[in] device The device configuration pointer.
+ * @param[in] register_address The address of the register to begin reading from.
+ * @param[out] data The data read from the register(s).
+ * @param[in] length The number of bytes to read from the peripheral.
+ * @return The I2C device configuration.
+ *
+ */
+/* @[declare_core2foraws_port_a_i2c_read] */
+esp_err_t Core2ForAWS_Port_A_I2C_Read(I2CDevice_t device, uint32_t register_address, uint8_t *data, uint16_t length);
+/* @[declare_core2foraws_port_a_i2c_read] */
+
+/**
+ * @brief Writes to I2C peripheral connected to expansion port A.
+ *
+ * This function writes a specified number of bytes starting from the
+ * specified register on the peripheral.
+ * 
+ * @note Some peripherals do not support specifying a register address to
+ * write to. In this scenario, input the @ref I2C_NO_REG macro as the 
+ * register_address.
+ *  
+ * Read more about [I2C capabilities of the ESP32 microcontroller and 
+ * available APIs in the ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/i2c.html).
+ *
+ * The example code allocates an I2C peripheral called 
+ * port_A_peripheral of type I2CDevice_t that has a 7-bit device address 
+ * of 0x68 and uses the standard baud rate. It then writes a single byte 
+ * of data to a specific register on the device, with a message printed to the serial output if successful.
+ *
+ * **Example:**
+ * @code{c}
+ *  #include <stdio.h>
+ *  #include <stdlib.h>
+ *  #include <freertos/FreeRTOS.h>
+ *  #include <freertos/task.h>
+ *  #include "esp_log.h"
+ *  #include "core2forAWS.h"
+ *  
+ *  #define DEVICE_ADDRESS 0x68
+ *  
+ *  static const char *TAG = "MAIN";
+ *  
+ *  void app_main()
+ *  {
+ *      Core2ForAWS_Init();
+ *      I2CDevice_t port_A_peripheral = Core2ForAWS_Port_A_I2C_Begin(DEVICE_ADDRESS, PORT_A_I2C_STANDARD_BAUD);
+ * 
+ *      uint8_t my_data = 23;
+ *      esp_err_t err = Core2ForAWS_Port_A_I2C_Read(port_A_peripheral, 0x30, &my_data, 1);
+ *      if(!err){
+ *          ESP_LOGI(TAG, "Successfully wrote to the I2C peripheral");    
+ *      }
+ *  }
+ * @endcode
+ * 
+ * @param[in] device The device configuration pointer.
+ * @param[in] register_address The address of the register to begin reading to.
+ * @param[in] data The data to write to the register(s).
+ * @param[in] length The number of bytes to write to the peripheral.
+ * @return The I2C device configuration.
+ *
+ */
+/* @[declare_core2foraws_port_a_i2c_write] */
+esp_err_t Core2ForAWS_Port_A_I2C_Write(I2CDevice_t device, uint32_t register_address, uint8_t *data, uint16_t length);
+/* @[declare_core2foraws_port_a_i2c_write] */
+
+/**
+ * @brief Frees the configuration pointer to the I2C peripheral connected 
+ * on port A.
+ *
+ * This function frees the allocated memory for the pointer that holds 
+ * the configuration for the I2C device connected on expansion port A. 
+ * I2C can have multiple peripherals connected on the same bus, using 
+ * this function to close/free one will not impact the others.
+ *  
+ * Read more about [I2C capabilities of the ESP32 microcontroller and 
+ * available APIs in the ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/i2c.html).
+ *
+ * The example code allocates a I2C peripheral called 
+ * port_A_peripheral of type I2CDevice_t at the standard baud rate. 
+ * It then closes/frees that device configuration.
+ *
+ * **Example:**
+ * @code{c}
+ *  #include <stdio.h>
+ *  #include <stdlib.h>
+ *  #include <freertos/FreeRTOS.h>
+ *  #include <freertos/task.h>
+ *  #include "esp_log.h"
+ *  #include "core2forAWS.h"
+ *  
+ *  #define DEVICE_ADDRESS 0xA0 >> 1
+ *  
+ *  static const char *TAG = "MAIN";
+ *  
+ *  void app_main()
+ *  {
+ *      Core2ForAWS_Init();
+ * 
+ *      I2CDevice_t port_A_peripheral = Core2ForAWS_Port_A_I2C_Begin(DEVICE_ADDRESS, PORT_A_I2C_STANDARD_BAUD);
+ *      Core2ForAWS_Port_A_I2C_Close(port_A_peripheral);
+ *  }
+ * @endcode
+ * 
+ * @param[in] device The device configuration pointer.
+ */
+/* @[declare_core2foraws_port_a_i2c_close] */
+void Core2ForAWS_Port_A_I2C_Close(I2CDevice_t device);
+/* @[declare_core2foraws_port_a_i2c_close] */
+
+/**
  * @brief Read the raw ADC value from GPIO36.
  *
  * @note Uses the etched eFuse VRef calibration.
@@ -888,7 +1181,7 @@ esp_err_t Core2ForAWS_Port_Write(gpio_num_t pin, bool level);
  *      xTaskCreatePinnedToCore(read_moisture_task, "moisture_raw", 4096*2, NULL, 1, NULL, 1);
  *  }
  *
- * @return the raw ADC reading.
+ * @return The raw ADC reading.
  *
  * @endcode
  */
@@ -998,6 +1291,9 @@ esp_err_t Core2ForAWS_Port_B_DAC_WriteMilliVolts(uint16_t mvolts);
  * on the Core2 for AWS IoT EduKit using the ESP32 and how to create
  * your own configuration, visit Espressif's official [documentation](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/uart.html).
  *
+ * @note The ESP32 is a 3.3v device and requires 3.3v on the UART TX/RX 
+ * lines. Higher voltages requires the use of a level shifter.
+ * 
  * The example below sets the PORT_C_UART_TX_PIN (GPIO 14) pin mode
  * to UART transmit, which will also set PORT_C_UART_RX_PIN (GPIO 13)
  * to UART receiver, and sets the UART baud rate to 115200. It then

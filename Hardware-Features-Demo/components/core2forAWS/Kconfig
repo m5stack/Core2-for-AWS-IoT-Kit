@@ -34,6 +34,24 @@ menu "Core2 for AWS hardware enable"
     config SOFTWARE_EXPPORTS_SUPPORT
         bool "Expansion Ports A, B, C"
         default y
+    config I2C_DEVICE_DEBUG_INFO
+        bool "I2C Log - Info Debugging"
+        depends on SOFTWARE_EXPPORTS_SUPPORT
+        default n
+        help
+            Log the info level outputs for I2C bus to serial(UART0)
+    config I2C_DEVICE_DEBUG_ERROR
+        bool "I2C Log - Error Debugging"
+        depends on SOFTWARE_EXPPORTS_SUPPORT
+        default n
+        help
+            Log the errors for I2C bus to serial(UART0)
+    config I2C_DEVICE_DEBUG_REG
+        bool "I2C Log - Register Debugingg"
+        depends on SOFTWARE_EXPPORTS_SUPPORT
+        default n
+        help
+            Log the I2C device register contents to serial(UART0)
 endmenu
 
 menu "LVGL TFT Display controller"

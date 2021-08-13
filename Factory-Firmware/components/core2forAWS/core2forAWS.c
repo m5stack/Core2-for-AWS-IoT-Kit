@@ -18,13 +18,13 @@
 #include "esp_adc_cal.h"
 #include "soc/dac_channel.h"
 
-#define DEFAULT_VREF    1100
 static esp_adc_cal_characteristics_t *adc_characterization;
+#define DEFAULT_VREF            1100
+#define ADC_CHANNEL             ADC1_CHANNEL_0
+#define ADC_WIDTH               ADC_WIDTH_BIT_12
+#define ADC_ATTENUATION         ADC_ATTEN_DB_11
+#define DAC_CHANNEL             DAC_GPIO26_CHANNEL
 
-#define ADC_CHANNEL ADC1_CHANNEL_0
-#define ADC_WIDTH ADC_WIDTH_BIT_12
-#define ADC_ATTENUATION ADC_ATTEN_DB_11
-#define DAC_CHANNEL DAC_GPIO26_CHANNEL
 #endif
 
 static const char *TAG = "Core2forAWS";
@@ -396,24 +396,34 @@ static void guiTask(void *pvParameter) {
 /* ----------------------------------------- Expansion Ports -----------------------------------------*/
 #if CONFIG_SOFTWARE_EXPPORTS_SUPPORT
 
-
 static esp_err_t check_pins(gpio_num_t pin, pin_mode_t mode){
-    if (pin != PORT_B_ADC_PIN && pin != PORT_B_DAC_PIN && pin != PORT_C_UART_RX_PIN && pin != PORT_C_UART_TX_PIN){
-        ESP_LOGE(TAG, "Only Port B (GPIO 26 and 36) is supported. Pin selected: %d", pin);
-        return ESP_ERR_NOT_SUPPORTED;
+    esp_err_t err = ESP_ERR_NOT_SUPPORTED;
+    if (pin != PORT_A_SDA_PIN && pin != PORT_A_SCL_PIN && pin != PORT_B_ADC_PIN && pin != PORT_B_DAC_PIN && pin != PORT_C_UART_RX_PIN && pin != PORT_C_UART_TX_PIN)
+    {
+        ESP_LOGE(TAG, "Only Ports (GPIO 32 and 33), Port B (GPIO 26 and 36), and Port C (GPIO 13 and 14) are supported. Pin selected: %d", pin);
+        return err;
     }
-    if (mode == DAC && pin != PORT_B_DAC_PIN){
+    if (mode == I2C && (pin != PORT_C_UART_TX_PIN && pin != PORT_C_UART_RX_PIN))
+    {
+        ESP_LOGE(TAG, "I2C is only supported on GPIO 32 (SDA) and GPIO 33 (SCL).");
+    }
+    if (mode == DAC && pin != PORT_B_DAC_PIN)
+    {
         ESP_LOGE(TAG, "DAC is only supported on GPIO 26.");
-        return ESP_ERR_NOT_SUPPORTED;
     } 
-    else if (mode == ADC && pin != PORT_B_ADC_PIN){
+    else if (mode == ADC && pin != PORT_B_ADC_PIN)
+    {
         ESP_LOGE(TAG, "ADC is only supported on GPIO 36.");
-        return ESP_ERR_NOT_SUPPORTED;
-    } else if (mode == UART && (pin != PORT_C_UART_TX_PIN && pin != PORT_C_UART_RX_PIN)){
+    } 
+    else if (mode == UART && (pin != PORT_C_UART_TX_PIN && pin != PORT_C_UART_RX_PIN))
+    {
         ESP_LOGE(TAG, "UART is only supported on GPIO 13 (receive) and GPIO 14 (transmit).");
-        return ESP_ERR_NOT_SUPPORTED;
     }
-    return ESP_OK;
+    else 
+    {
+        err = ESP_OK;
+    }
+    return err;
 }
 
 esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode){
@@ -436,7 +446,8 @@ esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode){
         io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
         io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     }
-    else if (mode == ADC){
+    else if (mode == ADC)
+    {
         err = adc1_config_width(ADC_WIDTH);
         if(err != ESP_OK){
             ESP_LOGE(TAG, "Error configuring ADC width on pin %d. Error code: %d", pin, err);
@@ -471,6 +482,7 @@ esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode){
         dac_output_disable(DAC_CHANNEL);
         gpio_reset_pin(pin);
         uart_driver_delete(UART_NUM_2);
+        i2c_free_port(I2C_NUM_0);
     }
     else {
         ESP_LOGE(TAG, "Invalid mode selected for GPIO %d", PORT_B_DAC_PIN);
@@ -497,6 +509,22 @@ esp_err_t Core2ForAWS_Port_Write(gpio_num_t pin, bool level){
         ESP_LOGE(TAG, "Error setting GPIO %d state", PORT_B_DAC_PIN);
     }
     return err;
+}
+
+I2CDevice_t Core2ForAWS_Port_A_I2C_Begin(uint8_t device_address, uint32_t baud){
+    return i2c_malloc_device(I2C_NUM_0, PORT_A_SDA_PIN, PORT_A_SCL_PIN, baud < 100000 ? baud : PORT_A_I2C_STANDARD_BAUD, device_address);
+}
+
+esp_err_t Core2ForAWS_Port_A_I2C_Read(I2CDevice_t device, uint32_t register_address, uint8_t *data, uint16_t length){
+    return i2c_read_bytes(device, register_address, data, length);
+}
+
+esp_err_t Core2ForAWS_Port_A_I2C_Write(I2CDevice_t device, uint32_t register_address, uint8_t *data, uint16_t length){
+    return i2c_write_bytes(device, register_address, data, length);
+}
+
+void Core2ForAWS_Port_A_I2C_Close(I2CDevice_t device){
+    i2c_free_device(device);
 }
 
 uint32_t Core2ForAWS_Port_B_ADC_ReadRaw(void){

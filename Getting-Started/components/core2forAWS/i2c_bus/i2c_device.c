@@ -9,26 +9,25 @@
 
 #define TAG "I2C-DEVICE"
 
-#ifdef I2C_DEVICE_DEBUG_INFO
+#ifdef CONFIG_I2C_DEVICE_DEBUG_INFO
 #define log_i(format...) ESP_LOGI(TAG, format)
 #else
 #define log_i(format...)
 #endif
 
-#ifdef I2C_DEVICE_DEBUG_ERROR
+#ifdef CONFIG_I2C_DEVICE_DEBUG_ERROR
 #define log_e(format...) ESP_LOGE(TAG, format)
 #else
 #define log_e(format...)
 #endif
 
-#ifdef I2C_DEVICE_DEBUG_REG
+#ifdef CONFIG_I2C_DEVICE_DEBUG_REG
 #define log_reg(buffer, buffer_len) ESP_LOG_BUFFER_HEX(TAG, buffer, buffer_len)
 #else
 #define log_reg(buffer, buffer_len)
 #endif
 
-#define I2C_TIMEOUT_MS (100) // 1000ms
-#define MAX_DEVICE_NUMBER 24
+#define I2C_TIMEOUT_MS (100)
 
 typedef struct _i2c_port_obj_t {
     i2c_port_t port;
@@ -152,49 +151,45 @@ esp_err_t i2c_apply_bus(I2CDevice_t i2c_device) {
     return ESP_OK;
 }
 
-void i2c_free_bus(I2CDevice_t i2c_device) {
+esp_err_t i2c_free_bus(I2CDevice_t i2c_device) {
     if (i2c_device == NULL) {
-        return ;
+        return ESP_ERR_INVALID_ARG;
     }
     i2c_device_t* device = (i2c_device_t *)i2c_device;
-    xSemaphoreGiveRecursive(i2c_mutex[device->i2c_port->port]);
+    return (xSemaphoreGiveRecursive(i2c_mutex[device->i2c_port->port]) == pdTRUE) ? ESP_OK : ESP_FAIL;
 }
 
-esp_err_t i2c_read_bytes(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data, uint16_t length) {
+esp_err_t i2c_read_bytes(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t *data, uint16_t length) {
     if (i2c_device == NULL || (length > 0 && data == NULL)) {
-        return ESP_FAIL;
+        return ESP_ERR_INVALID_ARG;
     }
 
     i2c_device_t* device = (i2c_device_t *)i2c_device;
 
-    i2c_cmd_handle_t write_cmd = i2c_cmd_link_create();
-    i2c_master_start(write_cmd);
-    i2c_master_write_byte(write_cmd, (device->addr << 1) | I2C_MASTER_WRITE, 1);
-    i2c_master_write_byte(write_cmd, reg_addr, 1);
-    i2c_master_stop(write_cmd);
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
-    i2c_cmd_handle_t read_cmd = i2c_cmd_link_create();
-    i2c_master_start(read_cmd);
-    i2c_master_write_byte(read_cmd, (device->addr << 1) | I2C_MASTER_READ, 1);
+    if(!(reg_addr & I2C_NO_REG)){
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (device->addr << 1) | I2C_MASTER_WRITE, 1);
+        i2c_master_write_byte(cmd, reg_addr, 1);
+    }
+ 
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (device->addr << 1) | I2C_MASTER_READ, 1);
     if (length > 1) {
-        i2c_master_read(read_cmd, data, length - 1, I2C_MASTER_ACK);
+        i2c_master_read(cmd, data, length - 1, I2C_MASTER_ACK);
     }
     if (length > 0) {
-        i2c_master_read_byte(read_cmd, &data[length-1], I2C_MASTER_NACK);
+        i2c_master_read_byte(cmd, &data[length-1], I2C_MASTER_NACK);
     }
-    i2c_master_stop(read_cmd);
-
-
+    i2c_master_stop(cmd);
     i2c_apply_bus(i2c_device);
+    
     esp_err_t err = ESP_FAIL;
-    err = i2c_master_cmd_begin(device->i2c_port->port, write_cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
-    if (err == ESP_OK && length > 0) {
-        err = i2c_master_cmd_begin(device->i2c_port->port, read_cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
-    }
-    i2c_free_bus(i2c_device);
 
-    i2c_cmd_link_delete(write_cmd);
-    i2c_cmd_link_delete(read_cmd);
+    err = i2c_master_cmd_begin(device->i2c_port->port, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
+    i2c_free_bus(i2c_device);
+    i2c_cmd_link_delete(cmd);
 
     if (err != ESP_OK) {
         log_e("I2C Read Error: 0x%02x, reg: 0x%02x, length: %d, Code: 0x%x", device->addr, reg_addr, length, err);
@@ -206,34 +201,37 @@ esp_err_t i2c_read_bytes(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data
     return err;
 }
 
-esp_err_t i2c_read_bytes_no_stop(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data, uint16_t length) {
+esp_err_t i2c_read_bytes_no_stop(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t *data, uint16_t length) {
     if (i2c_device == NULL || (length > 0 && data == NULL)) {
-        return ESP_FAIL;
+        return ESP_ERR_INVALID_ARG;
     }
 
     i2c_device_t* device = (i2c_device_t *)i2c_device;
 
-    i2c_cmd_handle_t write_cmd = i2c_cmd_link_create();
-    i2c_master_start(write_cmd);
-    i2c_master_write_byte(write_cmd, (device->addr << 1) | I2C_MASTER_WRITE, 1);
-    i2c_master_write_byte(write_cmd, reg_addr, 1);
-    i2c_master_start(write_cmd);
-    i2c_master_write_byte(write_cmd, (device->addr << 1) | I2C_MASTER_READ, 1);
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    
+    if(!(reg_addr & I2C_NO_REG)){
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (device->addr << 1) | I2C_MASTER_WRITE, 1);
+        i2c_master_write_byte(cmd, reg_addr, 1);
+    }
+
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (device->addr << 1) | I2C_MASTER_READ, 1);
     if (length > 1) {
-        i2c_master_read(write_cmd, data, length - 1, I2C_MASTER_ACK);
+        i2c_master_read(cmd, data, length - 1, I2C_MASTER_ACK);
     }
     if (length > 0) {
-        i2c_master_read_byte(write_cmd, &data[length-1], I2C_MASTER_NACK);
+        i2c_master_read_byte(cmd, &data[length-1], I2C_MASTER_NACK);
     }
-    i2c_master_stop(write_cmd);
-
-
+    i2c_master_stop(cmd);
     i2c_apply_bus(i2c_device);
-    esp_err_t err = ESP_FAIL;
-    err = i2c_master_cmd_begin(device->i2c_port->port, write_cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
-    i2c_free_bus(i2c_device);
 
-    i2c_cmd_link_delete(write_cmd);
+    esp_err_t err = ESP_FAIL;
+    
+    err = i2c_master_cmd_begin(device->i2c_port->port, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
+    i2c_free_bus(i2c_device);
+    i2c_cmd_link_delete(cmd);
 
     if (err != ESP_OK) {
         log_e("I2C Read Error: 0x%02x, reg: 0x%02x, length: %d, Code: 0x%x", device->addr, reg_addr, length, err);
@@ -245,11 +243,11 @@ esp_err_t i2c_read_bytes_no_stop(I2CDevice_t i2c_device, uint8_t reg_addr, uint8
     return err;
 }
 
-esp_err_t i2c_read_byte(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t* data) {
+esp_err_t i2c_read_byte(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t* data) {
     return i2c_read_bytes(i2c_device, reg_addr, data, 1);
 }
 
-esp_err_t i2c_read_bit(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data, uint8_t bit_pos) {
+esp_err_t i2c_read_bit(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t *data, uint8_t bit_pos) {
     if (data == NULL) {
         return ESP_FAIL;
     }
@@ -265,7 +263,7 @@ esp_err_t i2c_read_bit(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data, 
     return ESP_OK; 
 }
 
-esp_err_t i2c_read_bits(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data, uint8_t bit_pos, uint8_t bit_length) {
+esp_err_t i2c_read_bits(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t *data, uint8_t bit_pos, uint8_t bit_length) {
     if ((bit_pos + bit_length > 8) || data == NULL) {
         return ESP_FAIL;
     }
@@ -283,7 +281,7 @@ esp_err_t i2c_read_bits(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data,
     return ESP_OK;
 }
 
-esp_err_t i2c_write_bytes(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *data, uint16_t length) {
+esp_err_t i2c_write_bytes(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t *data, uint16_t length) {
     if (i2c_device == NULL || (length > 0 && data == NULL)) {
         return ESP_FAIL;
     }
@@ -293,7 +291,9 @@ esp_err_t i2c_write_bytes(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *dat
     i2c_cmd_handle_t write_cmd = i2c_cmd_link_create();
     i2c_master_start(write_cmd);
     i2c_master_write_byte(write_cmd, (device->addr << 1) | I2C_MASTER_WRITE, 1);
-    i2c_master_write_byte(write_cmd, reg_addr, 1);
+    if(!(reg_addr & I2C_NO_REG)){
+        i2c_master_write_byte(write_cmd, reg_addr, 1);
+    }
     if (length > 0) {
         i2c_master_write(write_cmd, data, length, 1);
     }
@@ -317,11 +317,11 @@ esp_err_t i2c_write_bytes(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t *dat
     return err;
 }
 
-esp_err_t i2c_write_byte(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t data) {
+esp_err_t i2c_write_byte(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t data) {
     return i2c_write_bytes(i2c_device, reg_addr, &data, 1);
 }
 
-esp_err_t i2c_write_bit(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t data, uint8_t bit_pos) {
+esp_err_t i2c_write_bit(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t data, uint8_t bit_pos) {
     uint8_t value = 0x00;
     esp_err_t err = ESP_FAIL;
     err = i2c_read_byte(i2c_device, reg_addr, &value);
@@ -334,7 +334,7 @@ esp_err_t i2c_write_bit(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t data, 
     return i2c_write_byte(i2c_device, reg_addr, value);
 }
 
-esp_err_t i2c_write_bits(I2CDevice_t i2c_device, uint8_t reg_addr, uint8_t data, uint8_t bit_pos, uint8_t bit_length) {
+esp_err_t i2c_write_bits(I2CDevice_t i2c_device, uint32_t reg_addr, uint8_t data, uint8_t bit_pos, uint8_t bit_length) {
     if ((bit_pos + bit_length) > 8) {
         return ESP_FAIL;
     }

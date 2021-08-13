@@ -35,7 +35,7 @@ void app_main(void)
     sdcardTest();
     sk6812Test();
 
-    xTaskCreatePinnedToCore(speakerTask, "speak", 4096*2, NULL, 4, NULL, 1);
+    xTaskCreatePinnedToCore(speakerTask, "speak", 4096 * 2, NULL, 4, NULL, 1);
     
     rtc_date_t date;
     date.year = 2020;
@@ -101,7 +101,7 @@ void app_main(void)
 
     xSemaphoreGive(xGuiSemaphore);
 
-    xTaskCreatePinnedToCore(ateccTask, "ateccTask", 4096*2, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(ateccTask, "ateccTask", 4096 * 2, NULL, 1, NULL, 1);
 
     char label_stash[200];
     for (;;) {
