@@ -113,14 +113,6 @@ typedef struct {
 int media_hal_playback(media_hal_audio_info_t *audio_info, void *buf, int len);
 
 /**
- * Stops throwing data onto I2S bus. 
- * Synchronously stops playback.
- * 
- * Return: Number of bytes written.
- */
-void media_hal_playback_stop();
-
-/**
  * Enable audio equalizer.
  *
  * Equalizes as per given gain value array.

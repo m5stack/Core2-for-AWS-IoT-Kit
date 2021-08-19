@@ -6,7 +6,7 @@
 #include "va_button.h"
 #include <media_hal.h>
 #include <va_mem_utils.h>
-#include "va_speaker.h"
+#include "speaker.h"
 #include <alerts.h>
 #include <tone.h>
 #include <voice_assistant.h>
@@ -56,6 +56,7 @@ typedef struct {
 static va_button_t button_st = {false, {0}, NULL, NULL, NULL, NULL, {0}};
 
 int number_of_active_alerts = 0;
+static esp_err_t va_touch_button_init(int (*button_event_cb)(int));
 
 #ifdef CONFIG_ULP_COPROC_ENABLED
 static void va_button_timer_cb(void *arg)
@@ -369,6 +370,11 @@ esp_err_t va_button_init(const button_cfg_t *button_cfg, int (*button_event_cb)(
 {
     button_st.but_cfg = *button_cfg;
 
+
+    if(button_st.but_cfg.is_touch) {
+        return va_touch_button_init(button_event_cb);
+    }
+
     esp_timer_init();
     esp_timer_create_args_t timer_arg = {
         .callback = va_button_factory_reset_timer_cb,
@@ -441,49 +447,53 @@ esp_err_t va_button_init(const button_cfg_t *button_cfg, int (*button_event_cb)(
     return ESP_OK;
 }
 
-/**********************Touch button handling : for M5Core2 boards******************************/
+/**********************Touch button handling******************************/
 static void touch_button_task(void *arg)
 {
-    int io_num;
     uint8_t mute_btn_press_en = false;
+
+    //This callback function is used to actually check from underlying driver
+    //if the corresponding button was pressed. This behavior is unlike the use
+    //of same callback in ADC button task above.
     int (*button_exe_internal)(int) = (int(*)(int))arg;
 
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(100));
 
-        if (button_exe_internal(VA_BUTTON_TAP_TO_TALK)) {
-            printf("Tap_To_Talk Button pressed\r\n");
-            va_dsp_tap_to_talk_start();
-            vTaskDelay(pdMS_TO_TICKS(333));
-        }   
-        if (button_exe_internal(VA_BUTTON_MIC_MUTE)) {
-            if(mute_btn_press_flg == 1) {
-                mute_btn_press_flg = 2;
-                button_st.b_mute = true;
-                va_dsp_mic_mute(button_st.b_mute);
-                va_ui_set_state(VA_MUTE_ENABLE);
-                printf("MUTE Button pressed, Mute Enabled\r\n");
-            } else if(mute_btn_press_flg == 2) {
-                mute_btn_press_flg = 1;
-                button_st.b_mute = false;
-                va_dsp_mic_mute(button_st.b_mute);
-                va_ui_set_state(VA_MUTE_DISABLE);
-                printf("MUTE Button pressed, Mute Disabled\r\n");
+        if(va_boot_is_finish()) {
+            if (button_exe_internal(VA_BUTTON_TAP_TO_TALK)) {
+                printf("Tap_To_Talk Button pressed\r\n");
+                va_dsp_tap_to_talk_start();
+                vTaskDelay(pdMS_TO_TICKS(333));
+            }   
+            if (button_exe_internal(VA_BUTTON_MIC_MUTE)) {
+                if(mute_btn_press_flg == 1) {
+                    mute_btn_press_flg = 2;
+                    button_st.b_mute = true;
+                    va_dsp_mic_mute(button_st.b_mute);
+                    va_ui_set_state(VA_MUTE_ENABLE);
+                    printf("MUTE Button pressed, Mute Enabled\r\n");
+                } else if(mute_btn_press_flg == 2) {
+                    mute_btn_press_flg = 1;
+                    button_st.b_mute = false;
+                    va_dsp_mic_mute(button_st.b_mute);
+                    va_ui_set_state(VA_MUTE_DISABLE);
+                    printf("MUTE Button pressed, Mute Disabled\r\n");
+                }
+            }   
+            if (button_exe_internal(VA_BUTTON_CUSTOM_1)) {
+                printf("Right Button pressed. No Action defined for this!\r\n");
             }
-        }   
-        if (button_exe_internal(VA_BUTTON_CUSTOM_1)) {
-            printf("Right Button pressed. No Action defined for this!\r\n");
         }
     }
 }
 
-
-esp_err_t va_touch_button_init(int (*button_event_cb)(int))
+static esp_err_t va_touch_button_init(int (*button_event_cb)(int))
 {
-    StackType_t *touch_button_task_stack = (StackType_t *)heap_caps_calloc(1, 4*1024, MALLOC_CAP_SPIRAM);
+    StackType_t *touch_button_task_stack = (StackType_t *)heap_caps_calloc(1, VA_BUTTON_TASK_BUFFER_SZ, MALLOC_CAP_SPIRAM);
     static StaticTask_t touch_button_task_buf;
     TaskHandle_t touch_button_task_handle;
-    touch_button_task_handle = xTaskCreateStatic(touch_button_task, "touch-button-thread", 4*1024,
+    touch_button_task_handle = xTaskCreateStatic(touch_button_task, "touch-button-thread", VA_BUTTON_TASK_BUFFER_SZ,
             button_event_cb, CONFIG_ESP32_PTHREAD_TASK_PRIO_DEFAULT, touch_button_task_stack, &touch_button_task_buf);
     if (touch_button_task_handle == NULL) {
         ESP_LOGE(TAG, "Could not create touch button task");

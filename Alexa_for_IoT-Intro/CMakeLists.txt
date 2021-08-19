@@ -1,8 +1,3 @@
-
-# (Automatically converted from project Makefile by convert_to_cmake.py.)
-
-# The following lines of boilerplate have to be in your project's CMakeLists
-# in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)
 
 set(VOICE_ASSISTANT "aia" CACHE INTERNAL "")
@@ -19,9 +14,6 @@ endif()
 
 idf_build_set_property(COMPILE_OPTIONS "-DVOICE_ASSISTANT_AIA" APPEND)
 
-if(DEFINED PARTITIONS_4MB_FLASH_CSV)
-    set(ENV{PARTITION_TABLE_CSV_PATH} CMAKE_CURRENT_SOURCE_DIR/partitions_4mb_flash.csv)
-endif()
 
 # SPIFFS specific configuration
 if(DEFINED DSP_EN_SPI_FFS)
@@ -53,8 +45,6 @@ if(DEFINED DSP_EN_SPI_FFS)
         "${CMAKE_CURRENT_SOURCE_DIR}/build/spiffs-alexa-img.bin")
 endif()
 
-project(AWS_IoT_EduKit-Intro_to_Alexa VERSION 1.1.2)
-
 if (DEFINED DSP_EN_SPI_FFS)
     esptool_py_custom_target(spiffs_flash spiffs_flash "spiffs_make")
     add_dependencies(flash spiffs_flash)
@@ -63,3 +53,5 @@ if (DEFINED DSP_EN_SPI_FFS)
         "${CMAKE_BINARY_DIR}/flash_spiffs_flash_args"
         )
 endif()
+
+project(AWS_IoT_EduKit-Intro_to_Alexa VERSION 1.2.0)

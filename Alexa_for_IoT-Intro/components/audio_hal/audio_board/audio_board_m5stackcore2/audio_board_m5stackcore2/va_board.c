@@ -16,7 +16,6 @@
 *
 */
 
-#include <string.h>
 #include <esp_log.h>
 #include <audio_board.h>
 #include <i2s_stream.h>
@@ -26,8 +25,6 @@
 #include <va_button.h>
 #include <va_led.h>
 #include <m5stackcore2_init.h>
-#include <media_hal.h>
-#include <media_hal_playback.h>
 #include "driver/gpio.h"
 #include "driver/adc.h"
 #include "tone.h"
@@ -37,34 +34,25 @@
 
 #define VA_TAG "AUDIO_BOARD"
 
-#define VA_ASSERT(a, format, b, ...) \
-    if ((a) == NULL) { \
-        ESP_LOGE(PLAT_TAG, format, ##__VA_ARGS__); \
-        return b;\
-    }
-/*I2S related */
-#define I2S_OUT_VOL_DEFAULT     60
-
+extern SemaphoreHandle_t spi_mutex;
+extern SemaphoreHandle_t xGuiSemaphore;
 xSemaphoreHandle mic_state = NULL; /* To protect I2S writes from I2S uninstall */
 
 bool ab_but_mute = false;
 
 int but_cb_reg_handlr(int ui_but_evt)
 {
-	if(ui_but_evt == VA_BUTTON_TAP_TO_TALK)
-	{
+	if(ui_but_evt == VA_BUTTON_TAP_TO_TALK) {
 		if(Button_WasPressed(button_left))
 			return 1;
 	}
 
-	if(ui_but_evt == VA_BUTTON_MIC_MUTE)
-	{
+	if(ui_but_evt == VA_BUTTON_MIC_MUTE) {
 		if(Button_WasPressed(button_middle))
 			return 1;
 	}
 	
-	if(ui_but_evt == VA_BUTTON_CUSTOM_1)
-	{
+	if(ui_but_evt == VA_BUTTON_CUSTOM_1) {
 		if(Button_WasPressed(button_right))
 			return 1;
 	}
@@ -72,10 +60,13 @@ int but_cb_reg_handlr(int ui_but_evt)
     return 0;
 }
 
-esp_err_t va_board_button_init()
+static esp_err_t va_board_button_init()
 {
-	// Map Buttons to Alexa
-    va_touch_button_init(but_cb_reg_handlr);
+	//Map Buttons to Alexa
+    button_cfg_t *ab_button_conf = NULL;
+    ab_button_conf = (button_cfg_t *)calloc(1, sizeof(button_cfg_t));
+    ab_button_conf->is_touch = true;
+    va_button_init(ab_button_conf, but_cb_reg_handlr);
 
     // Add touch button labels
     lv_obj_t * ptt_label = lv_label_create(lv_scr_act(), NULL);
@@ -85,7 +76,6 @@ esp_err_t va_board_button_init()
     lv_obj_t * mute_label = lv_label_create(lv_scr_act(), NULL);
     lv_label_set_text(mute_label, "Mute");
     lv_obj_align(mute_label,NULL,LV_ALIGN_IN_BOTTOM_MID, 0, -4);
-    
     return ESP_OK;
 }
 
@@ -156,7 +146,7 @@ int va_board_init()
     };
     media_hal_init_playback(&cfg);
 
-    ESP_LOGI(VA_TAG, "Installing M5Stack Core2 for AWS IoT EduKit board i2s driver for Speaker");
+    ESP_LOGE(VA_TAG, "Installing M5Stack Core2 for AWS IoT EduKit board i2s driver for Speaker");
     audio_board_i2s_init_default(&i2s_cfg);
     ret = i2s_driver_install(I2S_PORT_DAC, &i2s_cfg, 0, NULL);
     if (ret != ESP_OK) {
@@ -169,13 +159,13 @@ int va_board_init()
     i2s_set_pin(I2S_PORT_DAC, &ab_i2s_pin);
 
     static media_hal_config_t media_hal_conf = MEDIA_HAL_DEFAULT();
-    media_hal_t* mhal_handle = media_hal_init(&media_hal_conf);
+    media_hal_init(&media_hal_conf);
     
     Core2ForAWS_Init();
     Core2ForAWS_Display_SetBrightness(85);
-    
+    va_board_button_init();
     va_board_led_init();
-    
+
     display_function();
 
     //disable Alexa tones (Start of Response / End of Response) for this half duplex board

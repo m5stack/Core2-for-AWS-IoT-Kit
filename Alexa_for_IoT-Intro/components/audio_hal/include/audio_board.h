@@ -59,7 +59,7 @@ esp_err_t audio_board_i2c_pin_config(int port_num, i2c_config_t *pf_i2c_pin);
  */
 esp_err_t audio_board_i2s_init_default(i2s_config_t *i2s_cfg_dft);
 
-#ifdef HALF_DUPLEX_I2S_MODE
+#ifdef CONFIG_HALF_DUPLEX_I2S_MODE
 /*
  * @brief sets I2S to Mic mode or Speaker mode 
  *

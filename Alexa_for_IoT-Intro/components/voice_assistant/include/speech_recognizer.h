@@ -27,7 +27,7 @@ int speech_recognizer_record_stop();
  *
  * The application should call this function when the user initiates
  * communication with the voice assistant either through a wakeword or through
- * Push-to-talk.
+ * Tap-to-talk.
  *
  * \param[in] ww_length The length of the wakeword, if this is a wakeword driven interaction
  * \param[in] initiator The type of initiator

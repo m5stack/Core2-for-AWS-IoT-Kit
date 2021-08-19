@@ -43,9 +43,6 @@ static uint8_t *convert_buf;
 
 static xSemaphoreHandle eq_mutex = NULL; /* To protect eq_handle */
 
-static xSemaphoreHandle i2s_sem = NULL; /* To protect I2S writes from I2S uninstall */
-static bool i2s_stop_flag = false;
-
 /* Contains data or config relevant to a playback. */
 typedef struct media_hal_playback {
     media_hal_playback_cfg_t cfg;
@@ -61,29 +58,28 @@ static bool first_sound_flag = false;
 static int default_write_callback(int port_num, void *buf, size_t len, int src_bps, int dst_bps)
 {
     unsigned int sent_len = 0;
-#ifdef HALF_DUPLEX_I2S_MODE
-    if(i2s_mode == MODE_SPK) 
+#ifdef CONFIG_HALF_DUPLEX_I2S_MODE
+    if(i2s_mode != MODE_SPK) 
     {
-#endif
-        if (dst_bps == src_bps) {
-            i2s_write((i2s_port_t) port_num, (char *) buf, len, &sent_len, portMAX_DELAY);
-        } else {
-            if (dst_bps > src_bps) {
-                if (dst_bps % src_bps != 0) {
-                    ESP_LOGE(TAG, "destination bits need to be multiple of source bits");
-                    sent_len = -1;
-                    goto end;
-                }
-            } else {
-                ESP_LOGE(TAG, "destination bits need to greater than and multiple of source bits");
-                sent_len =  -1;
+        return sent_len;
+    }
+#endif    
+    if (dst_bps == src_bps) {
+        i2s_write((i2s_port_t) port_num, (char *) buf, len, &sent_len, portMAX_DELAY);
+    } else {
+        if (dst_bps > src_bps) {
+            if (dst_bps % src_bps != 0) {
+                ESP_LOGE(TAG, "destination bits need to be multiple of source bits");
+                sent_len = -1;
                 goto end;
             }
-            i2s_write_expand((i2s_port_t) port_num, (char *) buf, len, src_bps, dst_bps, &sent_len, portMAX_DELAY);
+        } else {
+            ESP_LOGE(TAG, "destination bits need to greater than and multiple of source bits");
+            sent_len =  -1;
+            goto end;
         }
-#ifdef HALF_DUPLEX_I2S_MODE
+        i2s_write_expand((i2s_port_t) port_num, (char *) buf, len, src_bps, dst_bps, &sent_len, portMAX_DELAY);
     }
-#endif
 end:    
     return sent_len;
 }
@@ -226,12 +222,6 @@ esp_err_t media_hal_disable_playback(void *playback_handle)
 
 void *media_hal_init_playback(media_hal_playback_cfg_t *cfg)
 {
-    if(!i2s_sem) {
-        i2s_sem = xSemaphoreCreateMutex();
-        if (!i2s_sem) {
-            ESP_LOGE(TAG, "i2s_sem initialization failed");
-        }
-    }
     if (!convert_buf) {
         convert_buf = esp_audio_mem_calloc(1, BUF_SZ);
         if (!convert_buf) {
@@ -331,25 +321,8 @@ int media_hal_playback_play(media_hal_playback_t *playback, media_hal_audio_info
             cfg->equalizer_callback((void *) convert_buf, conv_len * 2, cfg->sample_rate, cfg->channels);
         }
         
-        if(xSemaphoreTake(i2s_sem, 0) == pdTRUE)
-        {
-            if(!i2s_stop_flag)
-            {
-                cfg->write_callback((int) cfg->i2s_port_num, (void *) convert_buf, conv_len * 2,
+        cfg->write_callback((int) cfg->i2s_port_num, (void *) convert_buf, conv_len * 2,
                                         audio_info->bits_per_sample, cfg->bits_per_sample);
-                xSemaphoreGive(i2s_sem);
-            }
-            else
-            {
-                playback->is_disabled = true;
-                xSemaphoreGive(i2s_sem);
-                break;
-            }
-        }
-        else
-        {
-            break;
-        }
     }
     return sent_len;
 }
@@ -358,7 +331,6 @@ int media_hal_playback(media_hal_audio_info_t *audio_info, void *buf, int len)
 {
     //printf("%s: [resample-cb] %d spiram %d\n", TAG, heap_caps_get_free_size_sram(), heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     //memset(convert_buf, 0, BUF_SZ);
-    i2s_stop_flag = false;
 
     int sent_len = 0;
     for (int i = 0; i < MAX_PLAYBACK_REQUESTERS; i++) {
@@ -370,11 +342,4 @@ int media_hal_playback(media_hal_audio_info_t *audio_info, void *buf, int len)
         }
     }
     return sent_len;
-}
-
-void media_hal_playback_stop()
-{
-    xSemaphoreTake(i2s_sem, portMAX_DELAY);
-    i2s_stop_flag = true;
-    xSemaphoreGive(i2s_sem);
 }

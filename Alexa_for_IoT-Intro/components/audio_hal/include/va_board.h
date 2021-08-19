@@ -35,8 +35,6 @@
 extern "C" {
 #endif
 
-esp_err_t va_board_button_init();
-
 int va_board_init();
 
 #ifdef __cplusplus

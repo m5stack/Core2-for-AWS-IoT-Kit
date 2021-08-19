@@ -3,8 +3,8 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := aia
-PROJECT_VER := 1.0.2
+PROJECT_NAME := AWS_IoT_EduKit-Intro_to_Alexa
+PROJECT_VER := 1.2.0
 export VOICE_ASSISTANT = aia
 export LED_PATTERN_TYPE = alexa
 CPPFLAGS += -DVOICE_ASSISTANT_AIA
@@ -22,13 +22,6 @@ endif
 ifdef DSP_EN_SPI_FFS
 MKSPIFFS_PATH=tools/mkspiffs
 export PARTITION_TABLE_CSV_PATH:=$(CURDIR)/partitions_mkspiffs.csv
-endif
-
-ifdef PARTITIONS_4MB_FLASH_CSV
-# Set partition to `partitions_4mb_flash.csv`
-# This makes sure boards with smaller flash size of 4Mb work without issue.
-# var `PARTITIONS_4MB_FLASH_CSV` is set in `audio_board.mk`
-export PARTITION_TABLE_CSV_PATH:=$(CURDIR)/partitions_4mb_flash.csv
 endif
 
 include $(IDF_PATH)/make/project.mk

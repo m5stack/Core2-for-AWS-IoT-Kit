@@ -36,6 +36,7 @@ enum {
 typedef struct {
     bool is_adc;
     bool is_gpio;
+    bool is_touch;
     uint16_t va_button_adc_ch_num;
     union {
         int va_button_gpio_num[VA_BUTTON_MAX - 1];      // Since gpio is interrupt based, Idle is not required. Hence (MAX -1)
@@ -52,7 +53,6 @@ typedef void (*va_button_setup_mode_cb_t)(void *arg);
 esp_err_t va_button_init(const button_cfg_t *button_cfg, int (*button_event_cb)(int));
 void va_button_register_wifi_reset_cb(va_button_wifi_reset_cb_t wifi_reset_cb);
 void va_button_register_setup_mode_cb(va_button_wifi_reset_cb_t setup_mode_cb);
-esp_err_t va_touch_button_init();
 
 /**
  *

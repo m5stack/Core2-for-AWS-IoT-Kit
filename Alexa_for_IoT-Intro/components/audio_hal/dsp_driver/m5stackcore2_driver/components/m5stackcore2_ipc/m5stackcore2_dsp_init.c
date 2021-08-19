@@ -76,47 +76,6 @@ static struct dsp_data {
     .i2s_number = I2S_PORT_DAC 
 };
 
-esp_err_t InitI2SSpeakOrMic(int mode)
-{
-    esp_err_t err = ESP_OK;
-    i2s_config_t i2s_cfg = {};
-
-    i2s_driver_uninstall(I2S_PORT_DAC);
-
-    audio_board_i2s_init_default(&i2s_cfg);
-    //i2s_cfg.mode = (i2s_mode_t)(I2S_MODE_MASTER);
-        
-    if (mode == MODE_MIC)
-    {
-        i2s_cfg.mode = (I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
-    }
-    else
-    {
-        i2s_cfg.mode = (I2S_MODE_MASTER | I2S_MODE_TX);
-        i2s_cfg.use_apll = false;
-        i2s_cfg.tx_desc_auto_clear = true;
-    }
-    err = i2s_driver_install(I2S_PORT_DAC, &i2s_cfg, 0, NULL);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Error installing i2s driver");
-        return err;
-    } 
-    i2s_pin_config_t ab_i2s_pin;
-    // Write I2S0 pin config
-    audio_board_i2s_pin_config(I2S_PORT_DAC, &ab_i2s_pin);
-    err = i2s_set_pin(I2S_PORT_DAC, &ab_i2s_pin);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Error setting i2s pin config");
-        return err;
-    } 
-    err = i2s_set_clk(I2S_PORT_DAC, SAMPLE_RATE_DAC, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_MONO);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Error setting i2s clk");
-        return err;
-    } 
-    return err;
-}
-
 int m5stackcore2_stream_audio(uint8_t *buffer, int size, int wait);
 
 static void ww_detection_task(void *arg)
@@ -232,7 +191,7 @@ void m5stackcore2_configure(m5stackcore2_config_t *cfg)
 
 void m5stackcore2_audio_stream_pause()
 {
-    ESP_LOGI(TAG, "Pausing I2S Reader Stream");
+    ESP_LOGE(TAG, "Pausing I2S Reader Stream");
     if(dd.read_i2s_stream && dd.read_i2s_stream->base.label)
         audio_stream_pause(&dd.read_i2s_stream->base);
     vTaskDelay(100/portTICK_PERIOD_MS);
@@ -240,7 +199,7 @@ void m5stackcore2_audio_stream_pause()
 
 void m5stackcore2_audio_stream_resume()
 {
-    ESP_LOGI(TAG, "Resuming I2S Reader Stream");
+    ESP_LOGE(TAG, "Resuming I2S Reader Stream");
     if(dd.read_i2s_stream && dd.read_i2s_stream->base.label)
         audio_stream_resume(&dd.read_i2s_stream->base);
 }

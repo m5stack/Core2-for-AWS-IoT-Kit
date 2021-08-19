@@ -22,7 +22,6 @@
 #include "esp_intr_alloc.h"
 #include <m5stackcore2_init.h>
 #include "core2forAWS.h"
-#include "media_hal_playback.h"
 
 #define PLAT_TAG "AUDIO_BOARD"
 
@@ -89,10 +88,6 @@ esp_err_t audio_board_i2s_set_spk_mic_mode(int mode)
         if(mode == MODE_SPK)
         {
             m5stackcore2_audio_stream_pause();
-        }
-        else
-        {
-            media_hal_playback_stop();
         }
         ESP_LOGW(PLAT_TAG, "Installing I2S driver mode %d", mode);
         i2s_mode = mode;

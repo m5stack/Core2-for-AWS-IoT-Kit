@@ -25,7 +25,7 @@
 #include <wifi_cli.h>
 #include <tone.h>
 #include <prompt.h>
-#include <va_speaker.h>
+#include <speaker.h>
 #include <avs_config.h>
 #include <auth_delegate.h>
 #include <speech_recognizer.h>
@@ -214,10 +214,6 @@ void app_main()
     if (ret != ESP_OK) {
         while(1) vTaskDelay(2);
     }
-
-    // Initialize touch buttons and button labels
-    va_board_button_init();
-    
     /* This is a blocking call */
     va_dsp_init(speech_recognizer_recognize, speech_recognizer_record);
 

@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include <va_ui.h>
 #include <voice_assistant_app_cb.h>
+#include "va_led.h"
 #include "va_board.h"
 #include <media_hal.h>
 #include "esp_log.h"
@@ -26,14 +27,6 @@ void va_app_dialog_states(va_dialog_states_t va_state)
         ESP_LOGI(TAG, "Dialog state is: %d", va_state);
     }
     prv_led_state = va_state;
-   
-#ifdef HALF_DUPLEX_I2S_MODE
-    if(va_state == VA_IDLE)  
-    {
-        ESP_LOGI(TAG, "Enabling Mic");
-        audio_board_i2s_set_spk_mic_mode(MODE_MIC);
-    }
-#endif
 }
 
 int va_app_volume_is_set(int vol)

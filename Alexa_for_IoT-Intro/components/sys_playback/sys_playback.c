@@ -111,9 +111,16 @@ static void sys_playback_task()
             /* Tone gets priority */
             active = sp.tone;
         }
-        if (active == &sp.dummy && sp.duck && sp.downmix_support) {
-            wait_duck = wait;
-            wait_main = 0;
+
+        if (active == &sp.dummy) {
+            if (!sp.duck) {
+                /* Nothing to play! Raise va_dsp_playback_stopped event */
+                (void) va_dsp_playback_stopped();
+            } else if (sp.downmix_support) {
+                /* active == &dummy, sp.duck is there and downmix feature is enabled */
+                wait_duck = wait;
+                wait_main = 0;
+            }
         }
 
         /**** Read and Process Main Data ****/

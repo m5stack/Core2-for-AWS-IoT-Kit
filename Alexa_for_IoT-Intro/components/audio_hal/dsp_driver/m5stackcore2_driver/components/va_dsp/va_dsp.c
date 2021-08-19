@@ -146,7 +146,7 @@ static void va_dsp_thread(void *arg)
                         break;
                     }
                     case TAP_TO_TALK:
-                        ESP_LOGI(TAG, "Enabling Mic for Push-to-Talk Button %d", __LINE__);
+                        ESP_LOGE(TAG, "Enabling Mic for Tap-to-Talk Button %d", __LINE__);
 
                         xSemaphoreTake(mic_state, portMAX_DELAY);
                         dsp_mic_enabled = 1;
@@ -162,10 +162,9 @@ static void va_dsp_thread(void *arg)
                         }
                         break;
                     case START_MIC:
-                        ESP_LOGI(TAG, "Enabling Mic for multi-turn conversation");
+                        ESP_LOGE(TAG, "Enabling Mic for multi-turn conversation");
                         xSemaphoreTake(mic_state, portMAX_DELAY);
                         dsp_mic_enabled = 1;
-                        audio_board_i2s_set_spk_mic_mode(MODE_MIC);
                         xSemaphoreGive(mic_state);
 
                         _va_dsp_start_streaming();
@@ -177,8 +176,11 @@ static void va_dsp_thread(void *arg)
                     case MUTE:
                         _va_dsp_mute_mic();
                         break;
-                    case GET_AUDIO:
                     case STOP_MIC:
+                        xSemaphoreTake(mic_state, portMAX_DELAY);
+                        dsp_mic_enabled = 0;
+                        xSemaphoreGive(mic_state);
+                    case GET_AUDIO:
                     case UNMUTE:
                     default:
                         ESP_LOGI(TAG, "Event %d unsupported in STOPPED state", event_data.event);
@@ -190,11 +192,14 @@ static void va_dsp_thread(void *arg)
                     case UNMUTE:
                         _va_dsp_unmute_mic();
                         break;
+                    case STOP_MIC:
+                        xSemaphoreTake(mic_state, portMAX_DELAY);
+                        dsp_mic_enabled = 0;
+                        xSemaphoreGive(mic_state);
                     case WW:
                     case TAP_TO_TALK:
                     case GET_AUDIO:
                     case START_MIC:
-                    case STOP_MIC:
                     case MUTE:
                     default:
                         ESP_LOGI(TAG, "Event %d unsupported in MUTE state", event_data.event);
@@ -242,11 +247,21 @@ int va_dsp_tap_to_talk_start()
     return ESP_OK;
 }
 
+int va_dsp_playback_stopped()
+{
+    ESP_LOGE(TAG, "Enabling Mic");
+    xSemaphoreTake(mic_state, portMAX_DELAY);
+    audio_board_i2s_set_spk_mic_mode(MODE_MIC);
+    xSemaphoreGive(mic_state);
+    return 0;
+}
+
 int va_dsp_playback_starting()
 {
     xSemaphoreTake(mic_state, portMAX_DELAY);
     if(!dsp_mic_enabled && (i2s_mode != MODE_SPK)) 
     { 
+        ESP_LOGE(TAG, "Enabling Speaker");
         audio_board_i2s_set_spk_mic_mode(MODE_SPK);
     }
     xSemaphoreGive(mic_state);
@@ -293,8 +308,8 @@ void va_dsp_init(va_dsp_recognize_cb_t va_dsp_recognize_cb, va_dsp_record_cb_t v
     va_dsp_data.dsp_state = STOPPED;
     if (va_nvs_get_i8(DSP_NVS_KEY, &dsp_mute_en) == ESP_OK) {
         if (dsp_mute_en) {
-            //va_dsp_mic_mute(dsp_mute_en);
-            //va_button_notify_mute(dsp_mute_en);
+            va_dsp_mic_mute(dsp_mute_en);
+            va_button_notify_mute(dsp_mute_en);
         }
     }
 
@@ -306,5 +321,4 @@ void va_dsp_init(va_dsp_recognize_cb_t va_dsp_recognize_cb, va_dsp_record_cb_t v
     //Notify Alexa layer that DSP initialization is finished
     va_boot_dsp_signal();
     va_dsp_data.va_dsp_booted = true;
-    //_va_dsp_unmute_mic();
 }

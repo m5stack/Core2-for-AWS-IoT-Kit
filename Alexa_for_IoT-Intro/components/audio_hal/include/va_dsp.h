@@ -29,7 +29,7 @@
 enum initiator {
     /** Communication was initiated using a Wake-Word */
     WAKEWORD,
-    /** Communication was initiated using a Push-to-Talk event */
+    /** Communication was initiated using a Tap-to-Talk event */
     TAP,
     /** This is not yet supported */
     HOLD_AND_TALK,
@@ -74,14 +74,25 @@ typedef int (*va_dsp_recognize_cb_t) (int ww_length, enum initiator init_type);
 /**
  * @brief       Initialize dsp.
  *
- * Note: One also need to provide callbacks for dsp recognize and data_record as parameters to this function.
+ * @note        One also need to provide callbacks for dsp recognize
+ *              and data_record as parameters to this function.
  */
 void va_dsp_init(va_dsp_recognize_cb_t va_dsp_recognize_cb, va_dsp_record_cb_t va_dsp_record_cb);
 
-/** Notify playback to DSP
+/**
+ * @brief   Notify playback stop event to DSP
  *
- * This should be called when voice assistant is about to write some data to playback
- * interface
+ * @note    This should be called when voice assistant has done writing to
+ *          playback interface. va_dsp can take appropriate actions in this callback
+ *
+ */
+int va_dsp_playback_stopped();
+
+/**
+ * @brief   Notify playback to DSP
+ *
+ * @note    This should be called when voice assistant is about to write some data to
+ *          playback interface. va_dsp can take appropriate actions in this callback
  */
 int va_dsp_playback_starting();
 
