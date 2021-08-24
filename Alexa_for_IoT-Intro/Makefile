@@ -4,7 +4,7 @@
 #
 
 PROJECT_NAME := AWS_IoT_EduKit-Intro_to_Alexa
-PROJECT_VER := 1.2.0
+PROJECT_VER := 1.2.1
 export VOICE_ASSISTANT = aia
 export LED_PATTERN_TYPE = alexa
 CPPFLAGS += -DVOICE_ASSISTANT_AIA

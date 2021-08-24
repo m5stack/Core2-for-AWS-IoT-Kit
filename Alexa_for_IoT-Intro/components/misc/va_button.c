@@ -6,7 +6,7 @@
 #include "va_button.h"
 #include <media_hal.h>
 #include <va_mem_utils.h>
-#include "speaker.h"
+#include "va_speaker.h"
 #include <alerts.h>
 #include <tone.h>
 #include <voice_assistant.h>
