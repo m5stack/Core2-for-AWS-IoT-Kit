@@ -725,9 +725,17 @@ esp_err_t Core2ForAWS_SDcard_Unmount(const char *mount_path, sdmmc_card_t *out_c
  *
  * This function sets the mode of the pin. The available modes
  * are defined by pin_mode_t. All pins support digital input/ouput
- * of high/low. Only specified pins support I2C, ADC, DAC, or UART. 
- * View the hardware schematic or [pinmap](https://docs.m5stack.com/en/core/core2_for_aws?id=pinmap)
- * for pin features.
+ * of high/low. Only specified pins support digital output, I2C, ADC, 
+ * DAC, or UART. View the [ESP32 datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf) 
+ * or official ]Espressif GPIO driver documentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/gpio.html)
+ * 
+ * 
+ * **INPUT** sets the pin to be able to perform a digital read. Enables
+ * the internal pullup resistor. Voltage should not exceed 3.3v.
+ * 
+ * **OUTPUT** sets the pin to be able to perform a digital write. 
+ * Outputs 3.3v when the pin set to high. Not available on Port B
+ * GPIO 36.
  *
  * **I2C** checks to ensure the pin you're planning to use is meant
  * for I2C communications. You must use PORT_A_SDA_PIN (same as GPIO 
@@ -738,7 +746,7 @@ esp_err_t Core2ForAWS_SDcard_Unmount(const char *mount_path, sdmmc_card_t *out_c
  * built-in pullup resistors on the SDA and SCL lines with the Core2
  * for AWS IoT EduKit as the I2C controller, and all attached devices
  * as the peripheral.
- *  
+ * 
  * **ADC** sets the pin to analog single read mode. Single read mode is
  * suitable for low-frequency sampling operations. Must use
  * PORT_B_ADC_PIN (same as GPIO_NUM_36) since it is the only
@@ -758,6 +766,8 @@ esp_err_t Core2ForAWS_SDcard_Unmount(const char *mount_path, sdmmc_card_t *out_c
  * capable. Must use PORT_C_UART_RX_PIN (same as GPIO_NUM_13) as the
  * UART receive pin since it is the only expansion port pin that
  * is UART RX capable.
+ * 
+ * **NONE** resets the pin and removes frees memory.
  *
  * The example code below sets the ADC pin (GPIO 36) to ADC mode after
  * initializing the Core2 for AWS IoT EduKit and prints out the
@@ -819,7 +829,7 @@ esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode);
  *
  *  #include "core2forAWS.h"
  *
- *  static const char *TAG = "INPUT_READ_DEMO";
+ *  static const char *TAG = "DIGITAL_READ_DEMO";
  *
  *  void pin_read_task(){
  *      for(;;){
@@ -830,8 +840,10 @@ esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode);
  *
  *  void app_main(void){
  *      Core2ForAWS_Init();
- *      Core2ForAWS_Port_PinMode(GPIO_NUM_26, INPUT);
- *      xTaskCreatePinnedToCore(pin_read_task, "read_pin", 1024*4, NULL, 1, NULL, 1);
+ *      esp_err_t err = Core2ForAWS_Port_PinMode(GPIO_NUM_26, INPUT);
+ *      if (err == ESP_OK){
+ *          xTaskCreatePinnedToCore(pin_read_task, "read_pin", 1024*4, NULL, 1, NULL, 1);
+ *      }
  *  }
  * @endcode
  *
@@ -858,9 +870,9 @@ bool Core2ForAWS_Port_Read(gpio_num_t pin);
  * This function sets the specified pin to either high(1) or low(0)
  * digital level.
  *
- * The example code sets the GPIO 36 (same as PORT_B_ADC_PIN) pin mode
+ * The example code sets the GPIO 26 (same as PORT_B_DAC_PIN) pin mode
  * to OUTPUT, creates a FreeRTOS task which periodically (1s) toggles
- * GPIO 36 pin between high and low and prints the output level to
+ * GPIO 26 pin between high and low and prints the output level to
  * the serial monitor.
  *
  * **Example:**
@@ -877,8 +889,8 @@ bool Core2ForAWS_Port_Read(gpio_num_t pin);
  *  void pin_write_task(){
  *      bool output = 0;
  *      for(;;){
- *          Core2ForAWS_Port_Write(GPIO_NUM_36, output);
- *          ESP_LOGI(TAG, "Output on GPIO %d: %s", GPIO_NUM_36, output ? "HIGH" : "LOW");
+ *          Core2ForAWS_Port_Write(GPIO_NUM_26, output);
+ *          ESP_LOGI(TAG, "Output on GPIO %d: %s", GPIO_NUM_26, output ? "HIGH" : "LOW");
  *
  *          output = !output;
  *
@@ -888,8 +900,10 @@ bool Core2ForAWS_Port_Read(gpio_num_t pin);
  *
  *  void app_main(void){
  *      Core2ForAWS_Init();
- *      Core2ForAWS_Port_PinMode(GPIO_NUM_36, OUTPUT);
- *      xTaskCreatePinnedToCore(pin_write_task, "write_pin", 1024*4, NULL, 1, NULL, 1);
+ *      esp_err_t err = Core2ForAWS_Port_PinMode(GPIO_NUM_26, OUTPUT);
+ *      if (err == ESP_OK){
+ *          xTaskCreatePinnedToCore(pin_write_task, "write_pin", 1024*4, NULL, 1, NULL, 1);
+ *      }
  *  }
  * @endcode
  *
@@ -1177,8 +1191,10 @@ void Core2ForAWS_Port_A_I2C_Close(I2CDevice_t device);
  *
  *  void app_main(void){
  *      Core2ForAWS_Init();
- *      Core2ForAWS_Port_PinMode(PORT_B_ADC_PIN, ADC);
- *      xTaskCreatePinnedToCore(read_moisture_task, "moisture_raw", 4096*2, NULL, 1, NULL, 1);
+ *      esp_err_t err = Core2ForAWS_Port_PinMode(PORT_B_ADC_PIN, ADC);
+ *      if(err == ESP_OK){
+ *          xTaskCreatePinnedToCore(read_moisture_task, "moisture_raw", 4096*2, NULL, 1, NULL, 1);
+ *      }
  *  }
  *
  * @return The raw ADC reading.
@@ -1228,8 +1244,10 @@ uint32_t Core2ForAWS_Port_B_ADC_ReadRaw(void);
  *
  *  void app_main(void){
  *      Core2ForAWS_Init();
- *      Core2ForAWS_Port_PinMode(PORT_B_ADC_PIN, ADC);
- *      xTaskCreatePinnedToCore(read_moisture_task, "moisture_voltage", 1024*4, NULL, 1, NULL, 1);
+ *      esp_err_t err = Core2ForAWS_Port_PinMode(PORT_B_ADC_PIN, ADC);
+ *      if(err == ESP_OK){
+ *          xTaskCreatePinnedToCore(read_moisture_task, "moisture_voltage", 1024*4, NULL, 1, NULL, 1);
+ *      }
  *  }
  * @endcode
  *

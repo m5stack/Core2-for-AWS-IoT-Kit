@@ -400,14 +400,13 @@ static esp_err_t check_pins(gpio_num_t pin, pin_mode_t mode){
     esp_err_t err = ESP_ERR_NOT_SUPPORTED;
     if (pin != PORT_A_SDA_PIN && pin != PORT_A_SCL_PIN && pin != PORT_B_ADC_PIN && pin != PORT_B_DAC_PIN && pin != PORT_C_UART_RX_PIN && pin != PORT_C_UART_TX_PIN)
     {
-        ESP_LOGE(TAG, "Only Ports (GPIO 32 and 33), Port B (GPIO 26 and 36), and Port C (GPIO 13 and 14) are supported. Pin selected: %d", pin);
-        return err;
+        ESP_LOGE(TAG, "Only Port A (GPIO 32 and 33), Port B (GPIO 26 and 36), and Port C (GPIO 13 and 14) are supported. Pin selected: %d", pin);
     }
-    if (mode == I2C && (pin != PORT_C_UART_TX_PIN && pin != PORT_C_UART_RX_PIN))
+    else if (mode == I2C && (pin != PORT_A_SDA_PIN && pin != PORT_A_SCL_PIN))
     {
         ESP_LOGE(TAG, "I2C is only supported on GPIO 32 (SDA) and GPIO 33 (SCL).");
     }
-    if (mode == DAC && pin != PORT_B_DAC_PIN)
+    else if (mode == DAC && pin != PORT_B_DAC_PIN)
     {
         ESP_LOGE(TAG, "DAC is only supported on GPIO 26.");
     } 
@@ -419,6 +418,9 @@ static esp_err_t check_pins(gpio_num_t pin, pin_mode_t mode){
     {
         ESP_LOGE(TAG, "UART is only supported on GPIO 13 (receive) and GPIO 14 (transmit).");
     }
+    else if(mode == OUTPUT && pin == GPIO_NUM_36){
+        err = ESP_ERR_NOT_SUPPORTED;
+    }
     else 
     {
         err = ESP_OK;
@@ -429,34 +431,44 @@ static esp_err_t check_pins(gpio_num_t pin, pin_mode_t mode){
 esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode){
     esp_err_t err = check_pins(pin, mode);
     if (err != ESP_OK){
+        ESP_LOGE(TAG, "Invalid mode selected for GPIO %d. Error code: 0x%x.", pin, err);
         return err;
     }
 
-    gpio_config_t io_conf;
-    io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
-    io_conf.pin_bit_mask = (1ULL<<PORT_B_DAC_PIN);
+    if (mode == OUTPUT || mode == INPUT){
+        gpio_config_t io_conf;
+        io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
+        io_conf.pin_bit_mask = (1ULL << pin);
 
-    if (mode == OUTPUT){
-        io_conf.mode = GPIO_MODE_OUTPUT; 
-        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-        io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    }
-    else if (mode == INPUT){
-        io_conf.mode = GPIO_MODE_INPUT;
-        io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
-        io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+        if (mode == OUTPUT){
+            io_conf.mode = GPIO_MODE_OUTPUT; 
+            io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+            io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+            err = gpio_config(&io_conf);
+            if (err != ESP_OK){
+                ESP_LOGE(TAG, "Error configuring GPIO %d. Error code: 0x%x.", pin, err);
+            }
+        } else{
+            io_conf.mode = GPIO_MODE_INPUT;
+            io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+            io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+            err = gpio_config(&io_conf);
+            if (err != ESP_OK){
+                ESP_LOGE(TAG, "Error configuring GPIO %d. Error code: 0x%x.", pin, err);
+            }
+        }  
     }
     else if (mode == ADC)
     {
         err = adc1_config_width(ADC_WIDTH);
         if(err != ESP_OK){
-            ESP_LOGE(TAG, "Error configuring ADC width on pin %d. Error code: %d", pin, err);
+            ESP_LOGE(TAG, "Error configuring ADC width on pin %d. Error code: 0x%x.", pin, err);
             return err;
         }
         
         err = adc1_config_channel_atten(ADC_CHANNEL, ADC_ATTENUATION);
         if(err != ESP_OK){
-            ESP_LOGE(TAG, "Error configuring ADC channel attenuation on pin %d. Error code: %d", pin, err);
+            ESP_LOGE(TAG, "Error configuring ADC channel attenuation on pin %d. Error code: 0x%x.", pin, err);
         }
         
         adc_characterization = calloc(1, sizeof(esp_adc_cal_characteristics_t));
@@ -468,14 +480,14 @@ esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode){
     else if (mode == UART){
         err = uart_driver_install(PORT_C_UART_NUM, UART_RX_BUF_SIZE, 0, 0, NULL, 0);
         if(err != ESP_OK){
-            ESP_LOGE(TAG, "UART driver installation failed for UART num %d", PORT_C_UART_NUM);
+            ESP_LOGE(TAG, "UART driver installation failed for UART num %d. Error code: 0x%x.", PORT_C_UART_NUM, err);
             return err;
         }
 
         err = uart_set_pin(PORT_C_UART_NUM, PORT_C_UART_TX_PIN, PORT_C_UART_RX_PIN, 
         UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
         if(err != ESP_OK){
-            ESP_LOGE(TAG, "Failed to set pins %d, %d, to  UART %d.", PORT_C_UART_RX_PIN, PORT_C_UART_TX_PIN, PORT_C_UART_NUM);
+            ESP_LOGE(TAG, "Failed to set pins %d, %d, to  UART%d. Error code: 0x%x.", PORT_C_UART_RX_PIN, PORT_C_UART_TX_PIN, PORT_C_UART_NUM, err);
         }
     }
     else if (mode == NONE){
@@ -484,29 +496,21 @@ esp_err_t Core2ForAWS_Port_PinMode(gpio_num_t pin, pin_mode_t mode){
         uart_driver_delete(UART_NUM_2);
         i2c_free_port(I2C_NUM_0);
     }
-    else {
-        ESP_LOGE(TAG, "Invalid mode selected for GPIO %d", PORT_B_DAC_PIN);
-        return err;
-    }
-    err = gpio_config(&io_conf);//configure GPIO with the given settings
-    if (err != ESP_OK){
-        ESP_LOGE(TAG, "Error configuring GPIO %d", PORT_B_DAC_PIN);
-    }
     return err;
 }
 
 bool Core2ForAWS_Port_Read(gpio_num_t pin){
     ESP_ERROR_CHECK_WITHOUT_ABORT(check_pins(pin, INPUT));
 
-    return gpio_get_level(PORT_B_DAC_PIN);
+    return gpio_get_level(pin);
 }
 
 esp_err_t Core2ForAWS_Port_Write(gpio_num_t pin, bool level){
     esp_err_t err = check_pins(pin, OUTPUT);
     
-    err = gpio_set_level(PORT_B_DAC_PIN, level);
+    err = gpio_set_level(pin, level);
     if (err != ESP_OK){
-        ESP_LOGE(TAG, "Error setting GPIO %d state", PORT_B_DAC_PIN);
+        ESP_LOGE(TAG, "Error setting GPIO %d state. Error code: 0x%x.", pin, err);
     }
     return err;
 }

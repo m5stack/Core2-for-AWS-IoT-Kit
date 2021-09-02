@@ -57,10 +57,7 @@ ATCA_STATUS Atecc608_GetSerialString(char * sn) {
     int ret;
     uint8_t serial[ATCA_SERIAL_NUM_SIZE];
     
-    i2c_take_port(ATECC608_I2C_PORT, portMAX_DELAY);    
     ret = atcab_read_serial_number(serial);
-    i2c_free_port(ATECC608_I2C_PORT);
-    
     if (ret != ATCA_SUCCESS) {
         ESP_LOGI(TAG, "*FAILED* atcab_read_serial_number returned %02x", ret);
         handleErr();
@@ -75,7 +72,7 @@ ATCA_STATUS Atecc608_Init() {
     int ret = ATCA_SUCCESS;
     bool lock;
     uint8_t buf[ATCA_ECC_CONFIG_SIZE];
-    // uint8_t pubkey[ATCA_PUB_KEY_SIZE];
+    
     ret = configure_mbedtls_rng();
     ret = atcab_init(&cfg_ateccx08a_i2c_default);
     ESP_LOGI(TAG, "Initializing ATECC608 secure element");
