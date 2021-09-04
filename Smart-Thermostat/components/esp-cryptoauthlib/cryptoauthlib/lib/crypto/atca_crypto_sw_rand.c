@@ -2,7 +2,7 @@
  * \file
  * \brief API wrapper for software random
  *
- * \copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -25,6 +25,10 @@
  * THIS SOFTWARE.
  */
 
+#include "cryptoauthlib.h"
+
+#ifdef ATCA_ENABLE_RAND_IMPL
+
 #include "atca_crypto_sw_rand.h"
 
 /** \brief return software generated random number and the function is currently not implemented
@@ -37,3 +41,5 @@ int atcac_sw_random(uint8_t* data, size_t data_size)
 {
     return ATCA_UNIMPLEMENTED;
 }
+
+#endif

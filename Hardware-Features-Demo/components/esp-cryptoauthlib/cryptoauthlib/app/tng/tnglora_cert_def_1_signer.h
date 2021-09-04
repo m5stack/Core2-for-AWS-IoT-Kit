@@ -2,7 +2,7 @@
  * \file
  * \brief TNG LORA signer certificate definition
  *
- * \copyright (c) 2015-2019 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -37,8 +37,7 @@ extern "C" {
 /** \ingroup tng_
  * @{
  */
-
-extern const atcacert_def_t g_tnglora_cert_def_1_signer;
+ATCA_DLL const atcacert_def_t g_tnglora_cert_def_1_signer;
 
 /** @} */
 

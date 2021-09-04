@@ -139,7 +139,7 @@ void atecc_test() {
     uint8_t buf[ATCA_ECC_CONFIG_SIZE];
     uint8_t pubkey[ATCA_PUB_KEY_SIZE];
     ret = configure_mbedtls_rng();
-    cfg_ateccx08a_i2c_default.atcai2c.slave_address = 0x35 << 1;
+    cfg_ateccx08a_i2c_default.atcai2c.address = 0x35 << 1;
     cfg_ateccx08a_i2c_default.atcai2c.bus = 1;
     cfg_ateccx08a_i2c_default.atcai2c.baud = 100000;
     ret = atcab_init(&cfg_ateccx08a_i2c_default);

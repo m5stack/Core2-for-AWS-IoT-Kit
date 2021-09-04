@@ -28,16 +28,12 @@ except ImportError:  # cheat and use IDF's copy of esptool if available
     import esptool
 
 
+BINARY_STUB_PATH = '/sample_bins/secure_cert_mfg.bin'
+
+
 def main():
     parser = argparse.ArgumentParser(description='''Provision the ESPWROOM32SE device with
         device_certificate and signer_certificate required for TLS authentication''')
-
-    parser.add_argument(
-        "--flash",
-        dest='bin_path',
-        default='/sample_bins/secure_cert_mfg.bin',
-        metavar='relative/path/to/bins',
-        help='relative path(from secure_cert_mfg.py) to binary to be flashed on the ESP device')
 
     parser.add_argument(
         '--signer-cert',
@@ -67,18 +63,30 @@ def main():
         help='uart com port to which ESP device is connected')
 
     parser.add_argument(
-        "--type", "--print-atecc608a-type",
-        dest='print_atecc608a_type',action='store_true',
-        help='print type of atecc608a chip connected to your ESP device')
+        "--i2c-sda-pin', '-sda_pin'",
+        dest='i2c_sda_pin',
+        default=16,type=int,
+        help='The pin no of I2C SDA pin of esp32 to which atecc608 is connected, default = 16')
+
+    parser.add_argument(
+        "--i2c-scl-pin', '-scl_pin'",
+        dest='i2c_scl_pin',
+        default=17,type=int,
+        help='The pin no of I2C SCL pin of esp32 to which atecc608 is connected, default = 17')
+
+    parser.add_argument(
+        "--type", "--print-atecc608-type",
+        dest='print_atecc608_type',action='store_true',
+        help='print type of atecc608 chip connected to your ESP device')
 
     parser.add_argument(
         "--valid-for-years",
         dest='nva_years',
         default=40,type=int,
-        help='number of years for which device cert is valid (from current year), default = 40')
+        help='number of years for which device cert is valid (from current year), efault = 40')
     args = parser.parse_args()
     esp = esptool.ESP32ROM(args.port,baud=115200)
-    hs.serial.load_app_stub(args.bin_path,esp)
+    hs.serial.load_app_stub(BINARY_STUB_PATH,esp)
     init_mfg = hs.serial.cmd_interpreter()
 
     retval = init_mfg.wait_for_init(esp._port)
@@ -86,21 +94,22 @@ def main():
         print("CMD prompt timed out.")
         exit(0)
 
-    retval = init_mfg.exec_cmd(esp._port, "init")
-    hs.serial.esp_cmd_check_ok(retval, "init")
+    retval = init_mfg.exec_cmd(esp._port, "init {0} {1}".format(args.i2c_sda_pin, args.i2c_scl_pin))
+    hs.serial.esp_cmd_check_ok(retval, "init {0} {1}".format(args.i2c_sda_pin, args.i2c_scl_pin))
 
     if "TrustCustom" in retval[1]['Return']:
-        print("ATECC608A chip is of type TrustCustom")
+        print("ATECC608 chip is of type TrustCustom")
         provision_trustcustom_device(esp, args,init_mfg)
     elif "Trust&Go" in retval[1]['Return']:
-        print("ATECC608A chip is of type Trust&Go")
+        print("ATECC608 chip is of type Trust&Go")
         hs.manifest.generate_manifest_file(esp, args, init_mfg)
     elif "TrustFlex" in retval[1]['Return']:
-        print("ATECC608A chip is of type TrustFlex")
+        print("ATECC608 chip is of type TrustFlex")
         hs.manifest.generate_manifest_file(esp, args, init_mfg)
     else:
         print("Invalid type")
         exit(0)
+
 
 def provision_trustcustom_device(esp, args, init_mfg):
 
@@ -117,7 +126,7 @@ def provision_trustcustom_device(esp, args, init_mfg):
     print('Serial Number:')
     print(serial_number_hex.upper())
 
-    if args.print_atecc608a_type is True:
+    if args.print_atecc608_type is True:
         # print chip info and exit
         exit(0)
     print("Provisioning the Device")
@@ -174,19 +183,21 @@ def provision_trustcustom_device(esp, args, init_mfg):
     retval = init_mfg.exec_cmd(esp._port, "program-signer-cert", signer_cert_data)
     hs.serial.esp_cmd_check_ok(retval, "program-signer-cert")
 
+
 def esp_handle_file(file_name, operation, data=None):
-    if operation is "read":
+    if operation == "read":
         with open(file_name, "r") as cert_file:
             data = cert_file.read()
         return data
-    elif operation is "pem_read":
+    elif operation == "pem_read":
         with open(file_name, "r") as cert_file:
             data = pem.readPemFromFile(cert_file)
         return data
-    elif operation is "write":
+    elif operation == "write":
         with open(file_name, "w+") as cert_file:
             cert_file.write(data)
         return True
+
 
 if __name__ == "__main__":
     main()

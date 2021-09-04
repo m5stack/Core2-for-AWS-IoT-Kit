@@ -2,7 +2,7 @@
  * \file
  * \brief TNG LORA device certificate definition
  *
- * \copyright (c) 2015-2019 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -38,7 +38,7 @@ extern "C" {
  * @{
  */
 #define TNGLORA_CERT_TEMPLATE_4_DEVICE_SIZE 552
-extern const atcacert_def_t g_tnglora_cert_def_4_device;
+ATCA_DLL const atcacert_def_t g_tnglora_cert_def_4_device;
 
 /** @} */
 

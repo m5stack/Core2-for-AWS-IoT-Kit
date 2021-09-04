@@ -3,7 +3,7 @@
  *
  * \brief Provides required interface to access IO protection key.
  *
- * \copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -41,7 +41,7 @@ extern ATCA_STATUS io_protection_set_key(uint8_t* io_key);
 #ifdef __cplusplus
 }
 #endif
-/** @} */
+
 #endif
 
 

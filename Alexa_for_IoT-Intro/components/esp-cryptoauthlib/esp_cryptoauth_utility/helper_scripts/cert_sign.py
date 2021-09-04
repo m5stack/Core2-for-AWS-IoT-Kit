@@ -100,16 +100,16 @@ def sign_csr(cert_sign_req, ca_cert, ca_privkey, device_sn, nva_years):
     ).not_valid_after(
         nva_time
     ).add_extension(
-        extension=x509.KeyUsage(
+        x509.KeyUsage(
             digital_signature=True, key_encipherment=True, content_commitment=True,
             data_encipherment=False, key_agreement=False, encipher_only=False, decipher_only=False, key_cert_sign=False, crl_sign=False
         ),
         critical=True
     ).add_extension(
-        extension=x509.BasicConstraints(ca=False, path_length=None),
+        x509.BasicConstraints(ca=False, path_length=None),
         critical=True
     ).add_extension(
-        extension=x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_privkey.public_key()),
+        x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_privkey.public_key()),
         critical=False
     ).sign(
         private_key=ca_privkey,

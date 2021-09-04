@@ -3,7 +3,7 @@
  * \brief API wrapper for software ECDSA verify.  Currently unimplemented but could be
  *        implemented via a 3rd party library such as MicroECC.
  *
- * \copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -40,5 +40,9 @@ int atcac_sw_ecdsa_verify_p256(const uint8_t msg[ATCA_ECC_P256_FIELD_SIZE],
                                const uint8_t signature[ATCA_ECC_P256_SIGNATURE_SIZE],
                                const uint8_t public_key[ATCA_ECC_P256_PUBLIC_KEY_SIZE])
 {
+    (void)msg;
+    (void)signature;
+    (void)public_key;
+
     return ATCA_UNIMPLEMENTED;
 }

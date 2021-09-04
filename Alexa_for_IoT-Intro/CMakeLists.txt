@@ -54,4 +54,4 @@ if (DEFINED DSP_EN_SPI_FFS)
         )
 endif()
 
-project(AWS_IoT_EduKit-Intro_to_Alexa VERSION 1.2.1)
+project(AWS_IoT_EduKit-Intro_to_Alexa VERSION 1.3.0)

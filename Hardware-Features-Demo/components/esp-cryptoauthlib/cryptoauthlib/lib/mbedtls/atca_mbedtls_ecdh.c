@@ -2,7 +2,7 @@
  * \brief Replace mbedTLS ECDH Functions with hardware acceleration &
  * hardware key security.
  *
- * \copyright (c) 2015-2019 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -40,7 +40,7 @@
 
 /* Cryptoauthlib Includes */
 #include "cryptoauthlib.h"
-#include "basic/atca_basic.h"
+#include "atca_basic.h"
 #include "atca_mbedtls_wrap.h"
 #include <string.h>
 
@@ -133,7 +133,7 @@ int mbedtls_ecdh_compute_shared(mbedtls_ecp_group *grp, mbedtls_mpi *z,
     if (!ret)
     {
         slotid = *(uint16_t*)d->p;
-        if (ATECC608A == atcab_get_device()->mIface->mIfaceCFG->devtype)
+        if (ATECC608 == atcab_get_device_type())
         {
             ret = atca_mbedtls_ecdh_ioprot_cb(secret);
             if (!ret)

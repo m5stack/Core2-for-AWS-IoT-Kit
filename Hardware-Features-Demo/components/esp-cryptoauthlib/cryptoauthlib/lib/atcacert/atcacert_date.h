@@ -2,7 +2,7 @@
  * \file
  * \brief Declarations for date handling with regard to certificates.
  *
- * \copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -62,14 +62,13 @@ typedef struct atcacert_tm_utc_s
 /**
  * Date formats.
  */
-typedef enum atcacert_date_format_e
-{
-    DATEFMT_ISO8601_SEP,        //!< ISO8601 full date YYYY-MM-DDThh:mm:ssZ
-    DATEFMT_RFC5280_UTC,        //!< RFC 5280 (X.509) 4.1.2.5.1 UTCTime format YYMMDDhhmmssZ
-    DATEFMT_POSIX_UINT32_BE,    //!< POSIX (aka UNIX) date format. Seconds since Jan 1, 1970. 32 bit unsigned integer, big endian.
-    DATEFMT_POSIX_UINT32_LE,    //!< POSIX (aka UNIX) date format. Seconds since Jan 1, 1970. 32 bit unsigned integer, little endian.
-    DATEFMT_RFC5280_GEN         //!< RFC 5280 (X.509) 4.1.2.5.2 GeneralizedTime format YYYYMMDDhhmmssZ
-} atcacert_date_format_t;
+#define DATEFMT_ISO8601_SEP         0   //!< ISO8601 full date YYYY-MM-DDThh:mm:ssZ
+#define DATEFMT_RFC5280_UTC         1   //!< RFC 5280 (X.509) 4.1.2.5.1 UTCTime format YYMMDDhhmmssZ
+#define DATEFMT_POSIX_UINT32_BE     2   //!< POSIX (aka UNIX) date format. Seconds since Jan 1, 1970. 32 bit unsigned integer, big endian.
+#define DATEFMT_POSIX_UINT32_LE     3   //!< POSIX (aka UNIX) date format. Seconds since Jan 1, 1970. 32 bit unsigned integer, little endian.
+#define DATEFMT_RFC5280_GEN         4   //!< RFC 5280 (X.509) 4.1.2.5.2 GeneralizedTime format YYYYMMDDhhmmssZ
+
+typedef uint8_t atcacert_date_format_t;
 
 #define DATEFMT_ISO8601_SEP_SIZE     (20)
 #define DATEFMT_RFC5280_UTC_SIZE     (13)
@@ -87,7 +86,7 @@ extern const size_t ATCACERT_DATE_FORMAT_SIZES[ATCACERT_DATE_FORMAT_SIZES_COUNT]
  * \param[in]    format               Format to use.
  * \param[in]    timestamp            Timestamp to format.
  * \param[out]   formatted_date       Formatted date will be returned in this buffer.
- * \param[inout] formatted_date_size  As input, the size of the formatted_date buffer.
+ * \param[in,out] formatted_date_size  As input, the size of the formatted_date buffer.
  *                                    As output, the size of the returned formatted_date.
  *
  * \return ATCACERT_E_SUCCESS on success, otherwise an error code.

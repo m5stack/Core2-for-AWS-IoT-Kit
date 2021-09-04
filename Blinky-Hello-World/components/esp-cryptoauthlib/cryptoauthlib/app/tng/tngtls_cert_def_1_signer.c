@@ -2,7 +2,7 @@
  * \file
  * \brief TNG TLS signer certificate definition
  *
- * \copyright (c) 2015-2019 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -28,7 +28,7 @@
 #include "atcacert/atcacert_def.h"
 #include "tngtls_cert_def_1_signer.h"
 
-const uint8_t g_tngtls_cert_template_1_signer[TNGTLS_CERT_TEMPLATE_1_SIGNER_SIZE] = {
+SHARED_LIB_EXPORT const uint8_t g_tngtls_cert_template_1_signer[TNGTLS_CERT_TEMPLATE_1_SIGNER_SIZE] = {
     0x30, 0x82, 0x02, 0x04, 0x30, 0x82, 0x01, 0xaa, 0xa0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x10, 0x44,
     0x0e, 0xe4, 0x17, 0x0c, 0xb5, 0x45, 0xce, 0x59, 0x69, 0x8e, 0x30, 0x56, 0x99, 0x0a, 0x5d, 0x30,
     0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x02, 0x30, 0x4f, 0x31, 0x21, 0x30,
@@ -64,7 +64,20 @@ const uint8_t g_tngtls_cert_template_1_signer[TNGTLS_CERT_TEMPLATE_1_SIGNER_SIZE
     0xbf, 0x3b, 0x22, 0x78, 0x8e, 0x75, 0x41, 0x86
 };
 
-const atcacert_def_t g_tngtls_cert_def_1_signer = {
+SHARED_LIB_EXPORT const atcacert_cert_element_t g_tngtls_cert_elements_1_signer[] = {
+    {
+        .id = "subject",
+        .device_loc ={
+            .zone      = DEVZONE_NONE,
+        },
+        .cert_loc ={
+            .offset = 158,
+            .count  = 81
+        }
+    }
+};
+
+SHARED_LIB_EXPORT const atcacert_def_t g_tngtls_cert_def_1_signer = {
     .type                = CERTTYPE_X509,
     .template_id         = 1,
     .chain_id            = 0,
@@ -132,8 +145,8 @@ const atcacert_def_t g_tngtls_cert_def_1_signer = {
             .count       = 20
         }
     },
-    .cert_elements       = NULL,
-    .cert_elements_count = 0,
+    .cert_elements       = g_tngtls_cert_elements_1_signer,
+    .cert_elements_count = 1,
     .cert_template       = g_tngtls_cert_template_1_signer,
     .cert_template_size  = sizeof(g_tngtls_cert_template_1_signer),
     .ca_cert_def         = NULL

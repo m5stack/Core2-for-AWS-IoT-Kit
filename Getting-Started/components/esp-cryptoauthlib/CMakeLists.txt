@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.5)
 set(CRYPTOAUTHLIB_DIR "cryptoauthlib/lib")
 set(COMPONENT_SRCDIRS       "${CRYPTOAUTHLIB_DIR}/atcacert"
-                            "${CRYPTOAUTHLIB_DIR}/basic"
+                            "${CRYPTOAUTHLIB_DIR}/calib"
                             "${CRYPTOAUTHLIB_DIR}/crypto"
                             "${CRYPTOAUTHLIB_DIR}/crypto/hashes"
                             "${CRYPTOAUTHLIB_DIR}/host"
@@ -16,8 +16,8 @@ set(COMPONENT_SRCDIRS       "${CRYPTOAUTHLIB_DIR}/atcacert"
 
 set(COMPONENT_SRCS          "${COMPONENT_DIR}/cryptoauthlib/lib/hal/atca_hal.c"
                             "${COMPONENT_DIR}/cryptoauthlib/lib/hal/hal_freertos.c"
-                            "${COMPONENT_DIR}/cryptoauthlib/lib/hal/hal_esp32_i2c.c"
-                            "${COMPONENT_DIR}/cryptoauthlib/lib/hal/hal_esp32_timer.c"
+                            "${COMPONENT_DIR}/cryptoauthlib/third_party/hal/esp32/hal_core2foraws.c"
+                            "${COMPONENT_DIR}/cryptoauthlib/third_party/hal/esp32/hal_esp32_timer.c"
                             )
 
 set(COMPONENT_INCLUDEDIRS   "${CRYPTOAUTHLIB_DIR}/"
@@ -26,11 +26,11 @@ set(COMPONENT_INCLUDEDIRS   "${CRYPTOAUTHLIB_DIR}/"
                             "port"
                             )
 
-set(COMPONENT_REQUIRES      "mbedtls" "freertos" "driver" "core2forAWS")
+set(COMPONENT_REQUIRES      "mbedtls" "freertos"  "driver" "core2forAWS")
 
 # Don't include the default interface configurations from cryptoauthlib
 set(COMPONENT_EXCLUDE_SRCS "${CRYPTOAUTHLIB_DIR}/atca_cfgs.c")
-set(COMPONENT_CFLAGS "ESP32" "ATCA_HAL_I2C" "ATCA_USE_RTOS_TIMER")
+set(COMPONENT_CFLAGS "ESP32")
 
 idf_component_register(     SRC_DIRS        "${COMPONENT_SRCDIRS}"
                             INCLUDE_DIRS    "${COMPONENT_INCLUDEDIRS}"
@@ -44,8 +44,3 @@ target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-pointer-sign)
 
 idf_component_get_property(freertos_dir freertos COMPONENT_DIR)
 set_source_files_properties(${CRYPTOAUTHLIB_DIR}/hal/hal_freertos.c PROPERTIES COMPILE_FLAGS -I${freertos_dir}/include/freertos)
-
-# Turn off some warnings for some files that have been checked
-set_source_files_properties(${CRYPTOAUTHLIB_DIR}/hal/hal_esp32_i2c.c PROPERTIES COMPILE_FLAGS "-Wno-unused-variable -Wno-unused-but-set-variable")
-set_source_files_properties(${CRYPTOAUTHLIB_DIR}/basic/atca_helpers.c PROPERTIES COMPILE_FLAGS "-Wno-type-limits")
-set_source_files_properties(${CRYPTOAUTHLIB_DIR}/crypto/hashes/sha1_routines.c PROPERTIES COMPILE_FLAGS "-Wno-strict-aliasing")

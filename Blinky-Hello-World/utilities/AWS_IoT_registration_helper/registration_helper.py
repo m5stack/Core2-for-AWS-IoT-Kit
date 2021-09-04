@@ -64,6 +64,9 @@ sys.path.append(trustplatform_aws_path)
 from helper_aws import *
 from Microchip_manifest_handler import *
 
+atecc608_i2c_sda_pin = 21
+atecc608_i2c_scl_pin = 22
+
 iot = boto3.client('iot')
 
 def check_environment():
@@ -171,7 +174,7 @@ def main():
     device certificate using the esp-cryptoauth library and utility, creates 
     an AWS IoT thing using the AWS CLI and Microchip Trust Platform Design Suite.
     """
-    app_binary = 'sample_bins/secure_cert_mfg_esp32.bin'
+    app_binary = 'sample_bins/secure_cert_mfg.bin'
     parser = argparse.ArgumentParser(description='''Provision the Core2 for AWS IoT EduKit with 
         device_certificate and signer_certificate required for TLS authentication''')
 
@@ -186,7 +189,7 @@ def main():
 
     args.signer_cert = "output_files/signer_cert.crt"
     args.signer_privkey = "output_files/signer_key.pem"
-    args.print_atecc608a_type = False
+    args.print_atecc608_type = False
     check_environment()
     
     reqs = requirements_installer('requirements.txt')
@@ -202,8 +205,8 @@ def main():
         print("CMD prompt timed out.")
         exit(0)
 
-    retval = init_mfg.exec_cmd(esp._port, "init")
-    esp_hs.serial.esp_cmd_check_ok(retval, "init")
+    retval = init_mfg.exec_cmd(esp._port, "init {0} {1}".format(atecc608_i2c_sda_pin, atecc608_i2c_scl_pin))
+    esp_hs.serial.esp_cmd_check_ok(retval, "init {0} {1}".format(atecc608_i2c_sda_pin, atecc608_i2c_scl_pin))
     esp_hs.generate_manifest_file(esp, args, init_mfg)
     upload_manifest()
 

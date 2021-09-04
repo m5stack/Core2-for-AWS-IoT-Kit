@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Cloud Connected Blinky v1.3.2
+ * Cloud Connected Blinky v1.4.0
  * wifi.h
  * 
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.

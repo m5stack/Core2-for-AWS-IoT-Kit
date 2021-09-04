@@ -117,7 +117,7 @@ def generate_manifest_file(esp, args, init_mfg):
     serial_number_hex = serial_number_hex.replace(' ','')
     print('Serial Number:')
     print(serial_number_hex.upper())
-    if args.print_atecc608a_type is True:
+    if args.print_atecc608_type is True:
        # only print chip info and exit.
         exit(0)
 

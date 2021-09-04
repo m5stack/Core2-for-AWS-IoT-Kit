@@ -2,7 +2,7 @@
  * \file
  * \brief TNG TLS device certificate definition
  *
- * \copyright (c) 2015-2019 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -40,7 +40,7 @@ extern "C" {
 
 #define TNGTLS_CERT_TEMPLATE_2_DEVICE_SIZE 505
 #define TNGTLS_CERT_ELEMENTS_2_DEVICE_COUNT 2
-extern const atcacert_def_t g_tngtls_cert_def_2_device;
+ATCA_DLL const atcacert_def_t g_tngtls_cert_def_2_device;
 
 /** @} */
 

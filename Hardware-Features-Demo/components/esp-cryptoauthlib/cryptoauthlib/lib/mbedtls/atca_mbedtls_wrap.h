@@ -2,7 +2,7 @@
  * \brief mbedTLS Interface Functions that enable mbedtls objects to use
  * cryptoauthlib functions
  *
- * \copyright (c) 2015-2019 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -35,6 +35,9 @@
  *
    @{ */
 
+#include "cryptoauthlib.h"
+#include "atca_device.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,7 +46,21 @@ struct mbedtls_pk_context;
 struct mbedtls_x509_crt;
 struct atcacert_def_s;
 
+/** Structure to hold metadata - is written into the mbedtls pk structure as the private key
+    bignum value 'd' which otherwise would be unused. Bignums can be any arbitrary length of
+    bytes    */
+typedef struct atca_mbedtls_eckey_s
+{
+    ATCADevice device;
+    uint16_t   handle;
+} atca_mbedtls_eckey_t;
+
+/* Integration Helper */
+int atca_mbedtls_ecdsa_sign(const mbedtls_mpi* d, mbedtls_mpi* r, mbedtls_mpi* s,
+                            const unsigned char* buf, size_t buf_len);
+
 /* Wrapper Functions */
+int atca_mbedtls_pk_init_ext(ATCADevice device, struct mbedtls_pk_context * pkey, const uint16_t slotid);
 int atca_mbedtls_pk_init(struct mbedtls_pk_context * pkey, const uint16_t slotid);
 int atca_mbedtls_cert_add(struct mbedtls_x509_crt * cert, const struct atcacert_def_s * cert_def);
 

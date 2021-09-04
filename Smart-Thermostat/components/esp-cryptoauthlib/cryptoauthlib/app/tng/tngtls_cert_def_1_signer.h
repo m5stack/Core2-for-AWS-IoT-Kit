@@ -2,7 +2,7 @@
  * \file
  * \brief TNG TLS signer certificate definition
  *
- * \copyright (c) 2015-2019 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -39,7 +39,7 @@ extern "C" {
  */
 
 #define TNGTLS_CERT_TEMPLATE_1_SIGNER_SIZE 520
-extern const atcacert_def_t g_tngtls_cert_def_1_signer;
+ATCA_DLL const atcacert_def_t g_tngtls_cert_def_1_signer;
 
 /** @} */
 

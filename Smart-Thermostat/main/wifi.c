@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Smart Thermostat v1.2.2
+ * Smart Thermostat v1.3.0
  * wifi.c
  * 
  * Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -19,12 +19,10 @@
  */
 
 #include <string.h>
-
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
-
 #include "wifi.h"
 #include "ui.h"
 

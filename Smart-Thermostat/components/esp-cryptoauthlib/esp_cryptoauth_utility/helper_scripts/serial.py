@@ -66,6 +66,7 @@ class cmd_interpreter:
         while True:
             port.timeout = 1.5
             line = (port.readline()).decode()
+            print(line)
             if 'Status: Success' in line:
                 status = True
             elif 'Status: Failure' in line:
@@ -92,6 +93,7 @@ def load_app_stub(bin_path, esp):
     esp.connect()
     abs_bin_path = os.path.dirname(os.path.abspath(__file__)) + '/../' + bin_path
     if (os.path.exists(abs_bin_path) is False):
+        print(abs_bin_path)
         print("Stub not found")
         exit(0)
     arg_tuple = collections.namedtuple('ram_image', ['filename'])
