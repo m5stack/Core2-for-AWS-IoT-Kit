@@ -138,16 +138,6 @@ void atecc_test() {
     bool lock;
     uint8_t buf[ATCA_ECC_CONFIG_SIZE];
     uint8_t pubkey[ATCA_PUB_KEY_SIZE];
-    ret = configure_mbedtls_rng();
-    cfg_ateccx08a_i2c_default.atcai2c.address = 0x35 << 1;
-    cfg_ateccx08a_i2c_default.atcai2c.bus = 1;
-    cfg_ateccx08a_i2c_default.atcai2c.baud = 100000;
-    ret = atcab_init(&cfg_ateccx08a_i2c_default);
-    if (ret != 0) {
-        ESP_LOGI(TAG, " failed ! atcab_init returned %02x", ret);
-        goto exit;
-    }
-    ESP_LOGI(TAG, " ok");
 
     lock = 0;
     ESP_LOGI(TAG, " Check the data zone lock status...");

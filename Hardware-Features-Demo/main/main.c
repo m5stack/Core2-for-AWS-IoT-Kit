@@ -25,6 +25,10 @@ static void speakerTask(void *arg);
 static void ateccTask(void *arg);
 static void sdcardTest();
 
+TaskHandle_t mic_handle, speaker_handle, atecc_handle;
+
+static const char *TAG = "MAIN";
+
 void app_main(void)
 {
     esp_log_level_set("gpio", ESP_LOG_NONE);
@@ -35,8 +39,8 @@ void app_main(void)
     sdcardTest();
     sk6812Test();
 
-    xTaskCreatePinnedToCore(speakerTask, "speak", 4096 * 2, NULL, 4, NULL, 1);
-    
+    xTaskCreatePinnedToCore(speakerTask, "speak", 4096 * 2, NULL, 4, &speaker_handle, 1);
+    xTaskCreatePinnedToCore(microphoneTask, "microphoneTask", 4096 * 2, NULL, 1, &mic_handle, 1);
     rtc_date_t date;
     date.year = 2020;
     date.month = 9;
@@ -101,7 +105,7 @@ void app_main(void)
 
     xSemaphoreGive(xGuiSemaphore);
 
-    xTaskCreatePinnedToCore(ateccTask, "ateccTask", 4096 * 2, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(ateccTask, "ateccTask", 4096 * 2, NULL, 1, &atecc_handle, 1);
 
     char label_stash[200];
     for (;;) {
@@ -175,8 +179,14 @@ static void speakerTask(void *arg) {
     extern const unsigned char music[120264];
     Speaker_WriteBuff((uint8_t *)music, 120264, portMAX_DELAY);
     Core2ForAWS_Speaker_Enable(0);
-    Speaker_Deinit();
-    xTaskCreatePinnedToCore(microphoneTask, "microphoneTask", 4096 * 2, NULL, 1, NULL, 0);
+    esp_err_t err = Speaker_Deinit();
+
+    if(err == ESP_OK){
+        vTaskResume(mic_handle);
+    }
+    else {
+        ESP_LOGE(TAG, "Error uninstalling speaker");
+    }
     vTaskDelete(NULL);
 }
 

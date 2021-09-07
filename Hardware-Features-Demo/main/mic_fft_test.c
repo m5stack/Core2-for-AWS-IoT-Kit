@@ -107,6 +107,7 @@ void microphoneTask(void *arg) {
     int16_t *buffptr;
     double data = 0;
     uint8_t *fft_dis_buff = NULL;
+    vTaskSuspend(NULL);
     Microphone_Init();
     queue = xQueueCreate(2, sizeof(uint8_t *));
 
