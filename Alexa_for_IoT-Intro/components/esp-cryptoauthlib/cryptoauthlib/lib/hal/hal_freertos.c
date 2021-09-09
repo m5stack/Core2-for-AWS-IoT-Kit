@@ -2,7 +2,7 @@
  * \file
  * \brief FreeRTOS Hardware/OS Abstration Layer.
  *
- * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -43,20 +43,7 @@
  *
    @{ */
 
-#if !defined(ATCA_PLATFORM_MALLOC)
-void*   hal_malloc(size_t size)
-{
-    return pvPortMalloc(size);
-}
-#endif
-
-#if !defined(ATCA_PLATFORM_FREE)
-void    hal_free(void* ptr)
-{
-    vPortFree(ptr);
-}
-#endif
-
+#ifdef ATCA_USE_RTOS_TIMER
 /**
  * \brief This function delays for a number of milliseconds.
  *
@@ -65,17 +52,7 @@ void    hal_free(void* ptr)
  *
  * \param[in] delay  Number of milliseconds to delay
  */
-#if INCLUDE_xTaskGetSchedulerState == 0
-void hal_rtos_delay_ms(uint32_t delay)
-{
-    #if ATCA_USE_RTOS_TIMER
-    vTaskDelay(pdMS_TO_TICKS(delay) + 1);
-    #else
-    hal_delay_ms(delay);
-    #endif
-}
-#else
-void hal_rtos_delay_ms(uint32_t delay)
+void atca_delay_ms(uint32_t delay)
 {
     /* If the freeRTOS scheduler is running yield to other tasks */
     if (taskSCHEDULER_RUNNING == xTaskGetSchedulerState())
@@ -84,7 +61,7 @@ void hal_rtos_delay_ms(uint32_t delay)
     }
     else
     {
-        hal_delay_ms(delay);
+        atca_delay_ms_internal(delay);
     }
 }
 #endif

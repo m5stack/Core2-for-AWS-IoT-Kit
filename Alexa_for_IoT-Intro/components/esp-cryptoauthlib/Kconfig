@@ -33,12 +33,4 @@ menu "esp-cryptoauthlib"
         select MBEDTLS_ATCA_HW_ECDSA_VERIFY
         select MBEDTLS_ECP_DP_SECP256R1_ENABLED
 
-    config ATCA_I2C_SDA_PIN
-        int "I2C SDA pin used to communicate with the ATECC608A"
-        default 16
-
-    config ATCA_I2C_SCL_PIN
-        int "I2C SCL pin used to communicate with the ATECC608A"
-        default 17
-
 endmenu # cryptoauthlib

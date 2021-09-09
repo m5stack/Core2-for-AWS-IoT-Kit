@@ -7,7 +7,7 @@
  *
  * Prerequisite: add SERCOM I2C Master Polled support to application in Atmel Studio
  *
- * \copyright (c) 2015-2020 Microchip Technology Inc. and its subsidiaries.
+ * \copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
  *
  * \page License
  *
@@ -33,12 +33,11 @@
 #include <asf.h>
 #include <string.h>
 #include <stdio.h>
-#include "cryptoauthlib.h"
-#include "hal_uc3_i2c_asf.h"
 
-#ifndef ATCA_HAL_LEGACY_API
-#error "The use of this hal requires the ATCA_HAL_LEGACY_API option to be enabled.
-#endif
+#include "atca_hal.h"
+#include "atca_device.h"
+#include "atca_execution.h"
+#include "hal_uc3_i2c_asf.h"
 
 /** \defgroup hal_ Hardware abstraction layer (hal_)
  *
@@ -94,6 +93,7 @@ ATCA_STATUS hal_i2c_discover_devices(int bus_num, ATCAIfaceCfg cfg[], int *found
 ATCA_STATUS hal_i2c_init(void *hal, ATCAIfaceCfg *cfg)
 {
     twi_options_t opt;
+    ATCA_STATUS status = !ATCA_SUCCESS;
     ATCAI2CMaster_t* data = &i2c_hal_data[cfg->atcai2c.bus];
 
 
@@ -151,29 +151,20 @@ ATCA_STATUS hal_i2c_post_init(ATCAIface iface)
 
 
 /** \brief HAL implementation of I2C send over ASF
- * \param[in] iface         instance
- * \param[in] word_address  device word address
- * \param[in] txdata        pointer to space to bytes to send
- * \param[in] txlength      number of bytes to send
+ * \param[in] iface     instance
+ * \param[in] txdata    pointer to space to bytes to send
+ * \param[in] txlength  number of bytes to send
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
 
-ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t word_address, uint8_t *txdata, int txlength)
+ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t *txdata, int txlength)
 {
     twi_package_t packet;
 
     ATCAIfaceCfg *cfg = atgetifacecfg(iface);
 
-    if (!cfg)
-    {
-        return ATCA_BAD_PARAM;
-    }
-
-    if (0xFF != word_address)
-    {
-        txdata[0] = word_address;   // insert the Word Address Value, Command token
-        txlength++;                 // account for word address value byte.
-    }
+    txdata[0] = 0x03;     // insert the Word Address Value, Command token
+    txlength++;
 
     // TWI chip address to communicate with
     packet.chip = cfg->atcai2c.slave_address >> 1;
@@ -198,136 +189,82 @@ ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t word_address, uint8_t *txdata,
 }
 
 /** \brief HAL implementation of I2C receive function for ASF I2C
- * \param[in]    iface          Device to interact with.
- * \param[in]    word_address   device word address
- * \param[out]   rxdata         Data received will be returned here.
- * \param[in,out] rxlength       As input, the size of the rxdata buffer.
- *                              As output, the number of bytes received.
+ * \param[in]    iface     Device to interact with.
+ * \param[out]   rxdata    Data received will be returned here.
+ * \param[inout] rxlength  As input, the size of the rxdata buffer.
+ *                         As output, the number of bytes received.
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
-ATCA_STATUS hal_i2c_receive(ATCAIface iface, uint8_t word_address, uint8_t *rxdata, uint16_t *rxlength)
+ATCA_STATUS hal_i2c_receive(ATCAIface iface, uint8_t *rxdata, uint16_t *rxlength)
 {
     ATCAIfaceCfg *cfg = atgetifacecfg(iface);
-    int retries;
+    int retries = cfg->rx_retries;
     uint32_t status = !ATCA_SUCCESS;
     uint16_t rxdata_max_size = *rxlength;
-    uint8_t min_response_size = 4;
-    uint16_t read_length = 2;
-
-    if ((NULL == cfg) || (NULL == rxlength) || (NULL == rxdata))
-    {
-        return ATCA_TRACE(ATCA_INVALID_POINTER, "NULL pointer encountered");
-    }
 
     twi_package_t packet = {
         .chip           = cfg->atcai2c.slave_address >> 1,
-        .addr           = { 0 },
+        .addr[0]        = { 0 },
+        .addr[1]        = { 0 },
+        .addr[2]        = { 0 },
         .addr_length    = 0,
         .buffer         = (void*)rxdata,
-        .length         = (uint32_t)read_length
+        .length         = (uint32_t)1
     };
 
     *rxlength = 0;
-    //Read Length byte i.e. first byte from device
     if (rxdata_max_size < 1)
     {
         return ATCA_SMALL_BUFFER;
     }
 
-    do
+    while (retries-- > 0 && status != ATCA_SUCCESS)
     {
-        /*Send Word address to device...*/
-        retries = cfg->rx_retries;
-        while (retries-- > 0 && status != ATCA_SUCCESS)
+        if (twi_master_read(i2c_hal_data[cfg->atcai2c.bus].twi_master_instance, &packet) != TWI_SUCCESS)
         {
-            status = hal_i2c_send(iface, word_address, &word_address, 0);
-
-        }
-        if (ATCA_SUCCESS != status)
-        {
-            ATCA_TRACE(status, "hal_i2c_send - failed");
-            break;
-        }
-
-#if ATCA_TA_SUPPORT
-        /*Set read length.. Check for register reads or 1 byte reads*/
-        if ((word_address == ATCA_MAIN_PROCESSOR_RD_CSR) || (word_address == ATCA_FAST_CRYPTO_RD_FSR)
-            || (rxdata_max_size == 1))
-        {
-            read_length = 1;
-        }
-#endif
-
-        packet.length = read_length;
-
-        atca_delay_ms(2);
-        status = ATCA_COMM_FAIL;
-        if (twi_master_read(i2c_hal_data[cfg->atcai2c.bus].twi_master_instance, &packet) == TWI_SUCCESS)
-        {
-            status = ATCA_SUCCESS;
-        }
-
-        if (ATCA_SUCCESS != status)
-        {
-            ATCA_TRACE(status, "hal read - failed");
-            break;
-        }
-
-        if (1 == read_length)
-        {
-            ATCA_TRACE(status, "1 byte read completed");
-            break;
-        }
-
-        /*Calculate bytes to read based on device response*/
-        if (cfg->devtype == TA100)
-        {
-            read_length = ((uint16_t)rxdata[0] * 256) + rxdata[1];
-            min_response_size += 1;
+            status = ATCA_COMM_FAIL;
         }
         else
         {
-            read_length =  rxdata[0];
-        }
-
-        if (read_length > rxdata_max_size)
-        {
-            status = ATCA_TRACE(ATCA_SMALL_BUFFER, "rxdata is small buffer");
-            break;
-        }
-
-        if (read_length < min_response_size)
-        {
-            status = ATCA_TRACE(ATCA_RX_FAIL, "packet size is invalid");
-            break;
-        }
-
-        /* Read given length bytes from device */
-        packet.length = read_length - 2;
-        packet.buffer = &rxdata[2];
-
-
-        atca_delay_ms(2);
-
-        status = ATCA_COMM_FAIL;
-        if (twi_master_read(i2c_hal_data[cfg->atcai2c.bus].twi_master_instance, &packet) == TWI_SUCCESS)
-        {
             status = ATCA_SUCCESS;
         }
-
-        if (ATCA_SUCCESS != status)
-        {
-            ATCA_TRACE(status, "hal read - failed");
-            break;
-        }
-
     }
-    while (0);
 
+    if (status != ATCA_SUCCESS)
+    {
+        return status;
+    }
+    if (rxdata[0] < ATCA_RSP_SIZE_MIN)
+    {
+        return ATCA_INVALID_SIZE;
+    }
+    if (rxdata[0] > rxdata_max_size)
+    {
+        return ATCA_SMALL_BUFFER;
+    }
 
+    atca_delay_ms(1);
 
-    *rxlength = read_length;
-    return status;
+    //Update receive length with first byte received and set to read rest of the data
+    packet.length = rxdata[0] - 1;
+    packet.buffer = &rxdata[1];
+
+    if (twi_master_read(i2c_hal_data[cfg->atcai2c.bus].twi_master_instance, &packet) != TWI_SUCCESS)
+    {
+        status = ATCA_COMM_FAIL;
+    }
+    else
+    {
+        status = ATCA_SUCCESS;
+    }
+    if (status != ATCA_SUCCESS)
+    {
+        return status;
+    }
+
+    *rxlength = rxdata[0];
+
+    return ATCA_SUCCESS;
 }
 
 /** \brief method to change the bus speed of I2C
@@ -379,7 +316,7 @@ ATCA_STATUS hal_i2c_wake(ATCAIface iface)
     twi_master_write(i2c_hal_data[cfg->atcai2c.bus].twi_master_instance, &packet);
 
     // rounded up to the nearest ms
-    atca_delay_ms(((uint32_t)cfg->wake_delay + (1000 - 1)) / 1000);         // wait tWHI + tWLO which is configured based on device type and configuration structure
+    atca_delay_ms(((uint32_t)cfg->wake_delay + (1000 - 1)) / 1000);   // wait tWHI + tWLO which is configured based on device type and configuration structure
 
 
 
@@ -415,7 +352,7 @@ ATCA_STATUS hal_i2c_idle(ATCAIface iface)
     ATCAIfaceCfg *cfg = atgetifacecfg(iface);
     uint8_t data[4];
 
-    data[0] = 0x02;         // idle word address value
+    data[0] = 0x02; // idle word address value
     twi_package_t packet = {
         .chip           = cfg->atcai2c.slave_address >> 1,
         .addr           = { 0 },
@@ -442,7 +379,7 @@ ATCA_STATUS hal_i2c_sleep(ATCAIface iface)
     ATCAIfaceCfg *cfg = atgetifacecfg(iface);
     uint8_t data[4];
 
-    data[0] = 0x01;         // sleep word address value
+    data[0] = 0x01; // sleep word address value
     twi_package_t packet = {
         .chip           = cfg->atcai2c.slave_address >> 1,
         .addr           = { 0 },
