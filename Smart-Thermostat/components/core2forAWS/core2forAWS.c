@@ -580,7 +580,7 @@ int Core2ForAWS_Port_C_UART_Receive(uint8_t *message_buffer){
     }
 
     if (cached_buffer_length) {
-        rxBytes = uart_read_bytes(PORT_C_UART_NUM, message_buffer, (size_t)&cached_buffer_length, pdMS_TO_TICKS(1000));
+        rxBytes = uart_read_bytes(PORT_C_UART_NUM, message_buffer, (size_t)&cached_buffer_length, pdMS_TO_TICKS(20));
     }
     return rxBytes;
 }
