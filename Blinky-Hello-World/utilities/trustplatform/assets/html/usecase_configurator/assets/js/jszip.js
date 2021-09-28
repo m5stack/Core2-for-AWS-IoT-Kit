@@ -2850,7 +2850,7 @@ var utf8border = function(buf, max) {
     pos = max-1;
     while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
 
-    // Fuckup - very small and broken sequence,
+    // up - very small and broken sequence,
     // return max, because we should return something anyway.
     if (pos < 0) { return max; }
 
@@ -3091,7 +3091,6 @@ exports.newBlob = function(part, type) {
         }
         catch (e) {
 
-            // well, fuck ?!
             throw new Error("Bug : can't construct the Blob.");
         }
     }
@@ -5668,7 +5667,7 @@ exports.utf8border = function (buf, max) {
   pos = max - 1;
   while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
 
-  // Fuckup - very small and broken sequence,
+  // up - very small and broken sequence,
   // return max, because we should return something anyway.
   if (pos < 0) { return max; }
 
