@@ -1,5 +1,6 @@
 set(COMPONENT_SRCDIRS .)
 set(COMPONENT_ADD_INCLUDEDIRS .)
+set(COMPONENT_REQUIRES "mbedtls" "fatfs" "esp_adc_cal")
 
 list(APPEND COMPONENT_SRCDIRS i2c_bus)
 list(APPEND COMPONENT_ADD_INCLUDEDIRS i2c_bus)
@@ -32,6 +33,7 @@ endif()
 if(CONFIG_SOFTWARE_ATECC608_SUPPORT)
     list(APPEND COMPONENT_SRCDIRS atecc608)
     list(APPEND COMPONENT_ADD_INCLUDEDIRS atecc608)
+    list(APPEND COMPONENT_REQUIRES "esp-cryptoauthlib")
 endif()
 
 if(CONFIG_SOFTWARE_BUTTON_SUPPORT)
@@ -59,5 +61,4 @@ if(CONFIG_SOFTWARE_RTC_SUPPORT)
     list(APPEND COMPONENT_ADD_INCLUDEDIRS bm8563)
 endif()
 
-set(COMPONENT_REQUIRES "mbedtls" "esp-cryptoauthlib" "fatfs" "esp_adc_cal")
 register_component()
