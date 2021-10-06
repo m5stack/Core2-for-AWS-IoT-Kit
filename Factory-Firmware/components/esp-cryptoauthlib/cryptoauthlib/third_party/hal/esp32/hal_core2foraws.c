@@ -188,7 +188,6 @@ ATCA_STATUS hal_i2c_receive(ATCAIface iface, uint8_t address, uint8_t *rxdata, u
  */
 ATCA_STATUS hal_i2c_release(void *hal_data)
 {
-    i2c_free_device(atecc608_device);
     return ATCA_SUCCESS;
 }
 
