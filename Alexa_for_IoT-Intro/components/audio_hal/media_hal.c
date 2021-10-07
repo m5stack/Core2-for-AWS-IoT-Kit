@@ -21,20 +21,9 @@
 #include "esp_log.h"
 #include <media_hal.h>
 #include <media_hal_codec_init.h>
+#include <media_hal_playback.h>
 
 #define HAL_TAG "MEDIA_HAL"
-
-#define mutex_create() \
-            xSemaphoreCreateMutex()
-
-#define mutex_lock(x) \
-            xSemaphoreTake(x, portMAX_DELAY)
-
-#define mutex_unlock(x) \
-            xSemaphoreGive(x)
-
-#define mutex_destroy(x) \
-            vSemaphoreDelete(x)
 
 #define MEDIA_HAL_CHECK_NULL(a, format, b, ...) \
     if ((a) == 0) { \
@@ -47,14 +36,22 @@ static media_hal_t *media_hal_handle = NULL;
 
 static uint8_t volume_prv; //This currently is needed due to bt case.
 
-media_hal_t* media_hal_init(media_hal_config_t *media_hal_conf)
+media_hal_t* media_hal_init(media_hal_config_t *media_hal_cfg, media_hal_playback_cfg_t *media_hal_playback_cfg)
 {
     if (!media_hal_handle) {
         //esp_err_t ret  = 0;
+        /* Initialize playback */
+        if (media_hal_playback_cfg) {
+            media_hal_init_playback(media_hal_playback_cfg);
+        }
+
+        /* Initialize codec */
         media_hal_t *media_hal = (media_hal_t *) calloc(1, sizeof(media_hal_t));
-        media_hal->media_hal_lock = mutex_create();
+        media_hal->media_hal_lock = xSemaphoreCreateMutex();
         assert(media_hal->media_hal_lock);
-        media_hal_codec_init(media_hal, media_hal_conf);
+        xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
+        media_hal_codec_init(media_hal, media_hal_cfg);
+        xSemaphoreGive(media_hal->media_hal_lock);
         volume_prv = MEDIA_HAL_VOL_DEFAULT;
         media_hal_handle = media_hal;
     } else {
@@ -77,7 +74,7 @@ esp_err_t media_hal_deinit(media_hal_t* media_hal)
         return ESP_FAIL;
     }
     esp_err_t ret;
-    mutex_destroy(media_hal->media_hal_lock);
+    vSemaphoreDelete(media_hal->media_hal_lock);
     ret = media_hal->audio_codec_deinitialize(media_hal_port_num);
     media_hal->media_hal_lock = NULL;
     free(media_hal);
@@ -91,10 +88,10 @@ esp_err_t media_hal_set_state(media_hal_t* media_hal, media_hal_codec_mode_t mod
         return ESP_FAIL;
     }
     esp_err_t ret;
-    mutex_lock(media_hal->media_hal_lock);
+    xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
     ESP_LOGI(HAL_TAG, "Codec mode is %d", mode);
     ret = media_hal->audio_codec_set_state(mode, media_hal_state);
-    mutex_unlock(media_hal->media_hal_lock);
+    xSemaphoreGive(media_hal->media_hal_lock);
     return ret;
 }
 
@@ -191,13 +188,13 @@ esp_err_t media_hal_control_volume(media_hal_t* media_hal, uint8_t volume)
     }
     volume_prv = volume;
     esp_err_t ret;
-    mutex_lock(media_hal->media_hal_lock);
+    xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
     if (volume == 0) {
         ret = media_hal->audio_codec_set_mute(true);
     } else {
         ret = media_hal->audio_codec_control_volume(volume);
     }
-    mutex_unlock(media_hal->media_hal_lock);
+    xSemaphoreGive(media_hal->media_hal_lock);
     return ret;
 }
 
@@ -213,13 +210,13 @@ esp_err_t media_hal_set_mute_bt(media_hal_t* media_hal, bool mute)
          * This is request for bt unmute but codec mute is true.
          * Since there is no guarantee that we are already in mute state, do it.
          */
-        mutex_lock(media_hal->media_hal_lock);
+        xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
         ret = media_hal->audio_codec_set_mute(true);
-        mutex_unlock(media_hal->media_hal_lock);
+        xSemaphoreGive(media_hal->media_hal_lock);
     } else {
-        mutex_lock(media_hal->media_hal_lock);
+        xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
         ret = media_hal->audio_codec_control_volume(volume_prv);
-        mutex_unlock(media_hal->media_hal_lock);
+        xSemaphoreGive(media_hal->media_hal_lock);
     }
     return ret;
 }
@@ -241,9 +238,9 @@ esp_err_t media_hal_set_mute(media_hal_t* media_hal, bool mute)
         return ESP_FAIL;
     }
     esp_err_t ret;
-    mutex_lock(media_hal->media_hal_lock);
+    xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
     ret = media_hal->audio_codec_set_mute(mute);
-    mutex_unlock(media_hal->media_hal_lock);
+    xSemaphoreGive(media_hal->media_hal_lock);
     return ret;
 }
 
@@ -254,10 +251,10 @@ esp_err_t media_hal_get_volume(media_hal_t* media_hal, uint8_t *volume)
     }
     esp_err_t ret;
     MEDIA_HAL_CHECK_NULL(volume, "Get volume para is null", -1);
-    mutex_lock(media_hal->media_hal_lock);
+    xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
     *volume = volume_prv;
     //ret = media_hal->audio_codec_get_volume(volume);
-    mutex_unlock(media_hal->media_hal_lock);
+    xSemaphoreGive(media_hal->media_hal_lock);
     return ret;
 }
 
@@ -267,9 +264,9 @@ esp_err_t media_hal_config_format(media_hal_t* media_hal, media_hal_codec_mode_t
         return ESP_FAIL;
     }
     esp_err_t ret;
-    mutex_lock(media_hal->media_hal_lock);
+    xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
     ret = media_hal->audio_codec_config_format(mode, fmt);
-    mutex_unlock(media_hal->media_hal_lock);
+    xSemaphoreGive(media_hal->media_hal_lock);
     return ret;
 }
 
@@ -279,9 +276,9 @@ esp_err_t media_hal_set_clk(media_hal_t* media_hal, media_hal_codec_mode_t mode,
         return ESP_FAIL;
     }
     esp_err_t ret;
-    mutex_lock(media_hal->media_hal_lock);
+    xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
     ret = media_hal->audio_codec_set_i2s_clk(mode, bits_per_sample);
-    mutex_unlock(media_hal->media_hal_lock);
+    xSemaphoreGive(media_hal->media_hal_lock);
     return ret;
 }
 
@@ -291,9 +288,9 @@ esp_err_t media_hal_powerup(media_hal_t* media_hal)
         return ESP_FAIL;
     }
     esp_err_t ret;
-    mutex_lock(media_hal->media_hal_lock);
+    xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
     ret = media_hal->audio_codec_powerup();
-    mutex_unlock(media_hal->media_hal_lock);
+    xSemaphoreGive(media_hal->media_hal_lock);
     return ret;
 }
 
@@ -303,8 +300,8 @@ esp_err_t media_hal_powerdown(media_hal_t* media_hal)
         return ESP_FAIL;
     }
     esp_err_t ret;
-    mutex_lock(media_hal->media_hal_lock);
+    xSemaphoreTake(media_hal->media_hal_lock, portMAX_DELAY);
     ret = media_hal->audio_codec_powerdown();
-    mutex_unlock(media_hal->media_hal_lock);
+    xSemaphoreGive(media_hal->media_hal_lock);
     return ret;
 }

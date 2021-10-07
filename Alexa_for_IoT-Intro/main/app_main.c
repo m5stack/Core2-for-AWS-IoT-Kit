@@ -20,12 +20,13 @@
 #include <va_mem_utils.h>
 #include <va_ui.h>
 #include <va_button.h>
+#include <va_led.h>
 #include <scli.h>
 #include <va_diag_cli.h>
 #include <wifi_cli.h>
 #include <tone.h>
 #include <prompt.h>
-#include <va_speaker.h>
+#include <speaker.h>
 #include <avs_config.h>
 #include <auth_delegate.h>
 #include <speech_recognizer.h>
@@ -33,7 +34,6 @@
 #include <app_wifi.h>
 #include <app_prov.h>
 #include "app_auth.h"
-#include "app_aws_iot.h"
 
 #ifdef CONFIG_ALEXA_ENABLE_CLOUD
 #include <app_cloud.h>
@@ -71,6 +71,14 @@ char *app_nvs_alloc_and_get_str(const char *key)
     char *value = va_mem_alloc(required_size + 1, VA_MEM_EXTERNAL); /* + 1 for NULL termination */
     if (value) {
         nvs_get_blob(handle, key, value, &required_size);
+        value[required_size] = '\0';                                /* value goes from 0 to ((required_size + 1) - 1) */
+
+        /* Remove extra newlines from the end */
+        while (value[--required_size] == '\n') {
+            ESP_LOGI(TAG, "Removing newline for %s", key);
+            value[required_size] = '\0';                            /* -1 already subtracted */
+        }
+
     }
     nvs_close(handle);
     return value;
@@ -83,7 +91,9 @@ void app_get_device_config(aia_config_t *va_cfg)
         return;
     }
 
-    va_cfg->device_config.aws_root_ca_pem_cert = app_nvs_alloc_and_get_str("server_cert");
+    /* Server cert is taken from global CA store. If it needs to be overwritten, add it in global CA store or set it from here. */
+    // va_cfg->device_config.aws_root_ca_pem_cert = app_nvs_alloc_and_get_str("server_cert");
+
     va_cfg->device_config.certificate_pem_crt_cert = app_nvs_alloc_and_get_str("client_cert");
     va_cfg->device_config.private_pem_crt_cert = app_nvs_alloc_and_get_str("client_key");
     va_cfg->device_config.aws_endpoint = app_nvs_alloc_and_get_str("mqtt_host");        /* If this is not present in the 'fctry' partition, then the one mentioned the menuconfig is used. */
@@ -108,10 +118,6 @@ void app_get_device_config(aia_config_t *va_cfg)
         snprintf(va_cfg->device_config.client_id, MAX_CLIENT_ID_LEN, "%02x%02x%02x%02x%02x%02x", mac_int[0], mac_int[1], mac_int[2], mac_int[3], mac_int[4], mac_int[5]);
         printf("%s: Using the non-NVS client_id: %s\n", TAG, va_cfg->device_config.client_id);
     }
-
-    /* thing_name is only used in case of thing shadow. */
-    app_aws_iot_set_thing_name(va_cfg->device_config.client_id);    /* Setting thing_name same as client_id itself. */
-    va_cfg->device_config.thing_name = app_aws_iot_get_thing_name();
 
     if (!va_cfg->device_config.certificate_pem_crt_cert) {
         ESP_LOGE(TAG, "AIA device certificates not found. Please flash the certificates at the correct location and reboot the device to proceed.");
@@ -152,6 +158,7 @@ void app_main()
 #ifdef CONFIG_ALEXA_ENABLE_CLOUD
     app_cloud_init();
 #else /* !CONFIG_ALEXA_ENABLE_CLOUD */
+    /* To enable smart home, uncomment this. For more information check the Readme. */
     app_smart_home_init();
 #endif /* CONFIG_ALEXA_ENABLE_CLOUD */
     alexa_provisioning_init(amazon_cfg);
@@ -161,6 +168,8 @@ void app_main()
     app_get_device_config(va_cfg);
 
     va_board_init(); /* Initialize media_hal, media_hal_playback, board buttons and led patters */
+    va_button_init();
+    va_led_init();
 
     scli_init(); /* Initialize CLI */
     va_diag_register_cli(); /* Add diagnostic functions to CLI */
@@ -171,7 +180,7 @@ void app_main()
     printf("\r");       // To remove a garbage print ">>"
     auth_delegate_init(alexa_signin_handler, alexa_signout_handler);
 
-    ais_early_init();
+    aia_early_init();
 
     char service_name[20];
     uint8_t mac[6];
@@ -202,20 +211,28 @@ void app_main()
         app_wifi_start_station();
     }
 
-    app_wifi_wait_for_connection();
+    app_wifi_wait_for_connection(30000 / portTICK_PERIOD_MS);
 
     ret = alexa_local_config_start(amazon_cfg, service_name);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to start local SSDP instance. Some features might not work.");
     }
 
-    ret = ais_mqtt_init(va_cfg, app_aws_iot_callback);
+    ret = aia_init(va_cfg);
 
     if (ret != ESP_OK) {
         while(1) vTaskDelay(2);
     }
+
     /* This is a blocking call */
-    va_dsp_init(speech_recognizer_recognize, speech_recognizer_record);
+    va_dsp_init(speech_recognizer_recognize, speech_recognizer_record, va_button_notify_mute);
+    va_boot_dsp_signal();
+
+#ifdef CONFIG_HALF_DUPLEX_I2S_MODE
+    /* Disable 'Start of Response' and 'End of Response' tones for half duplex boards */
+    tone_set_sor_state(0);
+    tone_set_eor_state(0);
+#endif
 
 #ifdef CONFIG_PM_ENABLE
     int xtal_freq = (int) rtc_clk_xtal_freq_get();

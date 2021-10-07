@@ -38,6 +38,7 @@ typedef void *basic_player_handle_t;
 
 typedef ssize_t (*read_func_cb_t)(void *read_cb_data, void *data, int len, unsigned int wait);
 typedef int (*event_func_cb_t)(void *event_cb_data, basic_player_event_t event);
+typedef void (*read_len_func_cb_t)(void *read_cb_data, int len);
 
 /**
  * @brief Basic player config structure.
@@ -64,7 +65,11 @@ enum basic_player_play_method {
 typedef struct basic_player_play_config {
     enum basic_player_play_method play_method;
     union play_method_details {
-        char *url;
+        struct http {
+            char *url;
+            read_len_func_cb_t read_len_cb;
+            void *read_cb_data;
+        } http;
         struct callback {
             audio_codec_type_t decoder_type;
             read_func_cb_t read_cb;

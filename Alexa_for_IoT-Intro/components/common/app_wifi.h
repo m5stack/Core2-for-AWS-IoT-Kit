@@ -34,4 +34,4 @@ void app_wifi_start_station();
  * Waits for Wi-Fi connection to be completed. This is a blocking call.
  * If Wi-Fi is started using the `app_wifi_start_station` API, then this is unblocked internally when the device gets IP Address.
  */
-void app_wifi_wait_for_connection();
+void app_wifi_wait_for_connection(uint32_t wait);

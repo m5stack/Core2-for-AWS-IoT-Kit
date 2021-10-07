@@ -91,7 +91,7 @@ extern SemaphoreHandle_t xGuiSemaphore;
 #endif
 
 #if CONFIG_SOFTWARE_SPEAKER_SUPPORT
-#include "speaker.h"
+#include "core2foraws_speaker.h"
 #endif
 
 #if CONFIG_SOFTWARE_SDCARD_SUPPORT

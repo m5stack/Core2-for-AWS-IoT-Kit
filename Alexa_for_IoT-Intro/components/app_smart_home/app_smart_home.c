@@ -8,8 +8,22 @@
 #include <esp_console.h>
 #include <smart_home.h>
 #include <alexa_smart_home.h>
+#include "core2forAWS.h"
+
+#define BLINK_DELAY 500
+static bool green_light_status = 0;
 
 static const char *TAG = "[app_smart_home]";
+
+static void startLightBlink(int count)
+{    
+    // Toggle the LED to the opposite of the LED state and get back to the original LED state at the end
+    for(int i = (1 + green_light_status); i <= (count * 2 + green_light_status); i++) { 
+        Core2ForAWS_LED_Enable( i % 2 );
+        vTaskDelay(pdMS_TO_TICKS(BLINK_DELAY));
+    }
+}
+
 
 void app_device_driver_init()
 {
@@ -93,8 +107,13 @@ static esp_err_t write_cb(const smart_home_device_t *device, const smart_home_pa
 
     if (val.type == SMART_HOME_VAL_TYPE_BOOLEAN) {
         printf("%s: *************** %s's %s turned %s ***************\n", TAG, device_name, param_name, val.val.b ? "ON" : "OFF");
+        //Set the global green_light_status variable to the incoming message value and set the green LED value to 
+        green_light_status = val.val.b;
+        Core2ForAWS_LED_Enable(green_light_status);
     } else if (val.type == SMART_HOME_VAL_TYPE_INTEGER) {
         printf("%s: *************** %s's %s changed to %d ***************\n", TAG, device_name, param_name, val.val.i);
+        //call the Trigger Light Blink based on the desired number of actions
+        startLightBlink(val.val.i);    
     } else if (val.type == SMART_HOME_VAL_TYPE_STRING) {
         printf("%s: *************** %s's %s changed to %s ***************\n", TAG, device_name, param_name, val.val.s);
     } else {
@@ -131,8 +150,8 @@ esp_err_t app_smart_home_init()
 
     alexa_smart_home_device_info_t device_info = {
         .device_serial_num = mac_str,
-        .manufacturer_name = "Espressif",
-        .device_description = "Alexa Device",
+        .manufacturer_name = "M5Stack",
+        .device_description = "Core2 for AWS IoT EduKit",
         .model_name = "ESP32",
         .product_id = CONFIG_ALEXA_PRODUCT_ID,
     };
@@ -142,8 +161,8 @@ esp_err_t app_smart_home_init()
     smart_home_param_t *power_param = smart_home_param_create("Power", SMART_HOME_PARAM_POWER, smart_home_bool(true), SMART_HOME_PROP_FLAG_READ | SMART_HOME_PROP_FLAG_WRITE | SMART_HOME_PROP_FLAG_PERSIST);
     smart_home_device_add_param(device, power_param);
 
-    smart_home_param_t *brightness_param = smart_home_param_create("Brightness", SMART_HOME_PARAM_RANGE, smart_home_int(100), SMART_HOME_PROP_FLAG_READ | SMART_HOME_PROP_FLAG_WRITE | SMART_HOME_PROP_FLAG_PERSIST);
-    smart_home_param_add_bounds(brightness_param, smart_home_int(0), smart_home_int(100), smart_home_int(1));
+    smart_home_param_t *brightness_param = smart_home_param_create("Blink", SMART_HOME_PARAM_RANGE, smart_home_int(10), SMART_HOME_PROP_FLAG_READ | SMART_HOME_PROP_FLAG_WRITE | SMART_HOME_PROP_FLAG_PERSIST);
+    smart_home_param_add_bounds(brightness_param, smart_home_int(0), smart_home_int(10), smart_home_int(1));
     smart_home_device_add_param(device, brightness_param);
 
     return ESP_OK;

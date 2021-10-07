@@ -2,6 +2,8 @@
 // All rights reserved.
 
 #include "stdio.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <va_ui.h>
 #include <voice_assistant_app_cb.h>
 #include "va_led.h"
@@ -10,7 +12,6 @@
 #include "esp_log.h"
 #include <esp_system.h>
 #include <esp_heap_caps.h>
-#include <audio_board.h>
 
 static const char *TAG = "[app_va_cb]";
 static int prv_led_state = 1000;
@@ -18,6 +19,17 @@ static int prv_led_state = 1000;
 static inline int heap_caps_get_free_size_sram()
 {
     return heap_caps_get_free_size(MALLOC_CAP_8BIT) - heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+}
+
+void va_app_device_ready()
+{
+    static bool device_ready = false;
+    if (!device_ready) {
+        va_ui_set_state(VA_UI_OFF);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        va_ui_set_state(VA_IDLE);
+        device_ready = true;
+    }
 }
 
 void va_app_dialog_states(va_dialog_states_t va_state)

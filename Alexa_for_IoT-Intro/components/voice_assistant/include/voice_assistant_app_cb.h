@@ -82,6 +82,9 @@ typedef enum {
     ALEXA_ALERT_DISABLE,
 } alexa_alert_state_t;
 
+
+void va_app_device_ready();
+
 /** Dialog State callback
  *
  * This callback is executed when the dialog state changes. Please

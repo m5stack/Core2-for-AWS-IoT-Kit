@@ -27,6 +27,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
+#include <media_hal_playback.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -164,11 +166,12 @@ typedef  struct {
 /**
  * @brief Initialize media codec driver
  *
- * @praram media_hal_conf Configure structure media_hal_config_t
+ * @param media_hal_cfg Configure structure media_hal_config_t
+ * @param media_hal_playback_cfg Configure structure media_hal_playback_config_t
  *
  * @return  media_hal_t* - success, otherwise NULL
  */
-media_hal_t* media_hal_init(media_hal_config_t *media_hal_conf);
+media_hal_t* media_hal_init(media_hal_config_t *media_hal_cfg, media_hal_playback_cfg_t *media_hal_playback_cfg);
 
 /**
  * @brief Returns first initialized media_hal_t structure

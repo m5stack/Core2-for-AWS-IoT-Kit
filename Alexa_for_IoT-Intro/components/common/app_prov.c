@@ -7,7 +7,11 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
 #include <wifi_provisioning/manager.h>
+#ifdef CONFIG_BT_ENABLED
 #include <wifi_provisioning/scheme_ble.h>
+#else /* !CONFIG_BT_ENABLED */
+#include <wifi_provisioning/scheme_softap.h>
+#endif /* CONFIG_BT_ENABLED */
 #include <esp_log.h>
 
 #include "app_prov.h"
@@ -16,6 +20,12 @@
 #include <qrcode.h>
 #define ENABLE_PROV_QR 1
 #endif /* CONFIG_ALEXA_ENABLE_CLOUD */
+
+#ifdef CONFIG_BT_ENABLED
+static const char *prov_transport = "ble";
+#else /* !CONFIG_BT_ENABLED */
+static const char *prov_transport = "softap";
+#endif
 
 static const char *TAG = "[app_prov]";
 static EventGroupHandle_t event_group;
@@ -101,6 +111,8 @@ static void app_prov_event_handler(void *user_data, wifi_prov_cb_event_t event, 
 void app_prov_start_provisionig(const char *service_name, void *data)
 {
     printf("%s: Starting provisioning\n", TAG);
+
+#ifdef CONFIG_BT_ENABLED
     uint8_t custom_service_uuid[16] = {
         /* This is a random uuid. This can be modified if you want to change the BLE uuid. */
         /* 12th and 13th bit will be replaced by internal bits. */
@@ -108,6 +120,7 @@ void app_prov_start_provisionig(const char *service_name, void *data)
         0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34, 0x12,
     };
     wifi_prov_scheme_ble_set_service_uuid(custom_service_uuid);
+#endif
 
     wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
     const char *pop = CONFIG_VOICE_ASSISTANT_POP;
@@ -116,7 +129,7 @@ void app_prov_start_provisionig(const char *service_name, void *data)
     if (wifi_prov_mgr_start_provisioning(security, pop, service_name, service_key) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to start provisioning");
     }
-    app_wifi_print_qr(service_name, pop, "ble");
+    app_wifi_print_qr(service_name, pop, prov_transport);
     printf("%s: Provisioning started with: \n\tservice name: %s \n\tservice key: %s\n\tproof of possession (pop): %s\n", TAG, service_name, service_key ? service_key : "", pop);
 }
 
@@ -125,12 +138,17 @@ void app_prov_init()
     event_group = xEventGroupCreate();
 
     wifi_prov_mgr_config_t config = {
+#ifdef CONFIG_BT_ENABLED
         .scheme = wifi_prov_scheme_ble,
 #ifdef ALEXA_BT
         .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BLE,
 #else /* ALEXA_BT == 0 */
         .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM,
 #endif /* ALEXA_BT */
+#else /* !CONFIG_BT_ENABLED */
+        .scheme = wifi_prov_scheme_softap,
+        .scheme_event_handler = WIFI_PROV_EVENT_HANDLER_NONE,
+#endif
         .app_event_handler = {
             .event_cb = app_prov_event_handler,
             .user_data = NULL

@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 /** Initiator Type
  */
 enum initiator {
@@ -72,12 +74,19 @@ typedef int (*va_dsp_record_cb_t) (void *data, int len);
 typedef int (*va_dsp_recognize_cb_t) (int ww_length, enum initiator init_type);
 
 /**
+ * @brief       Mic mute notify callback
+ *
+ * @param[in]   mute    Mic mute status
+ */
+typedef void (*va_dsp_notify_mute_cb_t)(bool mute);
+
+/**
  * @brief       Initialize dsp.
  *
  * @note        One also need to provide callbacks for dsp recognize
  *              and data_record as parameters to this function.
  */
-void va_dsp_init(va_dsp_recognize_cb_t va_dsp_recognize_cb, va_dsp_record_cb_t va_dsp_record_cb);
+void va_dsp_init(va_dsp_recognize_cb_t va_dsp_recognize_cb, va_dsp_record_cb_t va_dsp_record_cb, va_dsp_notify_mute_cb_t va_dsp_mute_notify_cb);
 
 /**
  * @brief   Notify playback stop event to DSP
@@ -95,6 +104,14 @@ int va_dsp_playback_stopped();
  *          playback interface. va_dsp can take appropriate actions in this callback
  */
 int va_dsp_playback_starting();
+
+/**
+ * @brief   Notify ongoing playback to DSP
+ *
+ * @note    This should be called when voice assistant is writing data to
+ *          playback interface. va_dsp can take appropriate actions in this callback
+ */
+int va_dsp_playback_ongoing();
 
 //Call this api to start streaming audio data from microphones
 int va_dsp_tap_to_talk_start();

@@ -22,9 +22,7 @@ extern int number_of_active_alerts;
 
 esp_err_t va_led_set(int va_state);
 
-esp_err_t va_led_init(led_pattern_config_t va_led_conf[LED_PATTERN_PATTERN_MAX]);
-
-void va_led_set_pwm(const uint32_t * va_led_v);
+esp_err_t va_led_init();
 
 void va_led_set_alert(alexa_alert_types_t alert_type, alexa_alert_state_t alert_state);
 

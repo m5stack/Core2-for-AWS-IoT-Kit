@@ -9,14 +9,13 @@
 #include <esp_wifi.h>
 #include <esp_event_loop.h>
 
-#include <driver/adc.h>
-
 #include <prompt.h>
 #include <va_nvs_utils.h>
 #include <va_button.h>
 #include <va_ui.h>
 #include "app_prov.h"
 #include "app_wifi.h"
+#include <driver/adc.h>
 
 #define WIFI_RESET_TIMER_TIMEOUT  (3 * 65 * 1000 * 1000) // 3 minutes in usec, with some margin for local communication delay, if any
 
@@ -111,9 +110,9 @@ int app_wifi_init_wifi_reset()
     return 0;
 }
 
-void app_wifi_wait_for_connection()
+void app_wifi_wait_for_connection(uint32_t wait)
 {
-    xEventGroupWaitBits(event_group, CONNECTION_BIT, false, true, portMAX_DELAY);
+    xEventGroupWaitBits(event_group, CONNECTION_BIT, false, true, wait);
 }
 
 static void app_wifi_connection_done()
@@ -131,7 +130,13 @@ static void app_wifi_event_handler(void* arg, esp_event_base_t event_base, int32
         } else if (event_id == WIFI_EVENT_STA_DISCONNECTED || event_id == WIFI_EVENT_STA_AUTHMODE_CHANGE || event_id == WIFI_EVENT_STA_WPS_ER_FAILED || event_id == WIFI_EVENT_STA_WPS_ER_TIMEOUT) {
 #define MAX_RECONNECT_ATTEMPTS  6 /* Callback gets called twice for a single disconnect event, with different reason codes. Essentially no. of retries are 3 */
             app_wifi_stop_wifi_reset_timer();
-            printf("%s: Disconnected. Event: %d\n", TAG, event_id);
+            if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
+                wifi_event_sta_disconnected_t* disconnect_data = (wifi_event_sta_disconnected_t*) event_data;
+                /* You may want to look in esp_wifi_types.h for reason strings */
+                printf("%s: Disconnect event: %d, reason: %d\n", TAG, event_id, disconnect_data->reason);
+            } else {
+                printf("%s: Disconnected. Event: %d\n", TAG, event_id);
+            }
             disconnect_count++;
             if (!app_prov_get_provisioning_status()) {
                 if (disconnect_count > MAX_RECONNECT_ATTEMPTS) {
@@ -176,12 +181,7 @@ void app_wifi_start_station()
 
 void app_wifi_init()
 {
-    /**
-     * This will continuously draw some extra current even in power save mode.
-     * Should be removed when the issue is fixed.
-     */
-    adc_power_on();
-
+    adc_power_acquire();
     tcpip_adapter_init();
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &app_wifi_event_handler, NULL));

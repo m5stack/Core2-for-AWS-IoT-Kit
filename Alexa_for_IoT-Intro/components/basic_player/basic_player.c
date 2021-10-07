@@ -30,8 +30,10 @@ struct basic_player {
     const char *http_url;
     read_func_cb_t codec_read_cb;
     event_func_cb_t player_event_cb;
+    read_len_func_cb_t read_len_cb;
     void *codec_read_cb_data;
     void *player_event_cb_data;
+    void *read_len_cb_data;
 
     SemaphoreHandle_t lock;
 
@@ -173,7 +175,9 @@ esp_err_t basic_player_play(basic_player_handle_t handle, basic_player_play_conf
         arb_reset(b->http_output_rb);
         b->codec_read_cb = basic_player_http_read_cb;
         b->codec_read_cb_data = (void *)b;
-        b->hs_cfg.url = play_config->play_method_details.url;
+        b->read_len_cb = play_config->play_method_details.http.read_len_cb;
+        b->read_len_cb_data = play_config->play_method_details.http.read_cb_data;
+        b->hs_cfg.url = play_config->play_method_details.http.url;
         b->hs_cfg.offset_in_ms = play_config->offset_in_ms;
         http_playback_stream_set_config(b->http_stream, &b->hs_cfg);
         audio_stream_start(&b->http_stream->base);
@@ -407,6 +411,9 @@ static ssize_t basic_player_http_write_cb(void *arg, void *data, int len, unsign
             vTaskDelay(pdMS_TO_TICKS(10));
         }
         ret = arb_write(b->http_output_rb, data, len, wait);
+        if (b->read_len_cb) {
+            b->read_len_cb(b->read_len_cb_data, len);
+        }
     }
     return ret;
 }

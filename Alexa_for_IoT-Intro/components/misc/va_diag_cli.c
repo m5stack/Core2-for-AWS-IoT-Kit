@@ -174,9 +174,9 @@ static int crash_cli_handler(int argc, char *argv[])
 }
 
 #ifdef VOICE_ASSISTANT_AVS
-
 #include "alexa.h"
 
+#if CONFIG_BT_ENABLED && !CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY
 static int set_bt_only_cli_handler(int argc, char *argv[])
 {
     /* Just to go to the next line */
@@ -198,6 +198,7 @@ static int set_bt_only_cli_handler(int argc, char *argv[])
 
     return 0;
 }
+#endif
 #endif
 
 static esp_console_cmd_t diag_cmds[] = {
@@ -221,7 +222,7 @@ static esp_console_cmd_t diag_cmds[] = {
         .help = " ",
         .func = reboot_cli_handler,
     },
-#ifdef VOICE_ASSISTANT_AVS
+#if CONFIG_BT_ENABLED && !CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY
     {
         .command = "bt-only",
         .help = "Switch to BT only mode",

@@ -4,6 +4,6 @@ set(COMPONENT_ADD_INCLUDEDIRS .)
 set(COMPONENT_REQUIRES )
 set(COMPONENT_PRIV_REQUIRES )
 
-set(COMPONENT_SRCS ./app_auth.c ./app_main.c ./app_aws_iot.c ./app_va_cb.c)
+set(COMPONENT_SRCS ./app_auth.c ./app_main.c ./app_mqtt.c ./app_va_cb.c)
 
 register_component()

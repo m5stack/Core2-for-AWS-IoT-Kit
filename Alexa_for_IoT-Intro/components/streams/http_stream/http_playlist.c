@@ -197,7 +197,9 @@ int http_playlist_read_data(void *base_stream, void *buf, ssize_t len)
 
             http_request_delete(bstream->handle);
             ret = http_request_new(bstream->handle, ESP_HTTP_GET, url);
-            free(url); /* url freed */
+            esp_audio_mem_free(bstream->cfg.url); /* free old url */
+            bstream->cfg.url = url; /* keep current url in cfg */
+
             if (ret < 0) {
                 goto error1;
             }

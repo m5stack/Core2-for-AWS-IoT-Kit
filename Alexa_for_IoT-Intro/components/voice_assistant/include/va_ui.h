@@ -42,7 +42,7 @@ extern uint8_t volume_to_set;
 /* User Interface Initialisation
  *
  * This API registers the callbacks for the other APIs.
- * 
+ *
  * \param[in] ui_config     Pointer to `va_ui_config_t`. For example, you can set the callbacks for `va_led` APIs.
  */
 void va_ui_init(va_ui_config_t *ui_config);

@@ -43,6 +43,7 @@ static struct {
     SemaphoreHandle_t duck_lock;
     sys_playback_requester_t dummy;
     bool acquired;
+    bool playback_starting_sent;
 } sp;
 
 static ssize_t sys_playback_dummy_read_cb(void *cb_data, void *data, int len, unsigned int wait)
@@ -71,10 +72,15 @@ uint32_t sys_playback_get_current_offset(sys_playback_requester_t *requester)
 
 int sys_playback_play_data(media_hal_audio_info_t *audio_info, void *buf, ssize_t len)
 {
-   ssize_t sent_len = 0;
-   va_dsp_playback_starting();
-   sent_len = media_hal_playback(audio_info, (void *) buf, len);
-   return sent_len;
+    ssize_t sent_len = 0;
+    if (sp.playback_starting_sent == false) {
+        va_dsp_playback_starting();
+        sp.playback_starting_sent = true;
+    } else {
+        va_dsp_playback_ongoing();
+    }
+    sent_len = media_hal_playback(audio_info, (void *) buf, len);
+    return sent_len;
 }
 
 /**
@@ -116,6 +122,7 @@ static void sys_playback_task()
             if (!sp.duck) {
                 /* Nothing to play! Raise va_dsp_playback_stopped event */
                 (void) va_dsp_playback_stopped();
+                sp.playback_starting_sent = false;
             } else if (sp.downmix_support) {
                 /* active == &dummy, sp.duck is there and downmix feature is enabled */
                 wait_duck = wait;

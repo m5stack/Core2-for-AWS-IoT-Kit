@@ -2,9 +2,9 @@ set(COMPONENT_ADD_INCLUDEDIRS include)
 
 # Edit following two lines to set component requirements (see docs)
 set(COMPONENT_REQUIRES )
-set(COMPONENT_PRIV_REQUIRES misc)
+set(COMPONENT_PRIV_REQUIRES esp_codec media_hal audio_hal audio_utils)
 
-set(COMPONENT_SRCS media_hal.c)
+set(COMPONENT_SRCS media_hal.c va_dsp.c)
 
 register_component()
 

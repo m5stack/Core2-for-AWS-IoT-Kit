@@ -24,12 +24,21 @@
 
 #pragma once
 
+#include <freertos/FreeRTOS.h>
+#include <driver/i2s.h>
 #include <esp_err.h>
 
 /**
  * Number of supported eq bands.
  */
 #define MEDIA_HAL_EQ_BANDS 10
+
+#define DEFAULT_MEDIA_HAL_PLAYBACK_CONFIG() {       \
+    .channels = 2,                                  \
+    .sample_rate = 48000,                           \
+    .i2s_port_num = I2S_NUM_0,                      \
+    .bits_per_sample = 16,                          \
+}
 
 /**
  * Structure holding media_playback characteristics.
