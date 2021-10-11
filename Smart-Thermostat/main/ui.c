@@ -60,13 +60,14 @@ void ui_textarea_add(char *baseTxt, char *param, size_t paramLen) {
         xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);
         if (param != NULL && paramLen != 0){
             size_t baseTxtLen = strlen(baseTxt);
-            ui_textarea_prune(paramLen);
             size_t bufLen = baseTxtLen + paramLen;
             char buf[(int) bufLen];
             sprintf(buf, baseTxt, param);
+            ui_textarea_prune(strlen(buf));
             lv_textarea_add_text(out_txtarea, buf);
         } 
         else{
+            ui_textarea_prune(strlen(baseTxt));
             lv_textarea_add_text(out_txtarea, baseTxt); 
         }
         xSemaphoreGive(xGuiSemaphore);
