@@ -1,6 +1,6 @@
 /*
  * AWS IoT EduKit - Core2 for AWS IoT EduKit
- * Cloud Connected Blinky v1.4.0
+ * Cloud Connected Blinky v1.4.1
  * .c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -60,13 +60,14 @@ void ui_textarea_add(char *baseTxt, char *param, size_t paramLen) {
         xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);
         if (param != NULL && paramLen != 0){
             size_t baseTxtLen = strlen(baseTxt);
-            ui_textarea_prune(paramLen);
             size_t bufLen = baseTxtLen + paramLen;
             char buf[(int) bufLen];
             sprintf(buf, baseTxt, param);
+            ui_textarea_prune(strlen(buf));
             lv_textarea_add_text(out_txtarea, buf);
         } 
         else{
+            ui_textarea_prune(strlen(baseTxt));
             lv_textarea_add_text(out_txtarea, baseTxt); 
         }
         xSemaphoreGive(xGuiSemaphore);
