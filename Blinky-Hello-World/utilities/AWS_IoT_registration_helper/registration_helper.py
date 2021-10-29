@@ -154,7 +154,7 @@ def upload_manifest():
     applies the device certificate (public key) that is stored in the manifest
     file, and attaches a default policy.
     """
-    check_and_install_policy('Default')
+    check_and_install_policy('EduKit_Default_Policy')
 
     for file in os.listdir("output_files"):
         if re.match("\w+(\_manifest.json)", file):
@@ -163,13 +163,13 @@ def upload_manifest():
 
             signer_cert = open(os.path.join("output_files","signer_cert.crt"), "r").read()
             signer_cert_bytes = str.encode(signer_cert)
-            invoke_import_manifest('Default', manifest_data, signer_cert_bytes)
+            invoke_import_manifest('EduKit_Default_Policy', manifest_data, signer_cert_bytes)
             invoke_validate_manifest_import(manifest_data, signer_cert_bytes)
 
 
 def main():
     """AWS IoT EduKit MCU hardware device registration script
-    Checkes environment is set correctly, generates ECDSA certificates,
+    Checkes environment is set correctly, generates ECDSA x.509 certificates,
     ensures all required python libraries are included, retrieves on-board 
     device certificate using the esp-cryptoauth library and utility, creates 
     an AWS IoT thing using the AWS CLI and Microchip Trust Platform Design Suite.

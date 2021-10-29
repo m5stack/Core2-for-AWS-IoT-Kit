@@ -15,42 +15,50 @@ from cryptography.hazmat.primitives import hashes, serialization
 
 _DEFAULT_POLICY = {
     'Version': '2012-10-17',
-    'Statement': [{
-            'Effect': 'Allow',
-            'Action': [
-                'iot:Connect'
-            ],
-            'Resource': [
-                'arn:aws:iot:*:*:client/${iot:ClientId}'
-            ]
-        }, {
-            'Effect': 'Allow',
-            'Action': [
-                'iot:Publish',
-                'iot:Receive'
-            ],
-            'Resource': [
-                'arn:aws:iot:*:*:topic/${iot:ClientId}/*',
-                'arn:aws:iot:*:*:topic/$aws/things/${iot:ClientId}/shadow/*'
-            ]
-        }, {
-            'Effect': 'Allow',
-            'Action': [
-                'iot:Subscribe'
-            ],
-            'Resource': [
-                'arn:aws:iot:*:*:topicfilter/${iot:ClientId}/#',
-                'arn:aws:iot:*:*:topicfilter/$aws/things/${iot:ClientId}/shadow/*'
-            ]
-        }, {
-            'Effect': 'Allow',
-            'Action': [
-                'iot:UpdateThingShadow',
-                'iot:GetThingShadow'
-            ],
-            'Resource': [
-                'arn:aws:iot:*:*:topic/$aws/things/${iot:ClientId}/shadow/*'
-            ]
+    'Statement': [
+    {
+        'Effect': 'Allow',
+        'Action': [
+            'iot:Connect'
+        ],
+        'Resource': [
+            'arn:aws:iot:*:*:client/${iot:Connection.Thing.ThingName}'
+        ]
+    },
+    {
+        'Effect': 'Allow',
+        'Action': [
+            'iot:Publish',
+            'iot:Receive'
+        ],
+        'Resource': [
+            'arn:aws:iot:*:*:topic/${iot:Connection.Thing.ThingName}/*',
+            'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/shadow/*',
+            'arn:partition:iot:region:account:topic/$aws/things/${iot:Connection.Thing.ThingName}/streams/*',
+            'arn:partition:iot:region:account:topic/$aws/things/${iot:Connection.Thing.ThingName}/jobs/*'
+        ]
+    },
+    {
+        'Effect': 'Allow',
+        'Action': [
+            'iot:Subscribe'
+        ],
+        'Resource': [
+            'arn:aws:iot:*:*:topicfilter/${iot:Connection.Thing.ThingName}/#',
+            'arn:aws:iot:*:*:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/shadow/*',
+            'arn:partition:iot:region:account:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/streams/*',
+            'arn:partition:iot:region:account:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/jobs/*'
+        ]
+    },
+    {
+        'Effect': 'Allow',
+        'Action': [
+            'iot:UpdateThingShadow',
+            'iot:GetThingShadow'
+        ],
+        'Resource': [
+            'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/shadow/*'
+        ]
         }
     ]
 }
@@ -278,7 +286,7 @@ def invoke_validate_manifest_import(manifest, cert_pem):
     print("Manifest was loaded successfully")
 
 
-def check_and_install_policy(policy_name='Default', policy_document=_DEFAULT_POLICY):
+def check_and_install_policy(policy_name='EduKit_Default_Policy', policy_document=_DEFAULT_POLICY):
     client = boto3.client('iot')
 
     try:
