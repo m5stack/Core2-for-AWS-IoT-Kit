@@ -34,8 +34,8 @@ _DEFAULT_POLICY = {
         'Resource': [
             'arn:aws:iot:*:*:topic/${iot:Connection.Thing.ThingName}/*',
             'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/shadow/*',
-            'arn:partition:iot:region:account:topic/$aws/things/${iot:Connection.Thing.ThingName}/streams/*',
-            'arn:partition:iot:region:account:topic/$aws/things/${iot:Connection.Thing.ThingName}/jobs/*'
+            'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/streams/*',
+            'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/jobs/*'
         ]
     },
     {
@@ -46,8 +46,8 @@ _DEFAULT_POLICY = {
         'Resource': [
             'arn:aws:iot:*:*:topicfilter/${iot:Connection.Thing.ThingName}/#',
             'arn:aws:iot:*:*:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/shadow/*',
-            'arn:partition:iot:region:account:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/streams/*',
-            'arn:partition:iot:region:account:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/jobs/*'
+            'arn:aws:iot:*:*:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/streams/*',
+            'arn:aws:iot:*:*:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/jobs/*'
         ]
     },
     {
