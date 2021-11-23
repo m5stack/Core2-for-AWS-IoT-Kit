@@ -64,7 +64,7 @@ ATCA_STATUS Atecc608_GetSerialString(char * sn) {
     }
 
     for (size_t i = 0; i < ATCA_SERIAL_NUM_SIZE; i++)
-        sprintf(sn + i * 2, "%02x", serial[i]);
+        sprintf(sn + i * 2, "%02X", serial[i]);
     return ret;
 }
 

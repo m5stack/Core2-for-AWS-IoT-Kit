@@ -13,75 +13,27 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 
-_DEFAULT_POLICY = {
-    'Version': '2012-10-17',
-    'Statement': [
-    {
-        'Effect': 'Allow',
-        'Action': [
-            'iot:Connect'
-        ],
-        'Resource': [
-            'arn:aws:iot:*:*:client/${iot:Connection.Thing.ThingName}'
-        ]
-    },
-    {
-        'Effect': 'Allow',
-        'Action': [
-            'iot:Publish',
-            'iot:Receive'
-        ],
-        'Resource': [
-            'arn:aws:iot:*:*:topic/${iot:Connection.Thing.ThingName}/*',
-            'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/shadow/*',
-            'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/streams/*',
-            'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/jobs/*'
-        ]
-    },
-    {
-        'Effect': 'Allow',
-        'Action': [
-            'iot:Subscribe'
-        ],
-        'Resource': [
-            'arn:aws:iot:*:*:topicfilter/${iot:Connection.Thing.ThingName}/#',
-            'arn:aws:iot:*:*:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/shadow/*',
-            'arn:aws:iot:*:*:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/streams/*',
-            'arn:aws:iot:*:*:topicfilter/$aws/things/${iot:Connection.Thing.ThingName}/jobs/*'
-        ]
-    },
-    {
-        'Effect': 'Allow',
-        'Action': [
-            'iot:UpdateThingShadow',
-            'iot:GetThingShadow'
-        ],
-        'Resource': [
-            'arn:aws:iot:*:*:topic/$aws/things/${iot:Connection.Thing.ThingName}/shadow/*'
-        ]
-        }
-    ]
-}
-
 verification_algorithms = [
     'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'
 ]
 
 
-def make_thing(device_id, certificate_arn):
-    """Creates an AWS-IOT "thing" and attaches the certificate """
+def make_thing(device_id, certificate_arn, thing_type='microchip-tng'):
+    """Creates an AWS IoT "thing" and attaches the certificate """
     client = boto3.client('iot')
-
     try:
-        response = client.create_thing(thingName=device_id)
+        response = client.create_thing_type(thingTypeName=thing_type)
+        response = client.create_thing(thingName=device_id, thingTypeName=thing_type)
         thing_arn = response['thingArn']
-    except:
+    except BaseException as e:
+        print("Exception occurred: {}".format(e))
         return False
 
     try:
         response = client.attach_thing_principal(thingName=device_id,
                                                  principal=certificate_arn)
-    except:
+    except BaseException as e:
+        print("Exception occurred: {}".format(e))
         print("MANIFEST_IMPORT\t\tINFO\tattach_thing_principal failed.")
         return False
 
@@ -116,7 +68,7 @@ def load_manifest_by_file(filename):
 
 
 def import_certificate(certificate_x509_pem, policy_name):
-    """Load a certificate from the manifest into AWS-IOT and attach a policy to it"""
+    """Load a certificate from the manifest into AWS IoT and attach a policy to it"""
     client = boto3.client('iot')
     print("\nTry importing certificate...")
     try:
@@ -226,7 +178,7 @@ class ManifestItem:
 
 
 def invoke_import_manifest(policy_name, manifest, cert_pem):
-    """Processes a manifest and loads entries into AWS-IOT"""
+    """Processes a manifest and loads entries into AWS IoT"""
 
     verification_cert = x509.load_pem_x509_certificate(data=cert_pem, backend=default_backend())
 
@@ -239,7 +191,7 @@ def invoke_import_manifest(policy_name, manifest, cert_pem):
 
         certificate_arn = import_certificate(manifest_item.get_certificate_chain(), policy_name)
 
-        thing_arn = make_thing(manifest_item.identifier, certificate_arn)
+        thing_arn = make_thing(manifest_item.identifier.upper(), certificate_arn)
 
         if thing_arn is False:
             print("MANIFEST_IMPORT\t\tFAIL\t{}".format(certificate_arn))
@@ -248,7 +200,7 @@ def invoke_import_manifest(policy_name, manifest, cert_pem):
 
 
 def invokeImportLocal(skuname, manifest_filename, pem_filename):
-    """Load a manifest into AWS-IOT from a local file"""
+    """Load a manifest into AWS IoT from a local file"""
     cert = load_verify_cert_by_file(pem_filename)
     manifest = load_manifest_by_file(manifest_filename)
     policy_name = "{}-Policy".format(skuname)
@@ -256,7 +208,7 @@ def invokeImportLocal(skuname, manifest_filename, pem_filename):
 
 
 def invokeImport(skuname, bucket, manifest, pem):
-    """Load a manifest into AWS-IOT from a file retreived from an S3 bucket"""
+    """Load a manifest into AWS IoT from a file retreived from an S3 bucket"""
     (manifest_verify_cert, manifest_file) = fetch_manifest(bucket, manifest, pem)
     invokeImportLocal(skuname, manifest_file, manifest_verify_cert)
 
@@ -274,11 +226,11 @@ def invoke_validate_manifest_import(manifest, cert_pem):
         manifest_item = ManifestItem(next(iterator), verification_cert)
 
         try:
-            response = client.list_thing_principals(thingName=manifest_item.get_identifier())
+            response = client.list_thing_principals(thingName=manifest_item.get_identifier().upper())
             response = client.describe_certificate(certificateId=response['principals'][0].split('/')[-1])
 
             if response['certificateDescription']['certificatePem'] != manifest_item.get_certificate_chain():
-                raise BaseException('Certificate Mismatch for {}'.format(manifest_item.get_identifier()))
+                raise BaseException('Certificate Mismatch for {}'.format(manifest_item.get_identifier().upper()))
 
         except BaseException as e:
             print("Exception occurred: {}".format(e))
@@ -286,8 +238,61 @@ def invoke_validate_manifest_import(manifest, cert_pem):
     print("Manifest was loaded successfully")
 
 
-def check_and_install_policy(policy_name='EduKit_Default_Policy', policy_document=_DEFAULT_POLICY):
+def check_and_install_policy(policy_name='Default'):
     client = boto3.client('iot')
+    try:
+        region = boto3.session.Session().region_name
+        accountID = boto3.client("sts").get_caller_identity()["Account"]
+    except BaseException as e:
+        print("Exception occurred: {}".format(e))
+        print("Verify account csv file contents, region and do Config AWS CLI!")
+        return
+
+    policy_document = {
+        'Version': '2012-10-17',
+        'Statement': [{
+                'Effect': 'Allow',
+                'Action': [
+                    'iot:Connect'
+                ],
+                'Resource': [
+                    'arn:aws:iot:{}:{}:client/${{iot:Connection.Thing.ThingName}}'.format(region, accountID)
+                ]
+            }, {
+                'Effect': 'Allow',
+                'Action': [
+                    'iot:Publish',
+                    'iot:Receive'
+                ],
+                'Resource': [
+                    'arn:aws:iot:{}:{}:topic/${{iot:Connection.Thing.ThingName}}/*'.format(region, accountID),
+                    'arn:aws:iot:{}:{}:topic/$aws/things/${{iot:Connection.Thing.ThingName}}/shadow/*'.format(region, accountID),
+                    'arn:aws:iot:{}:{}:topic/$aws/things/${{iot:Connection.Thing.ThingName}}/streams/*'.format(region, accountID),
+                    'arn:aws:iot:{}:{}:topic/$aws/things/${{iot:Connection.Thing.ThingName}}/jobs/*'.format(region, accountID)
+                ]
+            }, {
+                'Effect': 'Allow',
+                'Action': [
+                    'iot:Subscribe'
+                ],
+                'Resource': [
+                    'arn:aws:iot:{}:{}:topicfilter/${{iot:Connection.Thing.ThingName}}/*'.format(region, accountID),
+                    'arn:aws:iot:{}:{}:topicfilter/$aws/things/${{iot:Connection.Thing.ThingName}}/shadow/*'.format(region, accountID),
+                    'arn:aws:iot:{}:{}:topicfilter/$aws/things/${{iot:Connection.Thing.ThingName}}/streams/*'.format(region, accountID),
+                    'arn:aws:iot:{}:{}:topicfilter/$aws/things/${{iot:Connection.Thing.ThingName}}/jobs/*'.format(region, accountID)
+                ]
+            }, {
+                'Effect': 'Allow',
+                'Action': [
+                    'iot:UpdateThingShadow',
+                    'iot:GetThingShadow'
+                ],
+                'Resource': [
+                    'arn:aws:iot:{}:{}:topic/$aws/things/${{iot:Connection.Thing.ThingName}}/shadow/*'.format(region, accountID)
+                ]
+            }
+        ]
+    }
 
     try:
         response = client.get_policy(policyName=policy_name)
@@ -299,3 +304,4 @@ def check_and_install_policy(policy_name='EduKit_Default_Policy', policy_documen
             print('Created policy {}'.format(policy_name))
         else:
             raise
+        
