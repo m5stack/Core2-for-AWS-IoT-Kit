@@ -1,0 +1,38 @@
+menu "I2C Expansion Port A (RED)"
+	depends on SOFTWARE_EXPPORTS_SUPPORT
+	config I2C_MANAGER_1_FREQ_HZ
+		int "I2C bus frequency (Hz)"
+		default 400000
+		range 100000 5000000
+		help
+			The clock speed in Hz. Ranges from 100000 (100 kHz) to
+			5000000 (5 Mhz). I2C busses that involve external wires may
+			have to be slower, and the real maximum speed the bus will
+			support depends on the value of the pullup resistors and the
+			design of the overall circuit. 
+	config I2C_MANAGER_1_TIMEOUT
+		int "I2C R/W timeout (ms)"
+		default 200
+		range 10 1000
+		help
+			Timeout for I2C read and write operations. This does not
+			include the time waiting for a lock. Default should be fine.
+	config I2C_MANAGER_1_LOCK_TIMEOUT
+		int "I2C stale lock override (ms)"
+		default 280
+		help
+			Timeout at which point an operation waiting for its turn on
+			the port will assume that whatever set the lock has died and
+			overrides it. Set this somewhat larger than the previous
+			timeout. Default should be fine.
+		range 30 1000
+	config I2C_MANAGER_1_PULLUPS
+		bool "Use ESP32 built-in bus pull-up resistors"
+		help
+			The I2C bus needs resistors to make sure it's in a defined
+			state when nobody is talking. Many circuits have external
+			pullup resistors already and turning these on will increase
+			power consumption slightly and may limit the speed your bus
+			can attain. Try with these off first if you don't know.
+
+endmenu

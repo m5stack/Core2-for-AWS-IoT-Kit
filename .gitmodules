@@ -1,0 +1,21 @@
+[submodule "lib/display/lib/lvgl"]
+	path = lib/display/lib/lvgl
+	url = https://github.com/lvgl/lvgl.git
+[submodule "lib/display/lib/lvgl_esp32_drivers"]
+	path = lib/display/lib/lvgl_esp32_drivers
+	url = https://github.com/lvgl/lvgl_esp32_drivers.git
+[submodule "lib/common/lib/i2c_manager"]
+	path = lib/common/lib/i2c_manager
+	url = https://github.com/ropg/i2c_manager.git
+[submodule "lib/motion/lib/MPU6886-idf"]
+	path = lib/motion/lib/MPU6886-idf
+	url = https://github.com/m5stack/MPU6886-idf.git
+[submodule "lib/power/lib/axp192"]
+	path = lib/power/lib/axp192
+	url = https://github.com/tuupola/axp192.git
+[submodule "lib/rgb_led/lib/esp-idf-lib"]
+	path = lib/rgb_led/lib/esp-idf-lib
+	url = https://github.com/UncleRus/esp-idf-lib.git
+[submodule "lib/rtc/lib/bm8563"]
+	path = lib/rtc/lib/bm8563
+	url = https://github.com/tuupola/bm8563.git

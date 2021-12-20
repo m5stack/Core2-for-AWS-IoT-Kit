@@ -1,0 +1,9 @@
+menu "LVGL Touch controller (FT6X06)"
+    depends on SOFTWARE_DISPLAY_SUPPORT && SOFTWARE_BUTTON_SUPPORT
+    config LV_FT6X36_COORDINATES_QUEUE
+        bool
+        prompt "Send coordinates to FreeRTOS queue."
+        default y
+        help
+        Receive from the FreeRTOS queue using the handle 'ft6x36_touch_queue_handle'.
+endmenu

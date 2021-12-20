@@ -1,0 +1,59 @@
+menu "Core2 for AWS hardware features"
+    config SOFTWARE_BSP_SUPPORT
+        bool "Enable Board Support Package APIs"
+        default y
+
+    config SOFTWARE_AUDIO_SUPPORT
+        bool "Enable Audio (Speaker & Microphone)"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+
+    config SOFTWARE_CRYPTO_SUPPORT
+        bool "Enable Cryptographic Encryption"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+
+    config SOFTWARE_DISPLAY_SUPPORT
+        bool "Enable Display"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+    rsource "lib/display/Kconfig"
+
+    config SOFTWARE_BUTTON_SUPPORT
+        bool "Enable Touch Buttons"
+        depends on SOFTWARE_DISPLAY_SUPPORT
+        default y
+    rsource "lib/button/Kconfig"
+
+    config SOFTWARE_MOTION_SUPPORT
+        bool "Enable 6-Axis Motion"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+
+    config SOFTWARE_RTC_SUPPORT
+        bool "Enable Real Time Clock"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+
+    config SOFTWARE_RGB_LED_SUPPORT
+        bool "Enable RGB LEDs"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+
+    config SOFTWARE_SDCARD_SUPPORT
+        bool "Enable SD card"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+
+    config SOFTWARE_EXPPORTS_SUPPORT
+        bool "Enable expansion ports A, B, C"
+        depends on SOFTWARE_BSP_SUPPORT
+        select I2C_MANAGER_1_ENABLED if SOFTWARE_EXPPORTS_SUPPORT
+        default y
+        rsource "lib/expports/Kconfig"
+
+    config SOFTWARE_WIFI_SUPPORT
+        bool "Enable Wi-Fi helper"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+endmenu
