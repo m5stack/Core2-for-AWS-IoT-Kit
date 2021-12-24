@@ -1,7 +1,7 @@
-# AWS IoT EduKit Pre-Provisioned MCU Device Registration Helper
-# v1.1.0
+# AWS IoT EduKit Pre-Provisioned MCU Device Registration Helper for PlatformIO
+# v1.0.0
 #
-# Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+# Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -20,15 +20,23 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import os
 import sys
 import argparse
 import subprocess
-import os
 
-# os.environ["CRYPTOAUTHLIB_NOUSB"] = "1"
+Import("env")
 
-subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r',
-'requirements.txt'])
+platform = env.PioPlatform()
+board = env.BoardConfig()
+cwd = os.getcwd()
+
+env.AutodetectUploadPort()
+
+def install_dependencies():
+    subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements.txt') ] )
+
+install_dependencies()
 
 from pyasn1_modules import pem
 from cryptography import x509
@@ -38,6 +46,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import fileinput
 import re
@@ -48,11 +57,11 @@ import boto3
 import esptool
 
 # Import the Espressif CryptoAuthLib Utility libraries
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), "..", "..", "components", "esp-cryptoauthlib", "esp_cryptoauth_utility")))
+sys.path.append(os.path.abspath(os.path.join(cwd, "components", "esp-cryptoauthlib", "esp_cryptoauth_utility")))
 import helper_scripts as esp_hs
 
 # Import the Microchip Trust Platform Design Suite libraries
-trustplatform_path = os.path.join(os.path.dirname( __file__ ), "..", "trustplatform", "assets", "python")
+trustplatform_path = os.path.join(cwd, "utilities", "trustplatform", "assets", "python")
 sys.path.append(trustplatform_path)
 import certs_handler
 import trustplatform
@@ -60,11 +69,13 @@ from requirements_helper import requirements_installer
 import manifest_helper
 
 # Import the Microchip Trust Platform Design Suite AWS and manifest helper libraries
-trustplatform_aws_path = os.path.join(os.path.dirname( __file__ ), "..", "trustplatform", "TrustnGO")
+trustplatform_aws_path = os.path.join(cwd, "utilities", "trustplatform", "TrustnGO")
 sys.path.append(trustplatform_aws_path)
 from helper_aws import *
 from Microchip_manifest_handler import *
 
+temp_folder = os.path.join( cwd, "output_files" )
+dest_folder = os.path.join( cwd, "utilities", "AWS_IoT_registration_helper", "output_files" )
 atecc608_i2c_sda_pin = 21
 atecc608_i2c_scl_pin = 22
 policy_name = 'EduKit_Policy'
@@ -96,8 +107,9 @@ def check_environment():
         print(ClientError.response['Error']['Code'])
         print("Error with AWS CLI! Follow the configurtion docs at 'https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html'")
     print(f"AWS CLI configured for IoT endpoint: {aws_iot_endpoint['endpointAddress']}")
-    replace_file_text( os.path.join( os.path.dirname( __file__ ), '..', '..', 'sdkconfig.defaults' ), "CONFIG_AWS_IOT_MQTT_HOST=\n", f"CONFIG_AWS_IOT_MQTT_HOST={aws_iot_endpoint['endpointAddress']}\n" )
-    replace_file_text( os.path.join( os.path.dirname( __file__ ), '..', '..', '..', 'Smart-Thermostat', 'sdkconfig.defaults' ), "CONFIG_AWS_IOT_MQTT_HOST=\n", f"CONFIG_AWS_IOT_MQTT_HOST={aws_iot_endpoint['endpointAddress']}\n" )
+    replace_file_text( os.path.join( cwd, 'sdkconfig.defaults' ), 'CONFIG_AWS_IOT_MQTT_HOST=\n', f'CONFIG_AWS_IOT_MQTT_HOST="{aws_iot_endpoint["endpointAddress"]}"\n' )
+    replace_file_text( os.path.join( cwd, '..', 'Smart-Thermostat', 'sdkconfig.defaults' ), "CONFIG_AWS_IOT_MQTT_HOST=\n", f"CONFIG_AWS_IOT_MQTT_HOST={aws_iot_endpoint['endpointAddress']}\n" )
+    
 
 def generate_signer_certificate():
     """Generates a x.509 certificate signed by ECDSA key
@@ -121,7 +133,7 @@ def generate_signer_certificate():
         format=serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm=serialization.NoEncryption(),
     )
-    with open(os.path.join(os.path.dirname( __file__ ), "output_files", "signer_key.pem"), "wb") as signer_key_file:
+    with open(os.path.join( dest_folder, "signer_key.pem"), "wb") as signer_key_file:
         signer_key_file.write(signer_key_pem)
 
     print("Generating self-signed x.509 certificate...")
@@ -151,7 +163,7 @@ def generate_signer_certificate():
 
     signer_cert_pem = x509_cert.public_bytes(encoding=serialization.Encoding.PEM)
 
-    with open(os.path.join(os.path.dirname( __file__ ), "output_files","signer_cert.crt"), "wb") as signer_cert_file:
+    with open(os.path.join( dest_folder, "signer_cert.crt"), "wb") as signer_cert_file:
         signer_cert_file.write(signer_cert_pem)
     print(f"Successfully created x.509 certificate with expiration in {days_to_expire} days...")
 
@@ -165,18 +177,28 @@ def upload_manifest():
     """
     check_and_install_policy('EduKit_Policy')
 
-    for file in os.listdir("output_files"):
+    for file in os.listdir( dest_folder ):
         if re.match("\w+(\_manifest.json)", file):
-            manifest_file = open(os.path.join(os.path.dirname( __file__ ), "output_files", file), "r")
+            manifest_file = open( os.path.join( dest_folder, file ), "r" )
             manifest_data = json.loads(manifest_file.read())
 
-            signer_cert = open(os.path.join(os.path.dirname( __file__ ), "output_files","signer_cert.crt"), "r").read()
+            signer_cert = open(os.path.join( dest_folder, "signer_cert.crt"), "r").read()
             signer_cert_bytes = str.encode(signer_cert)
             invoke_import_manifest('EduKit_Policy', manifest_data, signer_cert_bytes)
             invoke_validate_manifest_import(manifest_data, signer_cert_bytes)
 
+class manifest_args:
+  def __init__( manifest, device_port):
+    manifest.port = device_port
 
-def main():
+def move_temp_files():   
+    Path( os.path.join( temp_folder, "device_cert.pem" ) ).rename( os.path.join( dest_folder, "device_cert.pem" ) )
+    for file in os.listdir( temp_folder ):
+        if re.match( "\w+(\_manifest.json)", file ):
+            Path( os.path.join( temp_folder, file ) ).rename( os.path.join( dest_folder, file ) )
+    os.rmdir( temp_folder )
+
+def create_device_cert_and_manifest():
     """AWS IoT EduKit MCU hardware device registration script
     Checkes environment is set correctly, generates ECDSA certificates,
     ensures all required python libraries are included, retrieves on-board 
@@ -184,25 +206,15 @@ def main():
     an AWS IoT thing using the AWS CLI and Microchip Trust Platform Design Suite.
     """
     app_binary = 'sample_bins/secure_cert_mfg.bin'
-    parser = argparse.ArgumentParser(description='''Provision the Core2 for AWS IoT EduKit with 
-        device_certificate and signer_certificate required for TLS authentication''')
-
-    parser.add_argument(
-        "--port", '-p',
-        dest='port',
-        metavar='[port]',
-        required=True,
-        help='Serial comm port of the Core2 for AWS IoT EduKit device')
-
-    args = parser.parse_args()
-
-    args.signer_cert = "output_files/signer_cert.crt"
-    args.signer_privkey = "output_files/signer_key.pem"
-    args.print_atecc608_type = False
-    check_environment()
+    args = manifest_args( env.get("UPLOAD_PORT") )
     
-    generate_signer_certificate()
+    args.signer_cert = os.path.join(  dest_folder, "signer_cert.crt" )
+    args.signer_privkey = os.path.join(  dest_folder, "signer_key.pem" )
+    args.print_atecc608_type = False
 
+    check_environment()
+    generate_signer_certificate()
+    
     esp = esptool.ESP32ROM(args.port,baud=115200)
     esp_hs.serial.load_app_stub(app_binary, esp)
     init_mfg = esp_hs.serial.cmd_interpreter()
@@ -214,9 +226,23 @@ def main():
 
     retval = init_mfg.exec_cmd(esp._port, "init {0} {1}".format(atecc608_i2c_sda_pin, atecc608_i2c_scl_pin))
     esp_hs.serial.esp_cmd_check_ok(retval, "init {0} {1}".format(atecc608_i2c_sda_pin, atecc608_i2c_scl_pin))
+    os.makedirs( temp_folder, exist_ok=True )
     esp_hs.generate_manifest_file(esp, args, init_mfg)
-    upload_manifest()
 
-
-if __name__ == "__main__":
-    main() 
+env.AddCustomTarget(
+name="register_thing",
+dependencies=None,
+actions=[
+    # '"$PYTHONEXE" -m pip install -r "%s"'
+    # % (
+    #     os.path.join("utilities", "AWS_IoT_registration_helper", "requirements.txt" ),
+    # ),
+    create_device_cert_and_manifest(),
+    move_temp_files(),
+    upload_manifest(),
+    os.remove("sdkconfig")
+],
+title="AWS IoT Registration",
+description="Registers the thing to AWS IoT, attaches the certificate pulled from the secure element to \
+    the thing for TLS, attaches a secure IAM policy to the certificate for the device.",
+)

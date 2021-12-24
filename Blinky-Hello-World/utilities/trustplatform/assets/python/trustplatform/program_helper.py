@@ -24,7 +24,7 @@ class program_flash():
         self.java_loc = None
 
         trustplatform_directory = ".trustplatform"
-        self.filename = os.path.join(Path.home(), trustplatform_directory, json_name)
+        self.filename = os.path.join(os.path.expanduser('~'), trustplatform_directory, json_name)
 
     def get_jar_loc(self):
         """

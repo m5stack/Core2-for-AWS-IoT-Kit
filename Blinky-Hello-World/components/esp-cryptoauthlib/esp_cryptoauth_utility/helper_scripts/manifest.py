@@ -213,7 +213,7 @@ def generate_manifest_file(esp, args, init_mfg):
     device_cert_pem = device_cert.public_bytes(encoding=Encoding.PEM).decode('utf-8')
     print(device_cert_pem)
     print("Saving device cert to output_files")
-    with open("./output_files/device_cert.pem", "w+") as dev_cert_file:
+    with open( os.path.join( os.getcwd(), 'output_files', 'device_cert.pem'), 'w+' ) as dev_cert_file:
         dev_cert_file.write(device_cert_pem)
     print('TNG Device Public Key:')
     # Note that we could, of course, pull this from the device certificate above.
@@ -291,6 +291,7 @@ def generate_manifest_file(esp, args, init_mfg):
     # If a logging key and certificate was provided create a manifest file
     log_key = cert_sign.load_privatekey(args.signer_privkey)
     log_cert = cert_sign.load_certificate(args.signer_cert)
+
     # Generate the key and certificate ids for JWS
     log_key_id = jws_b64encode(log_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier).value.digest)
     log_cert_id = jws_b64encode(log_cert.fingerprint(hashes.SHA256()))
@@ -302,7 +303,6 @@ def generate_manifest_file(esp, args, init_mfg):
     manifest = json.dumps([create_signed_entry(device_entry, log_key, jws_header)], indent=2).encode('ascii')
 
     filename = make_valid_filename(device_entry['uniqueId']) + '_manifest' + '.json'
-    os.getcwd()
-    with open('./output_files/' + filename, 'wb') as f:
+    with open( os.path.join( os.getcwd(), 'output_files', filename ), 'wb') as f:
         f.write(manifest)
     print('\n\nGenerated the manifest file ' + filename + ' in output_files')
