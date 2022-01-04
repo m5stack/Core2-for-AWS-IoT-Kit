@@ -24,7 +24,9 @@ set( CORE2FORAWS_REQUIRES               "esp_adc_cal"
                                         "fatfs"
                                         )
 set( CORE2FORAWS_PRIV_INCLUDEDIRS       )
-set( CORE2FORAWS_PRIV_REQUIRES          "nvs_flash" )
+set( CORE2FORAWS_PRIV_REQUIRES          "nvs_flash"
+                                        "wifi_provisioning"
+                                        )
 set( CORE2FORAWS_EXCLUDE_SRCS           )
 set( CORE2FORAWS_LIB                    "${COMPONENT_DIR}/lib" )
 
@@ -169,13 +171,26 @@ if( CONFIG_SOFTWARE_SDCARD_SUPPORT )
 endif()
 
 if( CONFIG_SOFTWARE_WIFI_SUPPORT )
-    set( CORE2FORAWS_WIFI_SRCS               "${CORE2FORAWS_LIB}/wifi/core2foraws_wifi.c" )
-    set( CORE2FORAWS_WIFI_INCLUDE_DIRS       "${CORE2FORAWS_LIB}/wifi/include" )
+    file( GLOB_RECURSE QRCODE_SRCS          "$ENV{IDF_PATH}/examples/common_components/qrcode/*.c" )
+    set( QRCODE_INCLUDE_DIRS                "$ENV{IDF_PATH}/examples/common_components/qrcode"
+                                            "$ENV{IDF_PATH}/examples/common_components/qrcode/include"
+                                            )
+    set( CORE2FORAWS_WIFI_SRCS              "${CORE2FORAWS_LIB}/wifi/core2foraws_wifi.c" )
+    set( CORE2FORAWS_WIFI_INCLUDE_DIRS      "${CORE2FORAWS_LIB}/wifi/include" )
 
-    list( APPEND CORE2FORAWS_SRCS           ${CORE2FORAWS_WIFI_SRCS} )
-    list( APPEND CORE2FORAWS_INCLUDE_DIRS   ${CORE2FORAWS_WIFI_INCLUDE_DIRS} )
+    list( APPEND CORE2FORAWS_SRCS           ${CORE2FORAWS_WIFI_SRCS}
+                                            ${QRCODE_SRCS} )
+    list( APPEND CORE2FORAWS_INCLUDE_DIRS   ${CORE2FORAWS_WIFI_INCLUDE_DIRS}
+                                            ${QRCODE_INCLUDE_DIRS} )
 endif()
 
+if( CONFIG_SOFTWARE_DISPLAY_SUPPORT AND CONFIG_SOFTWARE_WIFI_SUPPORT )
+    file( GLOB_RECURSE CORE2FORAWS_DISPLAY_WIFI_SRCS    "${CORE2FORAWS_LIB}/display/lib/lv_lib_qrcode/*.c" )
+    set( CORE2FORAWS_DISPLAY_WIFI_INCLUDE_DIRS          "${CORE2FORAWS_LIB}/display/lib/lv_lib_qrcode" )
+
+    list( APPEND CORE2FORAWS_SRCS           ${CORE2FORAWS_DISPLAY_WIFI_SRCS} )
+    list( APPEND CORE2FORAWS_INCLUDE_DIRS   ${CORE2FORAWS_DISPLAY_WIFI_INCLUDE_DIRS} )
+endif()
 
 idf_component_register( SRCS                ${CORE2FORAWS_SRCS}
                         INCLUDE_DIRS        ${CORE2FORAWS_INCLUDE_DIRS}

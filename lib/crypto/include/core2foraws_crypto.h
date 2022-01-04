@@ -72,7 +72,9 @@ extern "C" {
  * @note The core2foraws_init() calls this function
  * when the hardware feature is enabled.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to initialize cryptoauthlib library
  */
 /* @[declare_core2foraws_crypto_init] */
 esp_err_t core2foraws_crypto_init( void );
@@ -118,7 +120,9 @@ esp_err_t core2foraws_crypto_init( void );
  * @param[out] serial_number A pointer to the unique serial number 
  * of the secure element.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to get the serial over the I2C bus
  */
 /* @[declare_core2foraws_crypto_serial_get] */
 esp_err_t core2foraws_crypto_serial_get( char *serial_number );
@@ -164,7 +168,9 @@ esp_err_t core2foraws_crypto_serial_get( char *serial_number );
  * 
  * @param[out] public_key The preprovisioned public key.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to get the device public key over the I2C bus
  */
 /* @[declare_core2foraws_crypto_pubkey_base64_get] */
 esp_err_t core2foraws_crypto_pubkey_base64_get( char *public_key );
@@ -226,7 +232,9 @@ esp_err_t core2foraws_crypto_pubkey_base64_get( char *public_key );
  * @param[out] signature The ECDSA signature.
  * @param[out] signature_length The length of the signature.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to get sign using the secure element
  */
 /* @[declare_core2foraws_crypto_sha256_sign] */
 esp_err_t core2foraws_crypto_sha256_sign( const unsigned char *message, uint8_t *signature, size_t *signature_length );
@@ -289,7 +297,9 @@ esp_err_t core2foraws_crypto_sha256_sign( const unsigned char *message, uint8_t 
  * @param[in] signature_length The length of the signature.
  * @param[out] verified The boolean if the signature validates the message.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to get verify certificate using the secure element
  */
 /* @[declare_core2foraws_crypto_sha256_verify] */
 esp_err_t core2foraws_crypto_sha256_verify( const unsigned char *message, const uint8_t *signature, const size_t signature_length, bool *verified );

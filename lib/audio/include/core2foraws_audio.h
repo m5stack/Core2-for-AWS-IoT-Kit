@@ -72,8 +72,9 @@ extern "C" {
  * @param[in] state Desired state of the speaker. 1 to enable, 0 to 
  * disable.
  * 
- * @return Error code of changing speaker state. 0 or `ESP_OK` if 
- * successful.
+ * @return Error code of changing speaker state.
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to enable the speaker
  */
 /* @[declare_core2foraws_audio_speaker_enable] */
 esp_err_t core2foraws_audio_speaker_enable( bool state );
@@ -93,7 +94,9 @@ esp_err_t core2foraws_audio_speaker_enable( bool state );
  * @param[in] state Desired state of the microphone. 1 to enable, 0 to 
  * disable.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to enable the mic
  */
 /* @[declare_core2foraws_audio_mic_enable] */
 esp_err_t core2foraws_audio_mic_enable( bool state );
@@ -133,7 +136,9 @@ esp_err_t core2foraws_audio_mic_enable( bool state );
  * @param[in] sound_buffer The sound buffer to play.
  * @param[in] to_write_length Length of the buffer to play.
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to write
  */
 /* @[declare_core2foraws_audio_speaker_write] */
 esp_err_t core2foraws_audio_speaker_write( const uint8_t *sound_buffer, size_t to_write_length );
@@ -191,7 +196,9 @@ esp_err_t core2foraws_audio_speaker_write( const uint8_t *sound_buffer, size_t t
  * @param[in] to_read_length Length of the buffer to read.
  * @param[out] was_read_length Length of audio read.
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to read
  */
 /* @[declare_core2foraws_audio_mic_read] */
 esp_err_t core2foraws_audio_mic_read( int8_t *sound_buffer, size_t to_read_length , size_t *was_read_length );

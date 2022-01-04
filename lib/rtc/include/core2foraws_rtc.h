@@ -63,7 +63,9 @@ extern "C" {
  * @note The core2foraws_init() calls this function when the 
  * hardware feature is enabled.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_rtc_init] */
 esp_err_t core2foraws_rtc_init( void );
@@ -97,7 +99,9 @@ esp_err_t core2foraws_rtc_init( void );
  * @endcode
  *  
  * @param[out] time The date-time read from the RTC.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Input parameter error
  */
 /* @[declare_core2foraws_rtc_time_get] */
 esp_err_t core2foraws_rtc_time_get( struct tm *time );
@@ -142,7 +146,9 @@ esp_err_t core2foraws_rtc_time_get( struct tm *time );
  * @endcode
  *  
  * @param[in] time The date-time to set on the RTC.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Input parameter error
  */
 /* @[declare_core2foraws_rtc_time_set] */
 esp_err_t core2foraws_rtc_time_set( const struct tm time );
@@ -214,7 +220,9 @@ esp_err_t core2foraws_rtc_time_set( const struct tm time );
  * @endcode
  *  
  * @param[out] alarm_time Pointer to the date-time the alarm is set to.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Input parameter error
  */
 /* @[declare_core2foraws_rtc_alarm_get] */
 esp_err_t core2foraws_rtc_alarm_get( struct tm *alarm_time );
@@ -286,7 +294,9 @@ esp_err_t core2foraws_rtc_alarm_get( struct tm *alarm_time );
  * @endcode
  *  
  * @param[in] alarm_time The date-time the alarm is set to.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Input parameter error
  */
 /* @[declare_core2foraws_rtc_alarm_set] */
 esp_err_t core2foraws_rtc_alarm_set( struct tm alarm_time );
@@ -369,7 +379,9 @@ esp_err_t core2foraws_rtc_alarm_set( struct tm alarm_time );
  * @endcode
  *  
  * @param[out] state The state of the alarm. 0 is not triggered, 1 if it is.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Input parameter error
  */
 /* @[declare_core2foraws_rtc_alarm_triggered] */
 esp_err_t core2foraws_rtc_alarm_triggered( bool *state );
@@ -454,7 +466,9 @@ esp_err_t core2foraws_rtc_alarm_triggered( bool *state );
  *  }
  * @endcode
  *  
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_rtc_alarm_clear] */
 esp_err_t core2foraws_rtc_alarm_clear( void );
@@ -518,7 +532,9 @@ esp_err_t core2foraws_rtc_alarm_clear( void );
  * @endcode
  *  
  * @param[out] seconds Pointer to the number of seconds on the current timer.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Input parameter error
  */
 /* @[declare_core2foraws_rtc_timer_get] */
 esp_err_t core2foraws_rtc_timer_get( uint32_t *seconds );
@@ -582,7 +598,9 @@ esp_err_t core2foraws_rtc_timer_get( uint32_t *seconds );
  * @endcode
  *  
  * @param[in] seconds The number of seconds to set the current timer.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Input parameter error
  */
 /* @[declare_core2foraws_rtc_timer_set] */
 esp_err_t core2foraws_rtc_timer_set( uint32_t seconds );
@@ -645,7 +663,9 @@ esp_err_t core2foraws_rtc_timer_set( uint32_t seconds );
  * @endcode
  *  
  * @param[out] state The number of state of the timer. 0 if it hasn't been triggered, 1 if it has.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Input parameter error
  */
 /* @[declare_core2foraws_rtc_timer_triggered] */
 esp_err_t core2foraws_rtc_timer_triggered( bool *state );
@@ -707,7 +727,9 @@ esp_err_t core2foraws_rtc_timer_triggered( bool *state );
  *  }
  * @endcode
  *  
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_rtc_timer_clear] */
 esp_err_t core2foraws_rtc_timer_clear( void );

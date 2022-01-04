@@ -198,7 +198,9 @@ extern "C" {
  * @param[in] pin The GPIO pin to read.
  * @param[out] level Pointer to set as the boolean digital level of 
  * the pin reading.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to read
  */
 /* @[declare_core2foraws_expport_digital_read] */
 esp_err_t core2foraws_expports_digital_read( gpio_num_t pin, bool *level );
@@ -259,7 +261,9 @@ esp_err_t core2foraws_expports_digital_read( gpio_num_t pin, bool *level );
  *
  * @param[in] pin The GPIO pin to write.
  * @param[out] level The digital level of the pin reading.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to write
  */
 /* @[declare_core2foraws_expport_digital_write] */
 esp_err_t core2foraws_expports_digital_write( gpio_num_t pin, const bool level );
@@ -295,7 +299,9 @@ esp_err_t core2foraws_expports_digital_write( gpio_num_t pin, const bool level )
  * @endcode
  *
  * @param[in] pin The GPIO pin to reset. 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to reset
  */
 /* @[declare_core2foraws_expport_pin_reset] */
 esp_err_t core2foraws_expports_pin_reset( gpio_num_t pin );
@@ -370,8 +376,9 @@ esp_err_t core2foraws_expports_pin_reset( gpio_num_t pin );
  *  }
  * @endcode
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
- *
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_expport_i2c_begin] */
 esp_err_t core2foraws_expports_i2c_begin( void );
@@ -453,7 +460,9 @@ esp_err_t core2foraws_expports_i2c_begin( void );
  * @param[in] register_address The data register address.
  * @param[out] data Pointer to the data read from the I2C peripheral.
  * @param[in] length The number of bytes to read.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_expport_i2c_read] */
 esp_err_t core2foraws_expports_i2c_read( uint16_t device_address, uint32_t register_address, uint8_t *data, uint16_t length );
@@ -511,7 +520,9 @@ esp_err_t core2foraws_expports_i2c_read( uint16_t device_address, uint32_t regis
  * @param[out] data Pointer to the data to write to the I2C 
  * peripheral.
  * @param[in] length The number of bytes to write.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_expport_i2c_write] */
 esp_err_t core2foraws_expports_i2c_write( uint16_t device_address, uint32_t register_address, const uint8_t *data, uint16_t length );
@@ -587,7 +598,9 @@ esp_err_t core2foraws_expports_i2c_write( uint16_t device_address, uint32_t regi
  *  }
  * @endcode
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_expport_i2c_close] */
 esp_err_t core2foraws_expports_i2c_close( void );
@@ -639,7 +652,9 @@ esp_err_t core2foraws_expports_i2c_close( void );
  * @endcode
  *
  * @param[out] raw_adc_value A pointer to the raw ADC reading.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to write
  */
 /* @[declare_core2foraws_expport_adc_read] */
 esp_err_t core2foraws_expports_adc_read( int *raw_adc_value );
@@ -694,7 +709,9 @@ esp_err_t core2foraws_expports_adc_read( int *raw_adc_value );
  *
  * @param[out] adc_mvolts Pointer to the voltage reading from the 
  * ADC in millivolts.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to write
  */
 /* @[declare_core2foraws_expport_adc_mv_read] */
 esp_err_t core2foraws_expports_adc_mv_read( uint32_t *adc_mvolts );
@@ -725,7 +742,9 @@ esp_err_t core2foraws_expports_adc_mv_read( uint32_t *adc_mvolts );
  * @endcode
  *
  * @param[in] dac_mvolts The voltage level to set the DAC pin in millivolts.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to write
  */
 /* @[declare_core2foraws_expport_adc_mv_write] */
 esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts );
@@ -822,7 +841,9 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts );
  * @endcode
  *
  * @param[in] baud The baud rate (bits per second) of the UART2 channel.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to write
  */
 /* @[declare_core2foraws_expport_uart_begin] */
 esp_err_t core2foraws_expports_uart_begin( uint32_t baud );
@@ -921,7 +942,9 @@ esp_err_t core2foraws_expports_uart_begin( uint32_t baud );
  * transmit.
  * @param[out] was_written_length Pointer to the number of bytes 
  * sent over @ref PORT_C_UART_TX_PIN (GPIO 14).
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to write
  */
 /* @[declare_core2foraws_expport_uart_write] */
 esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, size_t *was_written_length );
@@ -1018,7 +1041,9 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
  * UART2.
  * @param[out] was_read_length Pointer to the number of bytes read 
  * from @ref PORT_C_UART_RX_PIN (GPIO 13).
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to write
  */
 /* @[declare_core2foraws_expport_uart_read] */
 esp_err_t core2foraws_expports_uart_read( uint8_t *message_buffer, size_t *was_read_length );

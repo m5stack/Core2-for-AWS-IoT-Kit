@@ -46,7 +46,9 @@ extern "C" {
  * @note The core2foraws_init() calls this function when the 
  * hardware feature is enabled.
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_motion_init] */
 esp_err_t core2foraws_motion_init( void );
@@ -81,7 +83,9 @@ esp_err_t core2foraws_motion_init( void );
  * 
  * @param[out] temperature Pointer to the temperature of the MPU6886 
  * passed through the 16-bit ADC.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_motion_temperature_get] */
 esp_err_t core2foraws_motion_temperature_get( float *temperature );
@@ -119,7 +123,9 @@ esp_err_t core2foraws_motion_temperature_get( float *temperature );
  * the Y direction.
  * @param[out] z Pointer to the 16-bit accelerometer measurement in 
  * the Z direction.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_motion_accel_get] */
 esp_err_t core2foraws_motion_accel_get( float *x, float *y, float *z );
@@ -153,7 +159,9 @@ esp_err_t core2foraws_motion_accel_get( float *x, float *y, float *z );
  * @param[out] pitch Pointer to the 16-bit gyroscope pitch 
  * measurement.
  * @param[out] yaw Pointer to the 16-bit gyroscope yaw measurement.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_motion_gyro_get] */
 esp_err_t core2foraws_motion_gyro_get( float *roll, float *pitch, float *yaw );

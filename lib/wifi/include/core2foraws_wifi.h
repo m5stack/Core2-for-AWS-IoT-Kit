@@ -1,6 +1,6 @@
 /*
  * Core2 for AWS IoT EduKit BSP v2.0.0
- * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * Copyright (C) 2022 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -23,14 +23,31 @@
  *
  */
 
+/* This library referenced the Espressif Systems (Shanghai) PTE LTD's, Public Domain
+ * provisioning example:
+ * https://github.com/espressif/esp-idf/tree/release/v4.3/examples/provisioning/wifi_prov_mgr
+*/
+
 /**
- * @file core2foraws_wifi.h
+ * @file core2foraws_wifi.c
  * @brief Core2 for AWS IoT EduKit Wi-Fi helper APIs
  */
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h"
-#include "esp_event.h"
+#ifndef _CORE2FORAWS_WIFI_H_
+#define _CORE2FORAWS_WIFI_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+#include <freertos/event_groups.h>
+
+#ifdef CONFIG_SOFTWARE_DISPLAY_SUPPORT
+#include "lv_qrcode.h"
+#endif
 
 /**
  * @brief The FreeRTOS event group bit for the device being in a Wi-Fi connected state.
@@ -39,7 +56,7 @@
  * and connecting states of the Wi-Fi connectivity cycle.
  */
 /* @[declare_core2foraws_wifi_connected_bit] */
-#define CONNECTED_BIT BIT0
+#define WIFI_CONNECTED_BIT BIT0
 /* @[declare_core2foraws_wifi_connected_bit] */
 
 /**
@@ -49,7 +66,7 @@
  * and connecting states of the Wi-Fi connectivity cycle.
  */
 /* @[declare_core2foraws_wifi_disconnected_bit] */
-#define DISCONNECTED_BIT BIT1
+#define WIFI_DISCONNECTED_BIT BIT1
 /* @[declare_core2foraws_wifi_disconnected_bit] */
 
 /**
@@ -59,8 +76,15 @@
  * and connecting states of the Wi-Fi connectivity cycle.
  */
 /* @[declare_core2foraws_wifi_connecting_bit] */
-#define CONNECTING_BIT BIT2
+#define WIFI_CONNECTING_BIT BIT2
 /* @[declare_core2foraws_wifi_connecting_bit] */
+
+/**
+ * @brief The maximum length allowed for the Wi-Fi SSID.
+ */
+/* @[declare_core2foraws_wifi_prov_str_len] */
+#define WIFI_PROV_STR_LEN 78U
+/* @[declare_core2foraws_wifi_prov_str_len] */
 
 /**
  * @brief The maximum length allowed for the Wi-Fi SSID.
@@ -77,6 +101,16 @@
 /* @[declare_core2foraws_wifi_pass_max_len_pass] */
 
 /**
+ * @brief The maximum number of failures when attempting to connect using provided 
+ * credentials before calling @ref core2foraws_wifi_reset().
+ */
+/* @[declare_core2foraws_wifi_retries_max_fails] */
+#ifndef WIFI_RETRIES_MAX_FAILS
+#define WIFI_RETRIES_MAX_FAILS 5U
+#endif
+/* @[declare_core2foraws_wifi_retries_max_fails] */
+
+/**
  * @brief The FreeRTOS event group bit for Wi-Fi event states.
  * 
  * The Wi-Fi event group has a bit for the connected (@ref CONNECTED_BIT), disconnected 
@@ -88,29 +122,175 @@ EventGroupHandle_t wifi_event_group;
 /* @[declare_core2foraws_wifi_event_group] */
 
 /**
- * @brief Connects to Wi-Fi access point and stores credentials in NVS.
+ * @brief Starts Wi-Fi provisioning using BLE.
  * 
- * This function will connect to the Wi-Fi network using the configuration 
- * provided. If NULL is input to either of the parameters, it attempts to 
- * read from the non-volatile storage (NVS) for existing Wi-Fi credentials.
+ * @note This function is automatically called by @ref core2foraws_init if the feature
+ * is enabled.
  * 
+ * This function will start up BLE provisioning process to collect Wi-Fi credentials 
+ * using the [iOS](https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141) 
+ * or [Android](https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141) app. 
+ * After entering the credentials in the app, the device will attempt to connect to
+ * the Wi-Fi network.
  * 
- * @param[in] wifi_ssid A pointer to the provided Wi-Fi SSID.
- * @param[in] wifi_password A pointer to the provided Wi-Fi password.
+ * After a successful connection, the device will store the credentials into the device 
+ * non-volatile storage (NVS). On reboot, the device will read the stored credentials
+ * and use them to connect to the wireless network.
+ * 
+ * After @ref WIFI_RETRIES_MAX_FAILS failures to connect, the app will restart the 
+ * provisioning cycle over BLE.
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_WIFI_NOT_INIT : WiFi is not initialized
+ *  - ESP_ERR_NO_MEM        : Out of memory
+ *  - ESP_ERR_WIFI_CONN     : Internal error, station or soft-AP control block wrong
+ *  - ESP_FAIL              : Failed to connect to Wi-Fi or start up the provisioning manager.
  */
 /* @[declare_core2foraws_wifi_connect] */
-esp_err_t core2foraws_wifi_connect( const char *wifi_ssid, const char *wifi_password );
+esp_err_t core2foraws_wifi_prov_ble_init( void );
 /* @[declare_core2foraws_wifi_connect] */
 
 /**
  * @brief Disconnects from Wi-Fi access point.
  * This function will disconnect from the Wi-Fi network and free up 
  * resources that was allocated.
+ * 
+ * **Example:**
+ * 
+ * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), wait
+ * 5 seconds, and then disconnect from the Wi-Fi network.
+ * @code{c}
+ *  #include <stdint.h>
+ *  #include <esp_log.h>
+ *  #include <freertos/FreeRTOS.h>
+ * 
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_WIFI_DEMO";
+ * 
+ *  void app_main( void )
+ *  {   
+ *      core2foraws_init();
+ * 
+ *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+ * 
+ *      esp_err_t err = core2foraws_wifi_reset();
+ *      ESP_LOGI( TAG, "\tWi-Fi reset returned %d", err );
+ *  }
+ * @endcode
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_WIFI_NOT_INIT : WiFi is not initialized
  */
 /* @[declare_core2foraws_wifi_disconnect] */
 esp_err_t core2foraws_wifi_disconnect( void );
 /* @[declare_core2foraws_wifi_disconnect] */
+
+/**
+ * @brief Reset internal Wi-Fi state machine and clear provisioned credentials.
+ * 
+ * This function erases the stored credentials and restarts the Wi-Fi provisioning 
+ * process.
+ * 
+ * **Example:**
+ * 
+ * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), wait
+ * 5 seconds, and then reset the Wi-Fi to enter new credentials using the mobile
+ * app.
+ * @code{c}
+ *  #include <stdint.h>
+ *  #include <esp_log.h>
+ *  #include <freertos/FreeRTOS.h>
+ * 
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_WIFI_DEMO";
+ * 
+ *  void app_main( void )
+ *  {   
+ *      core2foraws_init();
+ * 
+ *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+ * 
+ *      esp_err_t err = core2foraws_wifi_reset();
+ *      ESP_LOGI( TAG, "\tWi-Fi reset returned %d", err );
+ *  }
+ * @endcode
+ *
+ * @return 
+ *  - [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_WIFI_NOT_INIT : Wi-Fi is not initialized
+
+ */
+/* @[declare_core2foraws_wifi_reset] */
+esp_err_t core2foraws_wifi_reset( void );
+/* @[declare_core2foraws_wifi_reset] */
+
+/**
+ * @brief Gets the stringified JSON used by the companion mobile provisioning app
+ * for setting up Wi-Fi.
+ * 
+ * @note This function can be used with the included LVGL QR Code library to 
+ * generate QR codes that can be displayed on the screen.
+ * 
+ * **Example:**
+ * 
+ * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), display
+ * the provisioning payload as a QR code on the screen to scan with companion 
+ * mobile app. 
+ * Removes the QR code once the device connects to Wi-Fi.
+ * @code{c}
+ *  #include <stdint.h>
+ *  #include <esp_log.h>
+ * 
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_WIFI_DEMO";
+ * 
+ *  void app_main( void )
+ *  {   
+ *      core2foraws_init();
+ * 
+ *      xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY )
+ *      
+ *      lv_coord_t qr_square_px = 200;
+ *      lv_color_t amazon_squid_ink = lv_color_hex( 0x232F3E );
+ *      lv_obj_t *display_wifi_qr = lv_qrcode_create( lv_scr_act(), qr_square_px, amazon_squid_ink, LV_COLOR_WHITE );
+ *      char wifi_provisioning_str[ WIFI_PROV_STR_LEN ] = { 0 };
+ * 
+ *      if ( core2foraws_wifi_prov_str_get( wifi_provisioning_str ) == ESP_OK )
+ *          lv_qrcode_update( display_wifi_qr, wifi_provisioning_str, strlen( wifi_provisioning_str ) );
+ *      
+ *      xSemaphoreGive( core2foraws_display_semaphore );
+ * 
+ *      xEventGroupWaitBits(
+ *          wifi_event_group,   // The event group being tested.
+ *          WIFI_CONNECTED_BIT, // The bit(s) within the event group to wait for.
+ *          pdFALSE,            // WIFI_CONNECTED_BIT should be cleared before returning.
+ *          pdTRUE,             // Don't wait for all bits (there's only one anyway).
+ *          portMAX_DELAY );    // Wait indefinitely.
+ *
+ *		xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY );
+ *	    lv_obj_del( display_wifi_qr );
+ *		xSemaphoreGive( core2foraws_display_semaphore );
+ *      
+ *  }
+ * @endcode
+ *
+ * @param[out] wifi_prov_str The pointer to the wifi provisioning string.
+ * @return 
+ *  - [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK      : Success
+ *  - ESP_FAIL    : Failed to retrieve the Wi-Fi provisioning string
+ */
+/* @[declare_core2foraws_wifi_display_qr_get] */
+esp_err_t core2foraws_wifi_prov_str_get( char *wifi_prov_str );
+/* @[declare_core2foraws_wifi_display_qr_get] */
+
+#ifdef __cplusplus
+}
+#endif
+#endif

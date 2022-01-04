@@ -100,7 +100,9 @@ extern "C" {
  * The speaker, microphone (audio) and SD card drivers need to be 
  * initialized separately as needed.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to initialize one or more features
  */
 /* @[declare_core2foraws_init] */
 esp_err_t core2foraws_init( void );

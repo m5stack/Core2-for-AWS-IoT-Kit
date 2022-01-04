@@ -50,6 +50,13 @@ esp_err_t core2foraws_init( void )
             Must be enabled in the application KConfig menu");
 #endif
 
+#ifdef CONFIG_SOFTWARE_WIFI_SUPPORT
+    err = core2foraws_wifi_prov_ble_init();
+    if( err != ESP_OK)
+        ESP_LOGE( TAG, "\tError initializing Wi-Fi provisioning over BLE. Error 0x%x", err);
+    ret |= err;
+#endif
+
 #ifdef CONFIG_SOFTWARE_DISPLAY_SUPPORT
     err = core2foraws_display_init();
     if( err != ESP_OK)
@@ -91,5 +98,6 @@ esp_err_t core2foraws_init( void )
         ESP_LOGE( TAG, "\tError initializing button. Error 0x%x", err);
     ret |= err;
 #endif
+
     return core2foraws_common_error( ret );
 }

@@ -123,7 +123,9 @@ typedef enum
  * @note The core2foraws_init() calls this function when the 
  * hardware feature is enabled.
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_init] */
 esp_err_t core2foraws_power_init( void );
@@ -150,7 +152,9 @@ esp_err_t core2foraws_power_init( void );
  *
  * @param[in] brightness The desired brightness of the display. 
  * Accepts a value from 0 to 100.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_backlight_set] */
 esp_err_t core2foraws_power_backlight_set( uint8_t brightness );
@@ -175,7 +179,9 @@ esp_err_t core2foraws_power_backlight_set( uint8_t brightness );
  *
  * @param[in] state The desired boolean state of the LED. 0 or FALSE 
  * is off, 1 or TRUE is on.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_led_enable] */
 esp_err_t core2foraws_power_led_enable( bool state );
@@ -204,7 +210,9 @@ esp_err_t core2foraws_power_led_enable( bool state );
  *
  * @param[in] state The desired boolean state of the vibration motor. 
  * 0 or FALSE is off, 1 or TRUE is on.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_vibration_enable] */
 esp_err_t core2foraws_power_vibration_enable( bool state );
@@ -231,7 +239,9 @@ esp_err_t core2foraws_power_vibration_enable( bool state );
  *
  * @param[in] state The desired boolean state of the speaker 
  * amplifier. 0 or FALSE is off, 1 or TRUE is on.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_speaker_enable] */
 esp_err_t core2foraws_power_speaker_enable( bool state );
@@ -243,7 +253,9 @@ esp_err_t core2foraws_power_speaker_enable( bool state );
  *
  * @param[out] volts Pointer to the buffer that will store the
  * battery voltage
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_batt_volts_get] */
 esp_err_t core2foraws_power_batt_volts_get( float *volts );
@@ -256,7 +268,9 @@ esp_err_t core2foraws_power_batt_volts_get( float *volts );
  * @param[out] m_amps Pointer to the buffer that will store the
  * battery voltage. A value greater than 0 means the battery is 
  * being charged.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_batt_current_get] */
 esp_err_t core2foraws_power_batt_current_get( float *m_amps );
@@ -272,7 +286,9 @@ esp_err_t core2foraws_power_batt_current_get( float *m_amps );
  * @param[out] status Pointer to the boolean value of the 
  * charging status. 1 (true) if it is currently charging, 0 (false)
  * if it is not charging or fully charged.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_charging_get] */
 esp_err_t core2foraws_power_charging_get( bool *status );
@@ -289,7 +305,9 @@ esp_err_t core2foraws_power_charging_get( bool *status );
  * @param[out] status Pointer to the boolean value of the plugged 
  * in to an external power source status. 1 (true) if it is 
  * currently plugged in, 0 (false) if it is using battery power.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_plugged_get] */
 esp_err_t core2foraws_power_plugged_get( bool *status );
@@ -308,7 +326,9 @@ esp_err_t core2foraws_power_plugged_get( bool *status );
  * @param[in] reg The register address to read from.
  * @param[out] buffer Pointer to the buffer data that was read from 
  * the PMU.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_axp_reg_get] */
 esp_err_t core2foraws_power_axp_reg_get( uint8_t reg, uint8_t *buffer );
@@ -326,7 +346,9 @@ esp_err_t core2foraws_power_axp_reg_get( uint8_t reg, uint8_t *buffer );
  *
  * @param[in] reg The register address to read from.
  * @param[in] value The value to set the register to.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_axp_reg_set] */
 esp_err_t core2foraws_power_axp_reg_set( uint8_t reg, uint8_t value );
@@ -344,7 +366,9 @@ esp_err_t core2foraws_power_axp_reg_set( uint8_t reg, uint8_t value );
  *
  * @param[in] reg The register address to read from.
  * @param[out] buffer Pointer to the buffer data read from the PMU.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_axp_read] */
 esp_err_t core2foraws_power_axp_read( uint8_t reg, void *buffer );
@@ -362,7 +386,9 @@ esp_err_t core2foraws_power_axp_read( uint8_t reg, void *buffer );
  *
  * @param[in] reg The register address to write to.
  * @param[out] buffer Pointer to the buffer data read from the PMU.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_axp_write] */
 esp_err_t core2foraws_power_axp_write( uint8_t reg, const uint8_t *buffer );
@@ -381,7 +407,9 @@ esp_err_t core2foraws_power_axp_write( uint8_t reg, const uint8_t *buffer );
  * @param[in] reg The starting register address to write to.
  * @param[in] affect The desired registers to change.
  * @param[in] value The desired value to change register(s) to.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_axp_twiddle] */
 esp_err_t core2foraws_power_axp_twiddle( uint8_t reg, uint8_t affect, uint8_t value );
@@ -396,7 +424,9 @@ esp_err_t core2foraws_power_axp_twiddle( uint8_t reg, uint8_t affect, uint8_t va
  *
  * @param[in] rail The power rail to retrieve the state of.
  * @param[out] enabled Pointer to the current state of the rail.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_rail_state_get] */
 esp_err_t core2foraws_power_rail_state_get( power_rail_t rail, bool *enabled );
@@ -414,7 +444,9 @@ esp_err_t core2foraws_power_rail_state_get( power_rail_t rail, bool *enabled );
  *
  * @param[in] rail The power rail to set the state of.
  * @param[out] enabled The state to set the rail to.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_rail_state_set] */
 esp_err_t core2foraws_power_rail_state_set( power_rail_t rail, bool enabled );
@@ -433,7 +465,9 @@ esp_err_t core2foraws_power_rail_state_set( power_rail_t rail, bool enabled );
  * @param[in] rail The power rail to set the voltage of.
  * @param[out] millivolts Pointer to the value the rail is set to in 
  * millivolts.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_rail_mv_get] */
 esp_err_t core2foraws_power_rail_mv_get( power_rail_t rail, uint16_t *millivolts );
@@ -451,7 +485,9 @@ esp_err_t core2foraws_power_rail_mv_get( power_rail_t rail, uint16_t *millivolts
  *
  * @param[in] rail The power rail to set the voltage of.
  * @param[out] millivolts The millivolts to set the rail to.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_ARG	: Driver parameter error
  */
 /* @[declare_core2foraws_power_rail_mv_set] */
 esp_err_t core2foraws_power_rail_mv_set( power_rail_t rail, uint16_t millivolts );

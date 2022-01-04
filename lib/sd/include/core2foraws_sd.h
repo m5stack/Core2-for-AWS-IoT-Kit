@@ -87,7 +87,9 @@ extern "C" {
  *  ESP_LOGI( TAG, "\tSD unmount %s", err == ESP_OK ? "success" : "fail" );
  * @endcode
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK      : Success
+ *  - ESP_FAIL    : Failed to mount the SD card
  */
 /* @[declare_core2foraws_sd_mount] */
 esp_err_t core2foraws_sd_mount( void );
@@ -130,7 +132,9 @@ esp_err_t core2foraws_sd_mount( void );
  * @param[out] message The string read and copied from the file on the SD card.
  * @param[in] to_read_length The number of characters to read from the file.
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK      : Success
+ *  - ESP_FAIL    : Failed to read file from SD
  */
 /* @[declare_core2foraws_sd_read] */
 esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_read_length );
@@ -170,14 +174,17 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
  * @param[in] message The pointer to the string to write to the file on the SD card.
  * @param[out] wrote_length The pointer to the number of characters that was written to the file.
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK      : Success
+ *  - ESP_FAIL    : Failed to write to SD card
  */
 /* @[declare_core2foraws_sd_write] */
 esp_err_t core2foraws_sd_write( const char *file_name, const char* message, size_t *wrote_length );
 /* @[declare_core2foraws_sd_write] */
 
 /**
- * @brief Removes the FAT partition and unmounts the SD-Card.
+ * @brief Removes the FAT partition and unmounts the SD-Card. Unmount 
+ * before removing SD card from the device.
  *
  * @note The SD Card must be mounted before use. The SD card
  * and the screen uses the same SPI bus. In order to avoid
@@ -215,7 +222,9 @@ esp_err_t core2foraws_sd_write( const char *file_name, const char* message, size
  *  xSemaphoreGive(spi_mutex);
  * @endcode
  *
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_STATE : Failed to unmount. Must call @ref core2foraws_sd_mount first
  */
 /* @[declare_core2foraws_sdcard_unmount] */
 esp_err_t core2foraws_sd_unmount( void );

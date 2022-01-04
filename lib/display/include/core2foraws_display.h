@@ -78,7 +78,6 @@ extern "C" {
  *  }
  *  
  * @endcode
- *
  */
 /* @[declare_core2foraws_display_semaphore] */
 extern SemaphoreHandle_t core2foraws_display_semaphore;
@@ -110,7 +109,6 @@ extern SemaphoreHandle_t core2foraws_display_semaphore;
  *  }
  *  
  * @endcode
- *
  */
 /* @[declare_core2foraws_display_task_handle] */
 extern TaskHandle_t core2foraws_display_task_handle;
@@ -125,7 +123,10 @@ extern TaskHandle_t core2foraws_display_task_handle;
  * @note The core2foraws_init() calls this function
  * when the hardware feature is enabled.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_INVALID_STATE : Library is unable to initialize
+ *  - ESP_ERR_NO_MEM        : Out of memory
  */
 /* @[declare_xore2foraws_display_init] */
 esp_err_t core2foraws_display_init( void );

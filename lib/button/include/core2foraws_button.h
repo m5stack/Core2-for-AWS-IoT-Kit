@@ -97,7 +97,9 @@ typedef enum {
  * @note The core2foraws_init() calls this function when the hardware 
  * feature is enabled.
  * 
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to initialize over I2C bus
  */
 /* @[declare_core2foraws_button_init] */
 esp_err_t core2foraws_button_init( void );
@@ -136,7 +138,9 @@ esp_err_t core2foraws_button_init( void );
  * @param[in] button The button to check if it was pressed. 
  * @param[out] state The current state of the button if it was pressed 
  * or not.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to get the button input data
  */
 /* @[declare_core2foraws_button_tapped] */
 esp_err_t core2foraws_button_tapped( enum core2foraws_button_btns button, bool *state );
@@ -175,7 +179,9 @@ esp_err_t core2foraws_button_tapped( enum core2foraws_button_btns button, bool *
  * @param[in] button The button to check if it's currently being pressed. 
  * @param[out] state The current state of the button if it is being pressed 
  * or not.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to get the button input data
  */
 /* @[declare_core2foraws_button_pressing] */
 esp_err_t core2foraws_button_pressing( enum core2foraws_button_btns button, bool *state );
@@ -215,7 +221,9 @@ esp_err_t core2foraws_button_pressing( enum core2foraws_button_btns button, bool
  * @param[in] button The button to check if it has been held. 
  * @param[out] state The current state of the button if it has been held 
  * or not.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to get the button input data
  */
 /* @[declare_core2foraws_button_held] */
 esp_err_t core2foraws_button_held( enum core2foraws_button_btns button, bool *state );
@@ -254,7 +262,9 @@ esp_err_t core2foraws_button_held( enum core2foraws_button_btns button, bool *st
  * @param[in] button The button to check if it's currently been released. 
  * @param[out] state The current state of the button if it was released 
  * or not.
- * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 0 or `ESP_OK` if successful.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL  : Failed to get the button input data
  */
 /* @[declare_core2foraws_button_released] */
 esp_err_t core2foraws_button_released( enum core2foraws_button_btns button, bool *state );
