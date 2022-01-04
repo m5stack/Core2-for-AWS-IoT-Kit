@@ -43,6 +43,10 @@ extern "C" {
 
 #include "lvgl.h"
 
+#ifdef CONFIG_SOFTWARE_WIFI_SUPPORT
+#include "lv_qrcode.h"
+#endif
+
 /**
  * @brief FreeRTOS semaphore to be used when performing any
  * operation on the display.

@@ -45,10 +45,6 @@ extern "C" {
 #include <freertos/semphr.h>
 #include <freertos/event_groups.h>
 
-#ifdef CONFIG_SOFTWARE_DISPLAY_SUPPORT
-#include "lv_qrcode.h"
-#endif
-
 /**
  * @brief The FreeRTOS event group bit for the device being in a Wi-Fi connected state.
  * 
