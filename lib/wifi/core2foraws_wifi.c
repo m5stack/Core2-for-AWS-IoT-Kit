@@ -45,6 +45,7 @@
 #include "qrcode.h"
 
 #include "core2foraws_wifi.h"
+#include "core2foraws_display.h"
 #include "core2foraws_common.h"
 
 #define PROV_QR_VERSION "v1"
