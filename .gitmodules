@@ -19,3 +19,6 @@
 [submodule "lib/rtc/lib/bm8563"]
 	path = lib/rtc/lib/bm8563
 	url = https://github.com/tuupola/bm8563.git
+[submodule "lib/display/lib/lv_lib_qrcode"]
+	path = lib/display/lib/lv_lib_qrcode
+	url = https://github.com/lvgl/lv_lib_qrcode.git
