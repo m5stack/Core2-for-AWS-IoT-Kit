@@ -29,7 +29,7 @@
 */
 
 /**
- * @file core2foraws_wifi.c
+ * @file core2foraws_wifi.h
  * @brief Core2 for AWS IoT EduKit Wi-Fi helper APIs
  */
 
@@ -109,8 +109,8 @@ extern "C" {
 /**
  * @brief The FreeRTOS event group bit for Wi-Fi event states.
  * 
- * The Wi-Fi event group has a bit for the connected (@ref CONNECTED_BIT), disconnected 
- * (@ref DISCONNECTED_BIT), and connecting (@ref CONNECTING_BIT) states of the Wi-Fi 
+ * The Wi-Fi event group has a bit for the connected (@ref WIFI_CONNECTED_BIT), disconnected 
+ * (@ref WIFI_DISCONNECTED_BIT), and connecting (@ref WIFI_CONNECTING_BIT) states of the Wi-Fi 
  * connectivity cycle.
  */
 /* @[declare_core2foraws_wifi_event_group] */
@@ -282,9 +282,9 @@ esp_err_t core2foraws_wifi_reset( void );
  *  - ESP_OK      : Success
  *  - ESP_FAIL    : Failed to retrieve the Wi-Fi provisioning string
  */
-/* @[declare_core2foraws_wifi_display_qr_get] */
+/* @[declare_core2foraws_wifi_prov_str_get] */
 esp_err_t core2foraws_wifi_prov_str_get( char *wifi_prov_str );
-/* @[declare_core2foraws_wifi_display_qr_get] */
+/* @[declare_core2foraws_wifi_prov_str_get] */
 
 #ifdef __cplusplus
 }

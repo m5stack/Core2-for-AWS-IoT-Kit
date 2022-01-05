@@ -732,7 +732,7 @@ esp_err_t core2foraws_expports_adc_mv_read( uint32_t *adc_mvolts );
  *  #include <stdio.h>
  *  #include <esp_log.h>
  *
- *  #include "core2forAWS.h"
+ *  #include "core2foraws.h"
  *
  *  void app_main( void )
  *  {
@@ -792,7 +792,7 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts );
  *  #include "driver/gpio.h"
  *  #include <esp_log.h>
  *
- *  #include "core2forAWS.h"
+ *  #include "core2foraws.h"
  *
  *  static const char *TAG = "MAIN_UART_DEMO";
  *
@@ -888,7 +888,7 @@ esp_err_t core2foraws_expports_uart_begin( uint32_t baud );
  *  #include <freertos/task.h>
  *  #include <esp_log.h>
  *
- *  #include "core2forAWS.h"
+ *  #include "core2foraws.h"
  *
  *  static const char *TAG = "MAIN_UART_DEMO";
  *
@@ -989,7 +989,7 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
  *  #include <freertos/task.h>
  *  #include <esp_log.h>
  *
- *  #include "core2forAWS.h"
+ *  #include "core2foraws.h"
  *
  *  static const char *TAG = "MAIN_UART_DEMO";
  *
