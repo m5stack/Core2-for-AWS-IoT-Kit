@@ -125,7 +125,7 @@ EventGroupHandle_t wifi_event_group;
  * 
  * This function will start up BLE provisioning process to collect Wi-Fi credentials 
  * using the [iOS](https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141) 
- * or [Android](https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141) app. 
+ * or [Android](https://play.google.com/store/apps/details?id=com.espressif.provble) app. 
  * After entering the credentials in the app, the device will attempt to connect to
  * the Wi-Fi network.
  * 
