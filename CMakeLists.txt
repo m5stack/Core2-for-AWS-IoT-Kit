@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt file for Core2 for AWS IoT EduKit Board Support Package
 #
-cmake_minimum_required( VERSION 3.10.2 )
+cmake_minimum_required( VERSION 3.16.0 )
 
 MACRO( GET_HEADER_DIRS return_list start_dir )
     FILE( GLOB_RECURSE new_list "${start_dir}/*.h" )
