@@ -14,7 +14,7 @@
 	path = lib/power/lib/axp192
 	url = https://github.com/tuupola/axp192.git
 [submodule "lib/rgb_led/lib/esp-idf-lib"]
-	path = lib/rgb_led/lib/esp-idf-lib
+	path = lib/common/lib/esp-idf-lib
 	url = https://github.com/UncleRus/esp-idf-lib.git
 [submodule "lib/rtc/lib/bm8563"]
 	path = lib/rtc/lib/bm8563

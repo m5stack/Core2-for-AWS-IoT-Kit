@@ -49,8 +49,11 @@
 
 SemaphoreHandle_t core2foraws_display_semaphore;
 TaskHandle_t core2foraws_display_task_handle;
+lv_disp_t *core2foraws_display_ptr;
 
 static const char *_s_TAG = "CORE2FORAWS_DISPLAY";
+static lv_color_t *_s_buf1 = NULL;
+static lv_color_t *_s_buf2 = NULL;
 
 static void _s_lv_tick_task( void *arg );
 static void _s_gui_task( void *pvParameter );
@@ -74,12 +77,15 @@ static void _s_gui_task( void *pvParameter )
         /* Try to take the semaphore, call lvgl related function on success */
         if ( pdTRUE == xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY ) ) 
 		{
-            lv_task_handler();
+            uint32_t ms_to_next_call = lv_task_handler();
+            ESP_LOGV( _s_TAG, "%dms until next LVGL timer call.", ms_to_next_call );
             xSemaphoreGive( core2foraws_display_semaphore );
         }
     }
 
     /* A task should NEVER return */
+    free( _s_buf1 );
+    free( _s_buf2 );
     vTaskDelete( NULL );
 }
 
@@ -94,7 +100,12 @@ esp_err_t core2foraws_display_init( void )
     xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY );
     	
 	lv_init();
-	lvgl_driver_init();
+
+	/* Initialize the needed peripherals */
+    lvgl_interface_init();
+
+    /* Initialize needed GPIOs, e.g. backlight, reset GPIOs */
+    lvgl_display_gpios_init();
 
 	/* Use double buffered when not working with monochrome displays. 
 	 * Application should allocate two buffers buf1 and buf2 of size
@@ -102,19 +113,23 @@ esp_err_t core2foraws_display_init( void )
 	 */
 
     static lv_disp_buf_t disp_buf;
-    uint32_t size_in_px = DISP_BUF_SIZE;
-    lv_color_t *buf1 = heap_caps_malloc( DISP_BUF_SIZE * sizeof( lv_color_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT ); //Assuming max size of lv_color_t = 16bit, DISP_BUF_SIZE calculated from max horizontal display size 480
-    lv_color_t *buf2 = heap_caps_malloc( DISP_BUF_SIZE * sizeof( lv_color_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT ); //Assuming max size of lv_color_t = 16bit, DISP_BUF_SIZE calculated from max horizontal display size 480
-
+    size_t display_buffer_size = lvgl_get_display_buffer_size();
+    _s_buf1 = heap_caps_malloc( display_buffer_size * sizeof( lv_color_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT ); //Assuming max size of lv_color_t = 16bit, display buffer size calculated from max horizontal display size 480
+    _s_buf2 = heap_caps_malloc( display_buffer_size * sizeof( lv_color_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT ); //Assuming max size of lv_color_t = 16bit, display buffer size calculated from max horizontal display size 480
+    assert( _s_buf1 != NULL );
+    assert( _s_buf2 != NULL );
+    
 	// Set up the frame buffers
-	lv_disp_buf_init( &disp_buf, buf1, buf2, size_in_px );
+    uint32_t size_in_px = display_buffer_size;
+	lv_disp_buf_init( &disp_buf, _s_buf1, _s_buf2, size_in_px );
 
 	// Set up the display driver
 	lv_disp_drv_t disp_drv;
+    ili9341_init( &disp_drv );
     lv_disp_drv_init( &disp_drv );
     disp_drv.flush_cb = disp_driver_flush;
     disp_drv.buffer = &disp_buf;
-    lv_disp_drv_register( &disp_drv );
+    core2foraws_display_ptr = lv_disp_drv_register( &disp_drv );
 
     /* Register an input device when enabled on the menuconfig */
 #if CONFIG_LV_TOUCH_CONTROLLER != TOUCH_CONTROLLER_NONE

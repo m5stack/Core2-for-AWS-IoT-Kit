@@ -14,6 +14,7 @@ MACRO( GET_HEADER_DIRS return_list start_dir )
     SET( ${return_list} ${dir_list} )
 ENDMACRO()
 
+set( ESP_IDF_PATH                       ${idf_path} )
 set( CORE2FORAWS_SRCS                   "${COMPONENT_DIR}/core2foraws.c" )
 set( CORE2FORAWS_INCLUDE_DIRS           "${COMPONENT_DIR}/include" )
 set( CORE2FORAWS_REQUIRES               "esp_adc_cal"
@@ -24,7 +25,7 @@ set( CORE2FORAWS_REQUIRES               "esp_adc_cal"
                                         "fatfs"
                                         )
 set( CORE2FORAWS_PRIV_INCLUDEDIRS       )
-set( CORE2FORAWS_PRIV_REQUIRES          "nvs_flash"
+set( CORE2FORAWS_PRIV_REQUIRES          "nvs_flash" 
                                         "wifi_provisioning"
                                         )
 set( CORE2FORAWS_EXCLUDE_SRCS           )
@@ -32,7 +33,9 @@ set( CORE2FORAWS_LIB                    "${COMPONENT_DIR}/lib" )
 
 
 if( CONFIG_SOFTWARE_BSP_SUPPORT )
-    set( I2C_MANAGER_SRCS                   "${CORE2FORAWS_LIB}/common/lib/i2c_manager/i2c_manager/i2c_manager.c" )
+set( I2C_MANAGER_SRCS                   "${CORE2FORAWS_LIB}/common/lib/i2c_manager/i2c_manager/i2c_manager.c"
+                                        "${CORE2FORAWS_LIB}/common/lib/i2c_manager/i2cdev/i2cdev.c"
+                                        )
     set( I2C_MANAGER_INCLUDE_DIRS           "${CORE2FORAWS_LIB}/common/lib/i2c_manager/i2c_manager"
                                             "${CORE2FORAWS_LIB}/common/lib/i2c_manager/i2cdev" 
                                             )
@@ -42,12 +45,10 @@ if( CONFIG_SOFTWARE_BSP_SUPPORT )
     set( CORE2FORAWS_BSP_SRCS                   "${CORE2FORAWS_LIB}/common/core2foraws_common.c"
                                                 "${CORE2FORAWS_LIB}/power/core2foraws_power.c"
                                                 "${CORE2FORAWS_LIB}/power/lib/axp192/axp192.c"
-                                                "${CORE2FORAWS_LIB}/wifi/core2foraws_wifi.c"
                                                 )
     set( CORE2FORAWS_BSP_INCLUDE_DIRS           "${CORE2FORAWS_LIB}/common/include" 
                                                 "${CORE2FORAWS_LIB}/power/include"
                                                 "${CORE2FORAWS_LIB}/power/lib/axp192"
-                                                "${CORE2FORAWS_LIB}/wifi/include"
                                                 )
     list( APPEND CORE2FORAWS_SRCS               ${CORE2FORAWS_BSP_SRCS} )
     list( APPEND CORE2FORAWS_INCLUDE_DIRS       ${CORE2FORAWS_BSP_INCLUDE_DIRS} )
@@ -91,11 +92,12 @@ if( CONFIG_SOFTWARE_DISPLAY_SUPPORT )
                                             "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lvgl_helpers.c"
                                             "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lvgl_i2c/i2c_manager.c"
                                             "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lvgl_tft/disp_driver.c"
-                                            "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lvgl_tft/esp_lcd_backlight.c"
+                                            "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lv_port/esp_lcd_backlight.c"
                                             "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lvgl_tft/ili9341.c"
-                                            "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lvgl_tft/disp_spi.c"
+                                            "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lv_port/disp_spi.c"
                                             "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lvgl_touch/touch_driver.c"
                                             "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lvgl_touch/ft6x36.c"
+                                            "${CORE2FORAWS_LIB}/display/lib/lvgl_esp32_drivers/lv_port/lv_port_display_espressif.c"
                                             )
     set( CORE2FORAWS_DISPLAY_INCLUDE_DIRS   "${CORE2FORAWS_LIB}/display/include" 
                                             "${CORE2FORAWS_LIB}/display/lib/lvgl"
@@ -133,16 +135,16 @@ endif()
 
 if( CONFIG_SOFTWARE_RGB_LED_SUPPORT )
     file( GLOB CORE2FORAWS_RGB_LED_SRCS     "${CORE2FORAWS_LIB}/rgb_led/*.c"
-                                            "${CORE2FORAWS_LIB}/rgb_led/lib/esp-idf-lib/components/lib8tion/*.c"
-                                            "${CORE2FORAWS_LIB}/rgb_led/lib/esp-idf-lib/components/color/*.c"
-                                            "${CORE2FORAWS_LIB}/rgb_led/lib/esp-idf-lib/components/led_strip/*.c"
+                                            "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/lib8tion/*.c"
+                                            "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/color/*.c"
+                                            "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/led_strip/*.c"
                                             )
     set( CORE2FORAWS_RGB_LED_INCLUDE_DIRS   "${CORE2FORAWS_LIB}/rgb_led/include"
-                                            "${CORE2FORAWS_LIB}/rgb_led/lib/esp-idf-lib/components/esp_idf_lib_helpers" 
-                                            "${CORE2FORAWS_LIB}/rgb_led/lib/esp-idf-lib/components/lib8tion"
-                                            "${CORE2FORAWS_LIB}/rgb_led/lib/esp-idf-lib/components/lib8tion/lib8tion"
-                                            "${CORE2FORAWS_LIB}/rgb_led/lib/esp-idf-lib/components/color"
-                                            "${CORE2FORAWS_LIB}/rgb_led/lib/esp-idf-lib/components/led_strip"
+                                            "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/esp_idf_lib_helpers" 
+                                            "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/lib8tion"
+                                            "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/lib8tion/lib8tion"
+                                            "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/color"
+                                            "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/led_strip"
                                             )
 
     list( APPEND CORE2FORAWS_SRCS           ${CORE2FORAWS_RGB_LED_SRCS} )
@@ -171,9 +173,9 @@ if( CONFIG_SOFTWARE_SDCARD_SUPPORT )
 endif()
 
 if( CONFIG_SOFTWARE_WIFI_SUPPORT )
-    file( GLOB_RECURSE QRCODE_SRCS          "$ENV{IDF_PATH}/examples/common_components/qrcode/*.c" )
-    set( QRCODE_INCLUDE_DIRS                "$ENV{IDF_PATH}/examples/common_components/qrcode"
-                                            "$ENV{IDF_PATH}/examples/common_components/qrcode/include"
+    file( GLOB_RECURSE QRCODE_SRCS          "${ESP_IDF_PATH}/examples/common_components/qrcode/*.c" )
+    set( QRCODE_INCLUDE_DIRS                "${ESP_IDF_PATH}/examples/common_components/qrcode"
+                                            "${ESP_IDF_PATH}/examples/common_components/qrcode/include"
                                             )
     set( CORE2FORAWS_WIFI_SRCS              "${CORE2FORAWS_LIB}/wifi/core2foraws_wifi.c" )
     set( CORE2FORAWS_WIFI_INCLUDE_DIRS      "${CORE2FORAWS_LIB}/wifi/include" )
@@ -255,12 +257,11 @@ if( CONFIG_SOFTWARE_RGB_LED_SUPPORT )
 endif()
 
 if( CONFIG_SOFTWARE_DISPLAY_SUPPORT )
-    target_compile_definitions(${COMPONENT_LIB} PUBLIC  "-DCONFIG_LV_HOR_RES_MAX=320"
+    target_compile_definitions(${COMPONENT_LIB} PUBLIC  "-DCONFIG_LV_CONF_SKIP=y"
+                                                        "-DCONFIG_LV_HOR_RES_MAX=320"
                                                         "-DCONFIG_LV_VER_RES_MAX=240"
-                                                        "-DLV_CONF_SKIP=y"
                                                         "-DCONFIG_LV_COLOR_DEPTH_16=y"
                                                         "-DCONFIG_LV_COLOR_DEPTH=16"
-                                                        "-DCONFIG_LV_I2C=y"
                                                         "-DCONFIG_LV_PREDEFINED_DISPLAY_M5CORE2=y"
                                                         "-DCONFIG_LV_TFT_DISPLAY_CONTROLLER_ILI9341=y"
                                                         "-DCONFIG_LV_TFT_DISPLAY_PROTOCOL_SPI=y"
@@ -269,7 +270,8 @@ if( CONFIG_SOFTWARE_DISPLAY_SUPPORT )
                                                         "-DCONFIG_LV_TFT_DISPLAY_SPI3_HOST=y"
                                                         "-DCONFIG_LV_TFT_DISPLAY_SPI_TRANS_MODE_DIO=y"
                                                         "-DCONFIG_LV_TFT_DISPLAY_SPI_HALF_DUPLEX=y"
-                                                        "-DCONFIG_LV_DISP_BACKLIGHT_OFF=y"
+                                                        "-DCONFIG_LV_TFT_CUSTOM_SPI_CLK_DIVIDER=2"
+                                                        "-DCONFIG_LV_INVERT_COLORS=y"
                                                         "-DCONFIG_LV_DISP_SPI_MOSI=23"
                                                         "-DCONFIG_LV_DISPLAY_USE_SPI_MISO=y"
                                                         "-DCONFIG_LV_DISP_SPI_MISO=38"
@@ -280,13 +282,14 @@ if( CONFIG_SOFTWARE_DISPLAY_SUPPORT )
                                                         "-DCONFIG_LV_DISPLAY_USE_DC=y"
                                                         "-DCONFIG_LV_DISP_PIN_DC=15"
                                                         "-DCONFIG_LV_DISP_PIN_BUSY=35"
+                                                        "-DCONFIG_LV_DISP_BACKLIGHT_OFF=y"
+                                                        "-DCONFIG_LV_I2C=y"
                                                         "-DCONFIG_LV_I2C_DISPLAY_PORT=0"
                                                         "-DCONFIG_LV_TOUCH_CONTROLLER=2"
                                                         "-DCONFIG_LV_TOUCH_CONTROLLER_FT6X06=y"
                                                         "-DCONFIG_LV_I2C_TOUCH=y"
                                                         "-DCONFIG_LV_I2C_TOUCH_PORT_0=y"
                                                         "-DCONFIG_LV_I2C_TOUCH_PORT=0"
-                                                        "-DLV_CONF_INCLUDE_SIMPLE"
                                                         "-DLV_LVGL_H_INCLUDE_SIMPLE"
                                                         )
 endif()

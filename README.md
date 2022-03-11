@@ -14,11 +14,11 @@ In addition to this, either enable [Developer Mode](https://docs.microsoft.com/e
 
 To clone using HTTPS:
 ```
-git clone https://github.com/aws-iot-edukit/Project_Template-Core2_for_AWS.git --recurse-submodules
+git clone -b BSP-dev https://github.com/m5stack/Core2-for-AWS-IoT-EduKit.git --recurse-submodules
 ```
 Using SSH:
 ```
-git clone git@github.com:aws-iot-edukit/Project_Template-Core2_for_AWS.git --recurse-submodules
+git clone -b BSP-dev git@github.com:m5stack/Core2-for-AWS-IoT-EduKit.git --recurse-submodules
 ```
 
 If you have downloaded the repo without using the `--recurse-submodules` argument, you need to run:
@@ -27,7 +27,7 @@ git submodule update --init --recursive
 ```
 
 ## Usage
-It is recommended to use the [project template](https://github.com/aws-iot-edukit/Project_Template-Core2_for_AWS) instead of the BSP directly. The GitHub project template repository contains all the necessary external dependencies and configuration to work properly with the Core2 for AWS IoT EduKit. The BSP is tested for compatibility with [ESP-IDF v4.3.2](https://www.espressif.com/en/products/sdks/esp-idf) or [PlatformIO](https://github.com/platformio/platform-espressif32/tree/v3.4.0) v3.4.0. Please ensure that your installation of PlatformIO is updated to the latest version of PlatformIO Core (5.2.4+) using the command `pio upgrade` from the PlatformIO terminal window. Follow the [AWS IoT EduKit — Getting Started](https://edukit.workshop.aws/en/getting-started.html) tutorial for instructions on how to setup your environment.
+It is recommended to use the [project template](https://github.com/aws-iot-edukit/Project_Template-Core2_for_AWS) instead of the BSP directly. The GitHub project template repository contains all the necessary external dependencies and configuration to work properly with the Core2 for AWS IoT EduKit. The BSP is tested for compatibility with [ESP-IDF v4.4.0](https://www.espressif.com/en/products/sdks/esp-idf) or [PlatformIO](https://github.com/platformio/platform-espressif32/tree/v3.5.0) v3.5.0. Please ensure that your installation of PlatformIO is updated to the latest version of PlatformIO Core (5.2.4+) using the command `pio upgrade` from the PlatformIO terminal window. Follow the [AWS IoT EduKit — Getting Started](https://edukit.workshop.aws/en/getting-started.html) tutorial for instructions on how to setup your environment.
 
 We also have code examples, drivers, or content available in other frameworks:
 - [Arduino](https://github.com/aws-samples/aws-iot-edukit-examples/tree/main/Basic_Arduino)

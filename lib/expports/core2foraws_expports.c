@@ -215,7 +215,7 @@ static esp_err_t _s_core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t
     if ( _s_port_pins[ index ].mode != mode || _s_port_pins[ index ].mode != NONE )
     {
         err = ESP_ERR_INVALID_STATE;
-        ESP_LOGD( _s_TAG, "\tPin is currently set in a different mode. Resetting");
+        ESP_LOGD( _s_TAG, "\tPin %d is currently set in a different mode. Resetting", pin );
         
         _s_core2foraws_expports_pin_init( pin, NONE );
         _s_port_pins[ index ].mode = NONE;
