@@ -34,7 +34,10 @@ cwd = os.getcwd()
 env.AutodetectUploadPort()
 
 def install_dependencies():
-    subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements.txt') ] )
+    if os.name == 'nt':
+        subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements-win.txt') ] )
+    else:
+        subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements-posix.txt') ] )
 
 install_dependencies()
 
