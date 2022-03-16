@@ -24,20 +24,25 @@ import os
 import sys
 import argparse
 import subprocess
+import platform
 
 Import("env")
 
-platform = env.PioPlatform()
+pio_platform = env.PioPlatform()
 board = env.BoardConfig()
 cwd = os.getcwd()
 
 env.AutodetectUploadPort()
 
 def install_dependencies():
-    if os.name == 'nt':
-        subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements-win.txt') ] )
+    if platform.system() == 'Darwin' and platform.processor() == 'arm':
+        rc = subprocess.call(['which', 'cmake'])
+        if rc != 0:
+            print('CMake is not installed! This is required for M1 Macs. Please install from https://github.com/Kitware/CMake/releases/download/v3.22.3/cmake-3.22.3-macos-universal.dmg')
+            sys.exit()
+        subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements-m1.txt') ] )
     else:
-        subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements-posix.txt') ] )
+        subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements.txt') ] )
 
 install_dependencies()
 
@@ -242,8 +247,7 @@ actions=[
     # ),
     create_device_cert_and_manifest(),
     move_temp_files(),
-    upload_manifest(),
-    os.remove("sdkconfig")
+    upload_manifest()
 ],
 title="AWS IoT Registration",
 description="Registers the thing to AWS IoT, attaches the certificate pulled from the secure element to \
