@@ -185,7 +185,7 @@ esp_err_t core2foraws_power_init( void )
 	// GPIO4 is reset for LCD and touch
 	core2foraws_power_axp_twiddle( AXP192_GPIO43_FUNCTION_CONTROL, ~0x72, 0x84 );
     core2foraws_power_axp_twiddle( AXP192_GPIO43_SIGNAL_STATUS, 0x02, 0x00 );
-    vTaskDelay( 100 / portTICK_RATE_MS );
+    vTaskDelay( pdMS_TO_TICKS ( 100 ) );
     if ( core2foraws_power_axp_twiddle( AXP192_GPIO43_SIGNAL_STATUS, 0x02, 0x02 ) == ESP_OK )
     {
     	ESP_LOGI( _s_TAG, "\tDisplay and touch reset" );
