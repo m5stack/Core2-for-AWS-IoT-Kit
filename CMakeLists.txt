@@ -271,7 +271,6 @@ if( CONFIG_SOFTWARE_DISPLAY_SUPPORT )
                                                         "-DCONFIG_LV_TFT_DISPLAY_SPI_TRANS_MODE_DIO=y"
                                                         "-DCONFIG_LV_TFT_DISPLAY_SPI_HALF_DUPLEX=y"
                                                         "-DCONFIG_LV_TFT_CUSTOM_SPI_CLK_DIVIDER=2"
-                                                        "-DCONFIG_LV_INVERT_COLORS=y"
                                                         "-DCONFIG_LV_DISP_SPI_MOSI=23"
                                                         "-DCONFIG_LV_DISPLAY_USE_SPI_MISO=y"
                                                         "-DCONFIG_LV_DISP_SPI_MISO=38"
