@@ -117,7 +117,7 @@ static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mo
     if ( mode == OUTPUT || mode == INPUT )
     {
         gpio_config_t io_conf;
-        io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
+        io_conf.intr_type = GPIO_INTR_DISABLE;
         io_conf.pin_bit_mask = ( 1ULL << pin );
 
         if ( mode == OUTPUT )

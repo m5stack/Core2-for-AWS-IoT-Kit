@@ -50,7 +50,9 @@ static led_strip_t _s_led_strip =
     .length = RGB_LED_NUMS,
     .gpio = RGB_LED_GPIO_DATA_PIN,
     .buf = NULL,
+#ifdef LED_STRIP_BRIGHTNESS
     .brightness = RGB_LED_BRIGHTNESS_DEFAULT,
+#endif
 };
 
 esp_err_t core2foraws_rgb_led_init( void )
@@ -92,9 +94,12 @@ esp_err_t core2foraws_rgb_led_side_color_set( rgb_led_side_type_t side, uint32_t
 
 esp_err_t core2foraws_rgb_led_brightness_set( uint8_t brightness )
 {
+#ifdef LED_STRIP_BRIGHTNESS
     esp_err_t err = ESP_OK;
-
     _s_led_strip.brightness = brightness;
+#else
+    esp_err_t err = ESP_ERR_NOT_SUPPORTED;
+#endif
 
     return err;
 }
