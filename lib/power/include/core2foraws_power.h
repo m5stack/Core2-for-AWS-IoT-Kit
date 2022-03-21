@@ -281,7 +281,31 @@ esp_err_t core2foraws_power_batt_current_get( float *m_amps );
  * from the power management unit (PMU).
  * 
  * @note A fully charged battery (~4.2v) will not receive further 
- * charge.
+ * charge and this value will return ~0mA. This is not the same as
+ * the device being plugged in.
+ * 
+ * **Example:**
+ *
+ * Print out to serial output if the device is charging.
+ * @code{c}
+ *  #include <esp_log.h>
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_POWER_DEMO";
+ * 
+ *  void app_main( void )
+ *  {
+ *      core2foraws_init();
+ *      
+ *      bool charge_status;
+ *      core2foraws_power_charging_get( &charge_status );
+ *      
+ *      if( charge_status)
+ *      {
+ *          ESP_LOGI( TAG, "Battery is being charged" );
+ *      }
+ *  }
+ * @endcode
  *
  * @param[out] status Pointer to the boolean value of the 
  * charging status. 1 (true) if it is currently charging, 0 (false)

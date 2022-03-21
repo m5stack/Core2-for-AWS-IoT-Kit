@@ -259,9 +259,7 @@ esp_err_t core2foraws_wifi_prov_ble_init( void )
         err = xSemaphoreTake( _s_service_name_mutex, portMAX_DELAY );
         if (  err == pdTRUE )
         {
-            ESP_LOGI( _s_TAG, "\n\n%d\n%s\n%s\n\n", security, PROV_POP, service_name );
             err = wifi_prov_mgr_start_provisioning( security, PROV_POP, service_name, service_key );
-            ESP_LOGI( _s_TAG, "\n\n%d\n\n", !err );
             xSemaphoreGive( _s_service_name_mutex );
         }
         else
