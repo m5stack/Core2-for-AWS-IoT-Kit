@@ -97,7 +97,7 @@ typedef enum
  * brightness.
  */
 /* @[declare_core2foraws_power_display_backlight_start] */
-#define DISPLAY_BACKLIGHT_START         80U
+#define DISPLAY_BACKLIGHT_START         90U
 /* @[declare_core2foraws_power_display_backlight_start] */
 #endif
 
