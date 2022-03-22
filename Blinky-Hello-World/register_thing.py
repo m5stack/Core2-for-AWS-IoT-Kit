@@ -35,14 +35,7 @@ cwd = os.getcwd()
 env.AutodetectUploadPort()
 
 def install_dependencies():
-    if platform.system() == 'Darwin' and platform.processor() == 'arm':
-        rc = subprocess.call(['which', 'cmake'])
-        if rc != 0:
-            print('CMake is not installed! This is required for M1 Macs. Please install from https://github.com/Kitware/CMake/releases/download/v3.22.3/cmake-3.22.3-macos-universal.dmg')
-            sys.exit()
-        subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements-m1.txt') ] )
-    else:
-        subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements.txt') ] )
+    subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements.txt') ] )
 
 install_dependencies()
 
