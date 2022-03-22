@@ -41,7 +41,8 @@ esp_err_t core2foraws_common_error( int8_t error_code )
 
     ESP_LOGV( _s_TAG, "Original error code: %d", error_code );
     
-    if ( error_code != 0 ){
+    if ( error_code != 0 )
+    {
         ret = ESP_FAIL;
     }
     return ret;

@@ -70,7 +70,8 @@ static void button_press_task( void *pvParameters )
         xQueueReceive( ft6x36_touch_queue_handle, &touch_received, 0 );
         for ( uint8_t i = 0; i < sizeof( _s_touch_buttons ) / sizeof ( _s_touch_buttons[ 0 ] ); i++ )
         {
-            if ( xSemaphoreTake(_s_button_mutex, portMAX_DELAY) == pdPASS ){
+            if ( xSemaphoreTake(_s_button_mutex, portMAX_DELAY) == pdPASS )
+            {
                 bool touched = ( touch_received.current_state == LV_INDEV_STATE_PR ) & 
                                 !((touch_received.last_x < _s_touch_buttons[ i ].x) || 
                                 (touch_received.last_x > (_s_touch_buttons[ i ].x + _s_touch_buttons[ i ].w)) || 

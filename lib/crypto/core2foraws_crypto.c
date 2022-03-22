@@ -153,7 +153,8 @@ esp_err_t core2foraws_crypto_pubkey_base64_get( char *public_key )
     uint8_t pubkey[ ATCA_PUB_KEY_SIZE ];
 
     err |= atcab_get_pubkey( 0, pubkey );
-    if (err != ATCA_SUCCESS){
+    if ( err != ATCA_SUCCESS )
+    {
         ESP_LOGE( _s_TAG, "\tFailed to get public key from ATECC608. atcab_get_pubkey returned %x", err );
         return core2foraws_common_error( err );
     }
@@ -211,7 +212,7 @@ esp_err_t core2foraws_crypto_sha256_verify( const unsigned char *message, const 
         return core2foraws_common_error( mbed_err );
     }
 
-    mbed_err |= mbedtls_pk_verify(&pkey, MBEDTLS_MD_SHA256, message, 0, signature, signature_length);
+    mbed_err |= mbedtls_pk_verify( &pkey, MBEDTLS_MD_SHA256, message, 0, signature, signature_length );
     
     if ( mbed_err != 0 )
     {

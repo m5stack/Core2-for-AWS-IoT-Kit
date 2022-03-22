@@ -236,7 +236,8 @@ esp_err_t core2foraws_expports_digital_read( gpio_num_t pin, bool *level );
  *
  *  static const char *TAG = "MAIN_DIGITAL_WRITE_DEMO";
  *
- *  void pin_write_task(){
+ *  void pin_write_task()
+ *  {
  *      bool output = 0;
  *      for( ;; )
  *      {

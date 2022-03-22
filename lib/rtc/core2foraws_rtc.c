@@ -135,7 +135,8 @@ esp_err_t core2foraws_rtc_timer_clear( void )
     bm8563_t* bm8563_i2c_device = ( bm8563_t * )RTC_I2C;
     uint8_t tmp = 0x00;
     bm8563_err_t err = bm8563_ioctl( bm8563_i2c_device, BM8563_TIMER_CONTROL_WRITE, &tmp );
-    if (err == BM8563_OK){
+    if ( err == BM8563_OK )
+    {
         bm8563_ioctl( bm8563_i2c_device, BM8563_TIMER_WRITE, &tmp );
         err = bm8563_ioctl( bm8563_i2c_device, BM8563_CONTROL_STATUS2_WRITE, &tmp );
     }
