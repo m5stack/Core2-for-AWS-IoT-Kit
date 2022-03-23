@@ -88,12 +88,14 @@ esp_err_t core2foraws_rtc_init( void );
  * 
  *  void app_main( void )
  *  {
- *      struct tm datetime;
+ *      struct tm *datetime;
+ * 		char buffer[ 26 ];
  *      
  *      core2foraws_init();
- *      core2foraws_rtc_time_get( &datetime );
- *      ESP_LOGI( TAG, "\tDate: %d-%02d-%02d Time: %02d:%02d:%02d",
- *          datetime.year, datetime.month, datetime.day, datetime.hour, datetime.minute, datetime.second );
+ *      core2foraws_rtc_time_get( datetime );
+ * 
+ *      strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", datetime);
+ * 		ESP_LOGI( TAG, "\tCurrent date time %s\n", buffer );
  *  }
  
  * @endcode
@@ -139,7 +141,7 @@ esp_err_t core2foraws_rtc_time_get( struct tm *time );
  *      {
  *          char buffer[ 128 ];
  *          strftime( buffer, 128 ,"%c (day %j)" , &datetime );
-	        ESP_LOGI( TAG, "\tCurrent time: %s\n", buffer );
+	        ESP_LOGI( TAG, "\tCurrent date time: %s\n", buffer );
  *      }
  *  }
  
