@@ -102,7 +102,7 @@ static uint8_t _s_core2foraws_expports_get_index( gpio_num_t pin )
         return 2;
     else if ( pin == PORT_B_DAC_PIN )
         return 3;
-    else if( PORT_C_UART_TX_PIN )
+    else if ( PORT_C_UART_TX_PIN )
         return 4;
     else if ( PORT_C_UART_RX_PIN )
         return 5;
@@ -395,7 +395,7 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
         err = ESP_ERR_INVALID_ARG;
         *was_written_length = 0;
     }
-    else{
+    else {
         err = ESP_OK;
         *was_written_length = ( size_t ) txBytes;
     }

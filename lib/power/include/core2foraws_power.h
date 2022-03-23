@@ -300,7 +300,7 @@ esp_err_t core2foraws_power_batt_current_get( float *m_amps );
  *      bool charge_status;
  *      core2foraws_power_charging_get( &charge_status );
  *      
- *      if( charge_status)
+ *      if ( charge_status )
  *      {
  *          ESP_LOGI( TAG, "Battery is being charged" );
  *      }

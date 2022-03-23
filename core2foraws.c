@@ -42,7 +42,7 @@ esp_err_t core2foraws_init( void )
 
 #ifdef CONFIG_SOFTWARE_BSP_SUPPORT
     err = core2foraws_power_init();
-    if( err != ESP_OK)
+    if ( err != ESP_OK)
         ESP_LOGE( TAG, "\tError initializing power. Error 0x%x", err);
     ret |= err;
 #else
@@ -52,49 +52,49 @@ esp_err_t core2foraws_init( void )
 
 #ifdef CONFIG_SOFTWARE_WIFI_SUPPORT
     err = core2foraws_wifi_prov_ble_init();
-    if( err != ESP_OK)
+    if ( err != ESP_OK)
         ESP_LOGE( TAG, "\tError initializing Wi-Fi provisioning over BLE. Error 0x%x", err);
     ret |= err;
 #endif
 
 #ifdef CONFIG_SOFTWARE_DISPLAY_SUPPORT
     err = core2foraws_display_init();
-    if( err != ESP_OK)
+    if ( err != ESP_OK)
         ESP_LOGE( TAG, "\tError initializing display. Error 0x%x", err);
     ret |= err;
 #endif
 
 #ifdef CONFIG_SOFTWARE_MOTION_SUPPORT
     err = core2foraws_motion_init();
-    if( err != ESP_OK)
+    if ( err != ESP_OK)
         ESP_LOGE( TAG, "\tError initializing motion sensor. Error 0x%x", err);
     ret |= err;
 #endif
 
 #ifdef CONFIG_SOFTWARE_RTC_SUPPORT
     err = core2foraws_rtc_init();
-    if( err != ESP_OK)
+    if ( err != ESP_OK)
         ESP_LOGE( TAG, "\tError initializing real time clock. Error 0x%x", err);
     ret |= err;
 #endif
 
 #ifdef CONFIG_SOFTWARE_CRYPTO_SUPPORT
     err = core2foraws_crypto_init();
-    if( err != ESP_OK)
+    if ( err != ESP_OK)
         ESP_LOGE( TAG, "\tError initializing secure element (crypto chip). Error 0x%x", err);
     ret |= err;
 #endif
 
 #ifdef CONFIG_SOFTWARE_RGB_LED_SUPPORT
     err = core2foraws_rgb_led_init();
-    if( err != ESP_OK)
+    if ( err != ESP_OK)
         ESP_LOGE( TAG, "\tError initializing rgb leds. Error 0x%x", err);
     ret |= err;
 #endif
 
 #ifdef CONFIG_SOFTWARE_BUTTON_SUPPORT
     err = core2foraws_button_init();
-    if( err != ESP_OK)
+    if ( err != ESP_OK)
         ESP_LOGE( TAG, "\tError initializing button. Error 0x%x", err);
     ret |= err;
 #endif

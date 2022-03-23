@@ -124,7 +124,8 @@ esp_err_t core2foraws_crypto_serial_get( char *serial_number )
     {
         ESP_LOGE( _s_TAG, "\tFailed to read ATECC608 serial number. atcab_read_serial_number returned %x", err );
     }
-    else{
+    else
+    {
         for ( size_t i = 0; i < ATCA_SERIAL_NUM_SIZE; i++ )
         {
             sprintf( serial_number + i * 2, "%02X", serial[ i ] );

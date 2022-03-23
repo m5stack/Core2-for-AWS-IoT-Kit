@@ -192,11 +192,11 @@ esp_err_t core2foraws_rtc_time_set( const struct tm time );
  *      core2foraws_rtc_time_get( &datetime );
  *      
  *      
- *      if( datetime.tm_min == 59 )
+ *      if ( datetime.tm_min == 59 )
  *      {
  *          alarm_time.tm_hour = datetime.tm_hour + 1;
  *          alarm_time.tm_min = 0;
- *          if( alarm_time.tm_hour == 25 )
+ *          if ( alarm_time.tm_hour == 25 )
  *              alarm_time.tm_hour = 0;
  *      }
  *      else
@@ -213,7 +213,7 @@ esp_err_t core2foraws_rtc_time_set( const struct tm time );
  *      alarm_time = { 0 };
  * 
  *      err = core2foraws_rtc_alarm_get( &alarm_time );
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  * 		    ESP_LOGI( TAG, "\tAlarm set for hour %d, minute %d, on the %d day of week, %d day of month\n", 
  *              alarm_time.tm_hour, alarm_time.tm_min, alarm_time.tm_wday, alarm_time.tm_mday );
  *  }
@@ -266,11 +266,11 @@ esp_err_t core2foraws_rtc_alarm_get( struct tm *alarm_time );
  *      core2foraws_rtc_time_get( &datetime );
  *      
  *      
- *      if( datetime.tm_min == 59 )
+ *      if ( datetime.tm_min == 59 )
  *      {
  *          alarm_time.tm_hour = datetime.tm_hour + 1;
  *          alarm_time.tm_min = 0;
- *          if( alarm_time.tm_hour == 25 )
+ *          if ( alarm_time.tm_hour == 25 )
  *              alarm_time.tm_hour = 0;
  *      }
  *      else
@@ -287,7 +287,7 @@ esp_err_t core2foraws_rtc_alarm_get( struct tm *alarm_time );
  *      alarm_time = { 0 };
  * 
  *      err = core2foraws_rtc_alarm_get( &alarm_time );
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  * 		    ESP_LOGI( TAG, "\tAlarm set for hour %d, minute %d, on the %d day of week, %d day of month\n", 
  *              alarm_time.tm_hour, alarm_time.tm_min, alarm_time.tm_wday, alarm_time.tm_mday );
  *  }
@@ -331,7 +331,7 @@ esp_err_t core2foraws_rtc_alarm_set( struct tm alarm_time );
  *      for ( ;; )
  *      {
  *          core2foraws_rtc_alarm_triggered( &alarm_status );
- *          if( alarm_status == true )
+ *          if ( alarm_status == true )
  *          {
  *              ESP_LOGI( TAG, "\tAlarm has been triggered!" );
  *              core2foraws_rtc_alarm_clear();
@@ -349,11 +349,11 @@ esp_err_t core2foraws_rtc_alarm_set( struct tm alarm_time );
  *      core2foraws_rtc_time_get( &datetime );
  *      
  *      
- *      if( datetime.tm_min == 59 )
+ *      if ( datetime.tm_min == 59 )
  *      {
  *          alarm_time.tm_hour = datetime.tm_hour + 1;
  *          alarm_time.tm_min = 0;
- *          if( alarm_time.tm_hour == 25 )
+ *          if ( alarm_time.tm_hour == 25 )
  *              alarm_time.tm_hour = 0;
  *      }
  *      else
@@ -370,7 +370,7 @@ esp_err_t core2foraws_rtc_alarm_set( struct tm alarm_time );
  *      alarm_time = { 0 };
  * 
  *      err = core2foraws_rtc_alarm_get( &alarm_time );
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  * 		    ESP_LOGI( TAG, "\tAlarm set for hour %d, minute %d, on the %d day of week, %d day of month\n", 
  *              alarm_time.tm_hour, alarm_time.tm_min, alarm_time.tm_wday, alarm_time.tm_mday );
  * 
@@ -419,7 +419,7 @@ esp_err_t core2foraws_rtc_alarm_triggered( bool *state );
  *      for ( ;; )
  *      {
  *          core2foraws_rtc_alarm_triggered( &alarm_status );
- *          if( alarm_status == true )
+ *          if ( alarm_status == true )
  *          {
  *              ESP_LOGI( TAG, "\tAlarm has been triggered!" );
  *              core2foraws_rtc_alarm_clear();
@@ -437,11 +437,11 @@ esp_err_t core2foraws_rtc_alarm_triggered( bool *state );
  *      core2foraws_rtc_time_get( &datetime );
  *      
  *      
- *      if( datetime.tm_min == 59 )
+ *      if ( datetime.tm_min == 59 )
  *      {
  *          alarm_time.tm_hour = datetime.tm_hour + 1;
  *          alarm_time.tm_min = 0;
- *          if( alarm_time.tm_hour == 25 )
+ *          if ( alarm_time.tm_hour == 25 )
  *              alarm_time.tm_hour = 0;
  *      }
  *      else
@@ -458,7 +458,7 @@ esp_err_t core2foraws_rtc_alarm_triggered( bool *state );
  *      alarm_time = { 0 };
  * 
  *      err = core2foraws_rtc_alarm_get( &alarm_time );
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  * 		    ESP_LOGI( TAG, "\tAlarm set for hour %d, minute %d, on the %d day of week, %d day of month\n", 
  *              alarm_time.tm_hour, alarm_time.tm_min, alarm_time.tm_wday, alarm_time.tm_mday );
  * 

@@ -169,7 +169,7 @@ static void _s_wifi_prov_qr_print( void )
 {
     char provisioning_payload[ WIFI_PROV_STR_LEN ] = { 0 };
 
-    if( core2foraws_wifi_prov_str_get( provisioning_payload ) == ESP_OK )
+    if ( core2foraws_wifi_prov_str_get( provisioning_payload ) == ESP_OK )
     {
         ESP_LOGI( _s_TAG, "\tScan this QR code from the provisioning application for Wi-Fi provisioning." );
         esp_qrcode_config_t cfg = ESP_QRCODE_CONFIG_DEFAULT();

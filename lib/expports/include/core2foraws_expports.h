@@ -188,7 +188,7 @@ extern "C" {
  *  {
  *      core2foraws_init();
  * 
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  *      {
  *          xTaskCreatePinnedToCore( pin_read_task, "read_pin", 1024*3, NULL, 1, NULL, 1 );
  *      }
@@ -244,7 +244,7 @@ esp_err_t core2foraws_expports_digital_read( gpio_num_t pin, bool *level );
  *          esp_err_t err = ESP_FAIL;
  *          
  *          err = core2foraws_expports_digital_write( GPIO_NUM_26, output );
- *          if( err == ESP_OK )
+ *          if ( err == ESP_OK )
  *              ESP_LOGI( TAG, "\tOutput on GPIO %d: %s", GPIO_NUM_26, output ? "HIGH" : "LOW" );
  *
  *          output = !output;
@@ -349,14 +349,14 @@ esp_err_t core2foraws_expports_pin_reset( gpio_num_t pin );
  *      
  *      err = core2foraws_expports_i2c_begin();
  *      
- *      if( err == ESP_OK)
+ *      if ( err == ESP_OK)
  *      {
  *          uint8_t heart_rate = 255;
  * 
  *          for( ;; )
  *          {
  *              err = core2foraws_expports_i2c_read( DEVICE_ADDRESS, I2C_NO_REG, &heart_rate, 1 );
- *              if( !err )
+ *              if ( !err )
  *              {
  *                  ESP_LOGI(TAG, "Heart Rate — %ubpm", heart_rate);    
  *              }
@@ -429,14 +429,14 @@ esp_err_t core2foraws_expports_i2c_begin( void );
  *      
  *      err = core2foraws_expports_i2c_begin();
  *      
- *      if( err == ESP_OK)
+ *      if ( err == ESP_OK)
  *      {
  *          uint8_t heart_rate = 255;
  * 
  *          for( ;; )
  *          {
  *              err = core2foraws_expports_i2c_read( DEVICE_ADDRESS, I2C_NO_REG, &heart_rate, 1 );
- *              if( !err )
+ *              if ( !err )
  *              {
  *                  ESP_LOGI(TAG, "Heart Rate — %ubpm", heart_rate);    
  *              }
@@ -509,7 +509,7 @@ esp_err_t core2foraws_expports_i2c_read( uint16_t device_address, uint32_t regis
  *      const uint8_t write_byte = 0x01;
  *      
  *      err = core2foraws_expports_i2c_begin();
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  *      {
  *          core2foraws_expports_i2c_write( DEVICE_ADDRESS, register_address, &write_byte, sizeof( write_byte ) )
  *      }
@@ -571,14 +571,14 @@ esp_err_t core2foraws_expports_i2c_write( uint16_t device_address, uint32_t regi
  *      
  *      err = core2foraws_expports_i2c_begin();
  *      
- *      if( err == ESP_OK)
+ *      if ( err == ESP_OK)
  *      {
  *          uint8_t heart_rate = 255;
  * 
  *          for( ;; )
  *          {
  *              err = core2foraws_expports_i2c_read( DEVICE_ADDRESS, I2C_NO_REG, &heart_rate, 1 );
- *              if( !err )
+ *              if ( !err )
  *              {
  *                  ESP_LOGI(TAG, "Heart Rate — %ubpm", heart_rate);    
  *              }
@@ -833,7 +833,7 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts );
  *      core2foraws_init();
  *      esp_err_t err = ESP_FAIL;
  *      err = core2foraws_expports_uart_begin( 115200 );
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  *      {
  *          xTaskCreatePinnedToCore( uart_rx_task, "uart_rx", 1024*2, NULL, configMAX_PRIORITIES-2, NULL, 1);
  *          xTaskCreatePinnedToCore( uart_tx_task, "uart_tx", 1024*2, NULL, configMAX_PRIORITIES-3, NULL, 1);
@@ -929,7 +929,7 @@ esp_err_t core2foraws_expports_uart_begin( uint32_t baud );
  *      core2foraws_init();
  *      esp_err_t err = ESP_FAIL;
  *      err = core2foraws_expports_uart_begin( 115200 );
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  *      {
  *          xTaskCreatePinnedToCore( uart_rx_task, "uart_rx", 1024*2, NULL, configMAX_PRIORITIES-2, NULL, 1);
  *          xTaskCreatePinnedToCore( uart_tx_task, "uart_tx", 1024*2, NULL, configMAX_PRIORITIES-3, NULL, 1);
@@ -1030,7 +1030,7 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
  *      core2foraws_init();
  *      esp_err_t err = ESP_FAIL;
  *      err = core2foraws_expports_uart_begin( 115200 );
- *      if( err == ESP_OK )
+ *      if ( err == ESP_OK )
  *      {
  *          xTaskCreatePinnedToCore( uart_rx_task, "uart_rx", 1024*2, NULL, configMAX_PRIORITIES-2, NULL, 1);
  *          xTaskCreatePinnedToCore( uart_tx_task, "uart_tx", 1024*2, NULL, configMAX_PRIORITIES-3, NULL, 1);
