@@ -390,12 +390,13 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
     int txBytes = 0;
 
     txBytes = uart_write_bytes( PORT_C_UART_NUM, message, length );
-    if( txBytes == -1 )
+    if ( txBytes == -1 )
     {
         err = ESP_ERR_INVALID_ARG;
         *was_written_length = 0;
     }
-    else {
+    else
+    {
         err = ESP_OK;
         *was_written_length = ( size_t ) txBytes;
     }
