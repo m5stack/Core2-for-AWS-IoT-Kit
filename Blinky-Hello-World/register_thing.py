@@ -35,6 +35,7 @@ cwd = os.getcwd()
 env.AutodetectUploadPort()
 
 def install_dependencies():
+    os.environ["CRYPTOAUTHLIB_NOUSB"] = "1"
     subprocess.check_call( [ env.get( 'PYTHONEXE' ), '-m', 'pip', 'install', '--no-cache-dir', '-r',  os.path.join( cwd, 'utilities', 'AWS_IoT_registration_helper', 'requirements.txt') ] )
 
 install_dependencies()
