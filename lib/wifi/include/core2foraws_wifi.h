@@ -148,9 +148,9 @@ esp_err_t core2foraws_wifi_prov_ble_init( void );
 /* @[declare_core2foraws_wifi_connect] */
 
 /**
- * @brief Disconnects from Wi-Fi access point.
+ * @brief Deinitializes the Wi-Fi driver.
  * This function will disconnect from the Wi-Fi network and free up 
- * resources that was allocated.
+ * resources that were allocated for the Wi-Fi stack.
  * 
  * **Example:**
  * 
@@ -171,7 +171,7 @@ esp_err_t core2foraws_wifi_prov_ble_init( void );
  * 
  *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
  * 
- *      esp_err_t err = core2foraws_wifi_reset();
+ *      esp_err_t err = core2foraws_wifi_deinit();
  *      ESP_LOGI( TAG, "\tWi-Fi reset returned %d", err );
  *  }
  * @endcode
@@ -180,9 +180,105 @@ esp_err_t core2foraws_wifi_prov_ble_init( void );
  *  - ESP_OK                : Success
  *  - ESP_ERR_WIFI_NOT_INIT : WiFi is not initialized
  */
+/* @[declare_core2foraws_wifi_deinit] */
+esp_err_t core2foraws_wifi_deinit( void );
+/* @[declare_core2foraws_wifi_deinit] */
+
+/**
+ * @brief Disconnect the device from the Wi-Fi AP.
+ * 
+ * A return of `ESP_OK` does not mean that the device is disconnected, it 
+ * means that the configuration is suitable for a disconnection attempt. Use 
+ * FreeRTOS event groups and the @ref WIFI_DISCONNECTED_BIT to monitor if the 
+ * device is freed from the Wi-Fi network.
+ * 
+ * **Example:**
+ * 
+ * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), 
+ * which is already provisioned and connected to an available network. Wait 5 
+ * seconds and disconnect from the Wi-Fi network.
+ * @code{c}
+ *  #include <stdint.h>
+ *  #include <esp_log.h>
+ *  #include <freertos/FreeRTOS.h>
+ * 
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_WIFI_DEMO";
+ * 
+ *  void app_main( void )
+ *  {   
+ *      core2foraws_init();
+ * 
+ *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+ * 
+ *      esp_err_t err core2foraws_wifi_disconnect();
+ * 
+ *      ESP_LOGI( TAG, "\tWi-Fi disconnect returned %d", err );
+ *  }
+ * @endcode
+ *
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 
+ *  - ESP_OK                    : Success
+ *  - ESP_ERR_WIFI_NOT_INIT     : WiFi is not initialized
+ *  - ESP_ERR_WIFI_NOT_STARTED  : WiFi is not started by esp_wifi_start
+ *  - ESP_FAIL                  : other WiFi internal errors
+ */
 /* @[declare_core2foraws_wifi_disconnect] */
 esp_err_t core2foraws_wifi_disconnect( void );
 /* @[declare_core2foraws_wifi_disconnect] */
+
+/**
+ * @brief Connect to the configured Wi-Fi AP.
+ * This function connects to the Wi-Fi network already configured during the
+ * provisioning process. If the device hadn't successfully connected to an
+ * access point already, this function will return an error.
+ * 
+ * A return of `ESP_OK` does not mean that the device is connected, it means
+ * that the configuration is suitable for a connection attempt. Use FreeRTOS
+ * event groups and the @ref WIFI_CONNECTED_BIT to monitor if the device is
+ * connected to the Wi-Fi network.
+ * 
+ * **Example:**
+ * 
+ * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), 
+ * which is already provisioned to an available network. Wait 5 seconds, 
+ * disconnect from the Wi-Fi network, then after another 5 seconds, reconnect.
+ * @code{c}
+ *  #include <stdint.h>
+ *  #include <esp_log.h>
+ *  #include <freertos/FreeRTOS.h>
+ * 
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_WIFI_DEMO";
+ * 
+ *  void app_main( void )
+ *  {   
+ *      core2foraws_init();
+ * 
+ *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+ * 
+ *      core2foraws_wifi_disconnect();
+ * 
+ *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+ * 
+ *      esp_err_t err = core2foraws_wifi_connect();
+ * 
+ *      ESP_LOGI( TAG, "\tWi-Fi connect returned %d", err );
+ *  }
+ * @endcode
+ *
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros). 
+ *  - ESP_OK                    : Success
+ *  - ESP_ERR_WIFI_NOT_INIT     : WiFi is not initialized
+ *  - ESP_ERR_WIFI_NOT_STARTED  : WiFi is not started by esp_wifi_start
+ *  - ESP_ERR_WIFI_CONN         : WiFi internal error, station or soft-AP control block wrong
+ *  - ESP_ERR_WIFI_SSID         : SSID of AP which station connects is invalid
+ */
+/* @[declare_core2foraws_wifi_connect] */
+esp_err_t core2foraws_wifi_connect( void );
+/* @[declare_core2foraws_wifi_connect] */
 
 /**
  * @brief Reset internal Wi-Fi state machine and clear provisioned credentials.

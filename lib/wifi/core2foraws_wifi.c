@@ -280,7 +280,7 @@ esp_err_t core2foraws_wifi_prov_ble_init( void )
     return err;
 }
 
-esp_err_t core2foraws_wifi_disconnect( void )
+esp_err_t core2foraws_wifi_deinit( void )
 {
     esp_err_t err = ESP_OK;
     ESP_ERROR_CHECK( esp_event_handler_unregister( IP_EVENT, ESP_EVENT_ANY_ID, &_s_on_got_ip ) );
@@ -301,6 +301,16 @@ esp_err_t core2foraws_wifi_disconnect( void )
     _s_wifi_netif = NULL;
 
     return err;
+}
+
+esp_err_t core2foraws_wifi_disconnect( void )
+{
+    return esp_wifi_disconnect()
+}
+
+esp_err_t core2foraws_wifi_connect( void )
+{
+    return esp_wifi_connect();
 }
 
 esp_err_t core2foraws_wifi_reset( void )
