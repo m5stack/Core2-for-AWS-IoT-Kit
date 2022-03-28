@@ -128,7 +128,7 @@ static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mo
             err = gpio_config( &io_conf );
             if ( err != ESP_OK )
             {
-                ESP_LOGE( _s_TAG, "\tError configuring GPIO %d as ouput. Error code: 0x%x.", pin, err);
+                ESP_LOGE( _s_TAG, "\tError configuring GPIO %d as ouput. Error code: 0x%x.", pin, err );
             }
         } 
         else
@@ -170,14 +170,14 @@ static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mo
         err = uart_driver_install(PORT_C_UART_NUM, UART_RX_BUF_SIZE, 0, 0, NULL, 0);
         if ( err != ESP_OK )
         {
-            ESP_LOGE( _s_TAG, "\tUART driver installation failed for UART num %d. Error code: 0x%x.", PORT_C_UART_NUM, err);
+            ESP_LOGE( _s_TAG, "\tUART driver installation failed for UART num %d. Error code: 0x%x.", PORT_C_UART_NUM, err );
             return err;
         }
 
         err = uart_set_pin(PORT_C_UART_NUM, PORT_C_UART_TX_PIN, PORT_C_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
         if ( err != ESP_OK )
         {
-            ESP_LOGE( _s_TAG, "\tFailed to set pins %d, %d, to  UART%d. Error code: 0x%x.", PORT_C_UART_RX_PIN, PORT_C_UART_TX_PIN, PORT_C_UART_NUM, err);
+            ESP_LOGE( _s_TAG, "\tFailed to set pins %d, %d, to  UART%d. Error code: 0x%x.", PORT_C_UART_RX_PIN, PORT_C_UART_TX_PIN, PORT_C_UART_NUM, err );
         }
     }
     else if ( mode == NONE )

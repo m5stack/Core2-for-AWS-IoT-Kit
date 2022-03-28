@@ -60,7 +60,7 @@ esp_err_t core2foraws_rtc_time_set( const struct tm time )
     bm8563_t* bm8563_i2c_device = ( bm8563_t * )RTC_I2C;
     bm8563_err_t err = bm8563_write( bm8563_i2c_device, &time );
 
-    return core2foraws_common_error(err);
+    return core2foraws_common_error(err );
 }
 
 esp_err_t core2foraws_rtc_alarm_get( struct tm *alarm_time )
