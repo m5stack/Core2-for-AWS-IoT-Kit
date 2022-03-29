@@ -305,7 +305,7 @@ esp_err_t core2foraws_wifi_deinit( void )
 
 esp_err_t core2foraws_wifi_disconnect( void )
 {
-    return esp_wifi_disconnect()
+    return esp_wifi_disconnect();
 }
 
 esp_err_t core2foraws_wifi_connect( void )

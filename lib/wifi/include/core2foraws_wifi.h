@@ -143,9 +143,9 @@ EventGroupHandle_t wifi_event_group;
  *  - ESP_ERR_WIFI_CONN     : Internal error, station or soft-AP control block wrong
  *  - ESP_FAIL              : Failed to connect to Wi-Fi or start up the provisioning manager.
  */
-/* @[declare_core2foraws_wifi_connect] */
+/* @[declare_core2foraws_wifi_prov_ble_init] */
 esp_err_t core2foraws_wifi_prov_ble_init( void );
-/* @[declare_core2foraws_wifi_connect] */
+/* @[declare_core2foraws_wifi_prov_ble_init] */
 
 /**
  * @brief Deinitializes the Wi-Fi driver.
@@ -231,7 +231,7 @@ esp_err_t core2foraws_wifi_disconnect( void );
 /**
  * @brief Connect to the configured Wi-Fi AP.
  * This function connects to the Wi-Fi network already configured during the
- * provisioning process. If the device hadn't successfully connected to an
+ * provisioning process. If the device hasn't successfully connected to an
  * access point already, this function will return an error.
  * 
  * A return of `ESP_OK` does not mean that the device is connected, it means
