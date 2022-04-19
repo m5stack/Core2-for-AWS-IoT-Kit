@@ -25,6 +25,7 @@ import sys
 import argparse
 import subprocess
 import platform
+import shutil
 
 Import("env")
 
@@ -169,6 +170,9 @@ def generate_signer_certificate():
         signer_cert_file.write(signer_cert_pem)
     print(f"Successfully created x.509 certificate with expiration in {days_to_expire} days...")
 
+def delete_build_files():
+    shutil.rmtree( os.path.join( cwd, ".pio" ) )
+    os.remove( os.path.join( cwd, "sdkconfig" ) )
 
 def upload_manifest():
     """Uses Microchip TrustPlatform to register an AWS IoT thing
@@ -194,10 +198,10 @@ class manifest_args:
     manifest.port = device_port
 
 def move_temp_files():   
-    Path( os.path.join( temp_folder, "device_cert.pem" ) ).rename( os.path.join( dest_folder, "device_cert.pem" ) )
+    shutil.move( os.path.join( temp_folder, "device_cert.pem" ), os.path.join( dest_folder, "device_cert.pem" ) )
     for file in os.listdir( temp_folder ):
         if re.match( "\w+(\_manifest.json)", file ):
-            Path( os.path.join( temp_folder, file ) ).rename( os.path.join( dest_folder, file ) )
+            shutil.move( os.path.join( temp_folder, file ), os.path.join( dest_folder, file ) )
     os.rmdir( temp_folder )
 
 def create_device_cert_and_manifest():
@@ -241,7 +245,8 @@ actions=[
     # ),
     create_device_cert_and_manifest(),
     move_temp_files(),
-    upload_manifest()
+    upload_manifest(),
+    delete_build_files()
 ],
 title="AWS IoT Registration",
 description="Registers the thing to AWS IoT, attaches the certificate pulled from the secure element to \
