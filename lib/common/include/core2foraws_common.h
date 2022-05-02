@@ -61,15 +61,14 @@ extern "C" {
 
 /**
  * @brief FreeRTOS semaphore to be used when performing any
- * operation on the display.
+ * operation on the display or SD card reader.
+ * 
+ * The display and SD card share a SPI bus.
  *
  * @note To avoid conflicts with multiple threads attempting to
- * write to the display, take this FreeRTOS semaphore first,
+ * write to the SPI bus, take this FreeRTOS semaphore first,
  * use the [LVGL API(s)](https://docs.lvgl.io/7.11/overview/index.html)
- * of choice, and then give the semaphore.
- * The FreeRTOS task, guiTask(), will write to the ILI9342C display
- * controller to update the display once it is in the running
- * state.
+ * or SD APIs of choice, and then give the semaphore.
  *
  * **Example:**
  *
