@@ -74,7 +74,7 @@ struct
 {
     gpio_num_t pin;
     pin_mode_t mode;
-} static _s_port_pins[] = 
+} static _port_pins[] = 
 {
     { PORT_A_SDA_PIN, NONE },
     { PORT_A_SCL_PIN, NONE },
@@ -84,15 +84,15 @@ struct
     { PORT_C_UART_RX_PIN, NONE }
 };
 
-static esp_adc_cal_characteristics_t *_s_adc_characterization;
+static esp_adc_cal_characteristics_t *_adc_characterization;
 
-static const char *_s_TAG = "CORE2FORAWS_EXPPORT";
+static const char *_TAG = "CORE2FORAWS_EXPPORT";
 
-static uint8_t _s_core2foraws_expports_get_index( gpio_num_t pin );
-static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode );
-static esp_err_t _s_core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t mode );
+static uint8_t _core2foraws_expports_get_index( gpio_num_t pin );
+static esp_err_t _core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode );
+static esp_err_t _core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t mode );
 
-static uint8_t _s_core2foraws_expports_get_index( gpio_num_t pin )
+static uint8_t _core2foraws_expports_get_index( gpio_num_t pin )
 {
     if ( pin  == PORT_A_SDA_PIN )
         return 0;
@@ -110,7 +110,7 @@ static uint8_t _s_core2foraws_expports_get_index( gpio_num_t pin )
     return 0xFF;
 }
 
-static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode )
+static esp_err_t _core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode )
 {
     esp_err_t err = ESP_FAIL;
 
@@ -128,7 +128,7 @@ static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mo
             err = gpio_config( &io_conf );
             if ( err != ESP_OK )
             {
-                ESP_LOGE( _s_TAG, "\tError configuring GPIO %d as ouput. Error code: 0x%x.", pin, err );
+                ESP_LOGE( _TAG, "\tError configuring GPIO %d as ouput. Error code: 0x%x.", pin, err );
             }
         } 
         else
@@ -139,7 +139,7 @@ static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mo
             err = gpio_config( &io_conf );
             if ( err != ESP_OK )
             {
-                ESP_LOGE( _s_TAG, "\tError configuring GPIO %d as input. Error code: 0x%x.", pin, err );
+                ESP_LOGE( _TAG, "\tError configuring GPIO %d as input. Error code: 0x%x.", pin, err );
             }
         }  
     }
@@ -148,18 +148,18 @@ static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mo
         err = adc1_config_width( ADC_WIDTH );
         if ( err != ESP_OK )
         {
-            ESP_LOGE( _s_TAG, "\tError configuring ADC width on pin %d. Error code: 0x%x.", pin, err );
+            ESP_LOGE( _TAG, "\tError configuring ADC width on pin %d. Error code: 0x%x.", pin, err );
             return err;
         }
         
         err = adc1_config_channel_atten( ADC_CHANNEL, ADC_ATTENUATION );
         if ( err != ESP_OK )
         {
-            ESP_LOGE( _s_TAG, "\tError configuring ADC channel attenuation on pin %d. Error code: 0x%x.", pin, err );
+            ESP_LOGE( _TAG, "\tError configuring ADC channel attenuation on pin %d. Error code: 0x%x.", pin, err );
         }
         
-        _s_adc_characterization = heap_caps_calloc( 1, sizeof( esp_adc_cal_characteristics_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT );
-        esp_adc_cal_characterize( ADC_UNIT_1, ADC_ATTENUATION, ADC_WIDTH, DEFAULT_VREF, _s_adc_characterization );
+        _adc_characterization = heap_caps_calloc( 1, sizeof( esp_adc_cal_characteristics_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT );
+        esp_adc_cal_characterize( ADC_UNIT_1, ADC_ATTENUATION, ADC_WIDTH, DEFAULT_VREF, _adc_characterization );
     }
     else if ( mode == DAC )
     {
@@ -170,14 +170,14 @@ static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mo
         err = uart_driver_install(PORT_C_UART_NUM, UART_RX_BUF_SIZE, 0, 0, NULL, 0);
         if ( err != ESP_OK )
         {
-            ESP_LOGE( _s_TAG, "\tUART driver installation failed for UART num %d. Error code: 0x%x.", PORT_C_UART_NUM, err );
+            ESP_LOGE( _TAG, "\tUART driver installation failed for UART num %d. Error code: 0x%x.", PORT_C_UART_NUM, err );
             return err;
         }
 
         err = uart_set_pin(PORT_C_UART_NUM, PORT_C_UART_TX_PIN, PORT_C_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
         if ( err != ESP_OK )
         {
-            ESP_LOGE( _s_TAG, "\tFailed to set pins %d, %d, to  UART%d. Error code: 0x%x.", PORT_C_UART_RX_PIN, PORT_C_UART_TX_PIN, PORT_C_UART_NUM, err );
+            ESP_LOGE( _TAG, "\tFailed to set pins %d, %d, to  UART%d. Error code: 0x%x.", PORT_C_UART_RX_PIN, PORT_C_UART_TX_PIN, PORT_C_UART_NUM, err );
         }
     }
     else if ( mode == NONE )
@@ -191,18 +191,18 @@ static esp_err_t _s_core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mo
     return err;
 }
 
-static esp_err_t _s_core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t mode )
+static esp_err_t _core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t mode )
 {
     esp_err_t err = ESP_ERR_NOT_SUPPORTED;
 
     if ( pin != PORT_A_SDA_PIN && pin != PORT_A_SCL_PIN && pin != PORT_B_ADC_PIN && pin != PORT_B_DAC_PIN && pin != PORT_C_UART_RX_PIN && pin != PORT_C_UART_TX_PIN )
     {
-        ESP_LOGE( _s_TAG, "\tOnly Port A (GPIO 32 and 33), Port B (GPIO 26 and 36), and Port C (GPIO 13 and 14) are supported. Pin selected: %d", pin );
+        ESP_LOGE( _TAG, "\tOnly Port A (GPIO 32 and 33), Port B (GPIO 26 and 36), and Port C (GPIO 13 and 14) are supported. Pin selected: %d", pin );
         return err;
     }
     else if ( mode == OUTPUT && pin == GPIO_NUM_36 )
     {
-        ESP_LOGE( _s_TAG, "\tGPIO 36 does not support digital output" );
+        ESP_LOGE( _TAG, "\tGPIO 36 does not support digital output" );
         return err;
     }
     else 
@@ -210,21 +210,21 @@ static esp_err_t _s_core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t
         err = ESP_OK;
     }
 
-    uint8_t index = _s_core2foraws_expports_get_index( pin );
+    uint8_t index = _core2foraws_expports_get_index( pin );
 
-    if ( _s_port_pins[ index ].mode != mode || _s_port_pins[ index ].mode != NONE )
+    if ( _port_pins[ index ].mode != mode || _port_pins[ index ].mode != NONE )
     {
         err = ESP_ERR_INVALID_STATE;
-        ESP_LOGD( _s_TAG, "\tPin %d is currently set in a different mode. Resetting", pin );
+        ESP_LOGD( _TAG, "\tPin %d is currently set in a different mode. Resetting", pin );
         
-        _s_core2foraws_expports_pin_init( pin, NONE );
-        _s_port_pins[ index ].mode = NONE;
+        _core2foraws_expports_pin_init( pin, NONE );
+        _port_pins[ index ].mode = NONE;
     }
 
-    if ( _s_port_pins[ index ].mode == NONE && _s_port_pins[ index ].mode != mode )
+    if ( _port_pins[ index ].mode == NONE && _port_pins[ index ].mode != mode )
     {
-        _s_core2foraws_expports_pin_init( pin, mode );
-        _s_port_pins[ index ].mode = mode;
+        _core2foraws_expports_pin_init( pin, mode );
+        _port_pins[ index ].mode = mode;
     }
 
     return err; 
@@ -232,7 +232,7 @@ static esp_err_t _s_core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t
 
 esp_err_t core2foraws_expports_digital_read( gpio_num_t pin, bool *level )
 {
-    esp_err_t err = _s_core2foraws_expports_pin_handler( pin, INPUT );
+    esp_err_t err = _core2foraws_expports_pin_handler( pin, INPUT );
     if ( err == ESP_OK )
     {
         *level = gpio_get_level( pin );
@@ -243,7 +243,7 @@ esp_err_t core2foraws_expports_digital_read( gpio_num_t pin, bool *level )
 
 esp_err_t core2foraws_expports_digital_write( gpio_num_t pin, const bool level )
 {
-    esp_err_t err = _s_core2foraws_expports_pin_handler( pin, OUTPUT );
+    esp_err_t err = _core2foraws_expports_pin_handler( pin, OUTPUT );
     if ( err == ESP_OK )
     {
         err = gpio_set_level(pin, level);
@@ -254,13 +254,13 @@ esp_err_t core2foraws_expports_digital_write( gpio_num_t pin, const bool level )
 
 esp_err_t core2foraws_expports_pin_reset( gpio_num_t pin )
 {
-    return _s_core2foraws_expports_pin_handler( pin, NONE );
+    return _core2foraws_expports_pin_handler( pin, NONE );
 }
 
 esp_err_t core2foraws_expports_i2c_begin( void )
 {
-    _s_core2foraws_expports_pin_handler( PORT_A_SDA_PIN, I2C );
-    _s_core2foraws_expports_pin_handler( PORT_A_SCL_PIN, I2C );
+    _core2foraws_expports_pin_handler( PORT_A_SDA_PIN, I2C );
+    _core2foraws_expports_pin_handler( PORT_A_SCL_PIN, I2C );
 
     return i2c_manager_init( COMMON_I2C_EXTERNAL );
 }
@@ -277,14 +277,14 @@ esp_err_t core2foraws_expports_i2c_write( uint16_t device_address, uint32_t regi
 
 esp_err_t core2foraws_expports_i2c_close( void )
 {
-    _s_core2foraws_expports_pin_handler( PORT_A_SDA_PIN, NONE );
-    _s_core2foraws_expports_pin_handler( PORT_A_SCL_PIN, NONE );
+    _core2foraws_expports_pin_handler( PORT_A_SDA_PIN, NONE );
+    _core2foraws_expports_pin_handler( PORT_A_SCL_PIN, NONE );
     return i2c_manager_close( COMMON_I2C_EXTERNAL );
 }
 
 esp_err_t core2foraws_expports_adc_read( int *raw_adc_value )
 {
-    esp_err_t err = _s_core2foraws_expports_pin_handler( PORT_B_ADC_PIN, ADC );
+    esp_err_t err = _core2foraws_expports_pin_handler( PORT_B_ADC_PIN, ADC );
     if ( err == ESP_OK )
     {
         *raw_adc_value = adc1_get_raw(ADC_CHANNEL);
@@ -297,10 +297,10 @@ esp_err_t core2foraws_expports_adc_mv_read( uint32_t *adc_mvolts )
 {
     esp_err_t err = ESP_FAIL;
     
-    err = _s_core2foraws_expports_pin_handler( PORT_B_ADC_PIN, ADC );
+    err = _core2foraws_expports_pin_handler( PORT_B_ADC_PIN, ADC );
     if ( err == ESP_OK )
     {
-        err = esp_adc_cal_get_voltage(ADC_CHANNEL, _s_adc_characterization, adc_mvolts );
+        err = esp_adc_cal_get_voltage(ADC_CHANNEL, _adc_characterization, adc_mvolts );
     }
     
     return err;
@@ -310,7 +310,7 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts )
 {
     esp_err_t err = ESP_FAIL;
 
-    err = _s_core2foraws_expports_pin_handler( PORT_B_DAC_PIN, DAC );
+    err = _core2foraws_expports_pin_handler( PORT_B_DAC_PIN, DAC );
     if ( err == ESP_OK )
     {
         uint8_t duty = 0;
@@ -332,8 +332,8 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts )
 
 esp_err_t core2foraws_expports_uart_begin( uint32_t baud )
 {
-    _s_core2foraws_expports_pin_handler( PORT_C_UART_RX_PIN, UART );
-    _s_core2foraws_expports_pin_handler( PORT_C_UART_TX_PIN, UART );
+    _core2foraws_expports_pin_handler( PORT_C_UART_RX_PIN, UART );
+    _core2foraws_expports_pin_handler( PORT_C_UART_TX_PIN, UART );
 
     const uart_config_t uart_config = 
     {
@@ -348,7 +348,7 @@ esp_err_t core2foraws_expports_uart_begin( uint32_t baud )
     esp_err_t err = uart_param_config( PORT_C_UART_NUM, &uart_config );
     if ( err != ESP_OK )
     {
-        ESP_LOGE( _s_TAG, "\tFailed to configure UART%d with the provided configuration.", PORT_C_UART_NUM );
+        ESP_LOGE( _TAG, "\tFailed to configure UART%d with the provided configuration.", PORT_C_UART_NUM );
     }    
 
     return err;
@@ -363,7 +363,7 @@ esp_err_t core2foraws_expports_uart_read( uint8_t *message_buffer, size_t *was_r
     err = uart_get_buffered_data_len( PORT_C_UART_NUM, ( size_t* )&cached_buffer_length );
     if ( err != ESP_OK )
     {
-        ESP_LOGE( _s_TAG, "\tFailed to get UART ring buffer length. Check if pins were set to UART and has been configured." );
+        ESP_LOGE( _TAG, "\tFailed to get UART ring buffer length. Check if pins were set to UART and has been configured." );
         return err;
     }
 

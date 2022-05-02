@@ -48,46 +48,6 @@ extern "C" {
 #endif
 
 /**
- * @brief FreeRTOS semaphore to be used when performing any
- * operation on the display.
- *
- * @note To avoid conflicts with multiple threads attempting to
- * write to the display, take this FreeRTOS semaphore first,
- * use the [LVGL API(s)](https://docs.lvgl.io/7.11/overview/index.html)
- * of choice, and then give the semaphore.
- * The FreeRTOS task, guiTask(), will write to the ILI9342C display
- * controller to update the display once it is in the running
- * state.
- *
- * **Example:**
- *
- * Create a LVGL label widget, set the text of the label to "Hello 
- * World!", and align the label to the center of the screen.
- * @code{c}
- *  #include <stdint.h>
- *  #include <stdbool.h>
- *  #include "core2foraws.h"
- * 
- *  void app_main( void )
- *  {
- *      core2foraws_init();
- * 
- *      xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY );
- *
- *      lv_obj_t * hello_label = lv_label_create( NULL, NULL );
- *      lv_label_set_text_static( hello_label, "Hello World!" );
- *      lv_obj_align( hello_label, NULL, LV_ALIGN_CENTER, 0, 0 );
- *
- *      xSemaphoreGive( core2foraws_display_semaphore );
- *  }
- *  
- * @endcode
- */
-/* @[declare_core2foraws_display_semaphore] */
-extern SemaphoreHandle_t core2foraws_display_semaphore;
-/* @[declare_core2foraws_display_semaphore] */
-
-/**
  * @brief FreeRTOS task handle for the LVGL guiTask.
  *
  * This is the task handle that can be used to control the display's
@@ -142,19 +102,19 @@ extern TaskHandle_t core2foraws_display_task_handle;
  *  {
  *      core2foraws_init();
  * 
- *      xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY );
+ *      xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
  *
  *      lv_obj_t * hello_label = lv_label_create( NULL, NULL );
  *      lv_label_set_text_static( hello_label, "Hello World!" );
  *      lv_obj_align( hello_label, NULL, LV_ALIGN_CENTER, 0, 0 );
  *
- *      xSemaphoreGive( core2foraws_display_semaphore );
+ *      xSemaphoreGive( core2foraws_common_spi_semaphore );
  * 
  *      vTaskDelay( pdMS_TO_TICKS( 1000 ) );
  * 
- *      xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY );
+ *      xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
  *      lv_disp_set_rotation( core2foraws_display_ptr, LV_DISP_ROT_180 );
- *      xSemaphoreGive( core2foraws_display_semaphore );
+ *      xSemaphoreGive( core2foraws_common_spi_semaphore );
  *  }
  *  
  * @endcode

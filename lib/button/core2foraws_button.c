@@ -38,9 +38,9 @@
 
 #include "lvgl_touch/ft6x36.h"
 
-static SemaphoreHandle_t _s_button_mutex;
+static SemaphoreHandle_t _button_mutex;
 
-static const char *_s_TAG = "CORE2FORAWS_BUTTON";
+static const char *_TAG = "CORE2FORAWS_BUTTON";
 
 struct 
 {
@@ -54,7 +54,7 @@ struct
     uint32_t long_press_time;           /**< @brief Number of FreeRTOS ticks to elapse to consider holding the touch button a long press */
     press_event_t state;                /**< @brief The button press event */
     enum core2foraws_button_btns id;    /**< @brief The id of the button from the enumerated list */
-} static _s_touch_buttons[] = 
+} static _touch_buttons[] = 
 {
     { 10, 241, 86, 38, false, false, 0, 0, 0, BUTTON_LEFT },
     { 117, 241, 86, 38, false, false, 0, 0, 0, BUTTON_MIDDLE },
@@ -68,42 +68,42 @@ static void button_press_task( void *pvParameters )
     for ( ;; )
     {
         xQueueReceive( ft6x36_touch_queue_handle, &touch_received, 0 );
-        for ( uint8_t i = 0; i < sizeof( _s_touch_buttons ) / sizeof ( _s_touch_buttons[ 0 ] ); i++ )
+        for ( uint8_t i = 0; i < sizeof( _touch_buttons ) / sizeof ( _touch_buttons[ 0 ] ); i++ )
         {
-            if ( xSemaphoreTake(_s_button_mutex, portMAX_DELAY) == pdPASS )
+            if ( xSemaphoreTake(_button_mutex, portMAX_DELAY) == pdPASS )
             {
                 bool touched = ( touch_received.current_state == LV_INDEV_STATE_PR ) & 
-                                !((touch_received.last_x < _s_touch_buttons[ i ].x) || 
-                                (touch_received.last_x > (_s_touch_buttons[ i ].x + _s_touch_buttons[ i ].w)) || 
-                                (touch_received.last_y < _s_touch_buttons[ i ].y) || 
-                                (touch_received.last_y > (_s_touch_buttons[ i ].y + _s_touch_buttons[ i ].h)));
-                ESP_LOGD( _s_TAG, "Touch button id=%i, touched=%d", i, touched );
+                                !((touch_received.last_x < _touch_buttons[ i ].x) || 
+                                (touch_received.last_x > (_touch_buttons[ i ].x + _touch_buttons[ i ].w)) || 
+                                (touch_received.last_y < _touch_buttons[ i ].y) || 
+                                (touch_received.last_y > (_touch_buttons[ i ].y + _touch_buttons[ i ].h)));
+                ESP_LOGD( _TAG, "Touch button id=%i, touched=%d", i, touched );
 
                 uint32_t now_ticks = xTaskGetTickCount();
-                if ( touched != _s_touch_buttons[ i ].last_touched )
+                if ( touched != _touch_buttons[ i ].last_touched )
                 {
                     if ( touched == 1 )
                     {
-                        _s_touch_buttons[ i ].state |= PRESS;
-                        _s_touch_buttons[ i ].last_press_time = now_ticks;
+                        _touch_buttons[ i ].state |= PRESS;
+                        _touch_buttons[ i ].last_press_time = now_ticks;
                     }
                     else
                     {
-                        if ( _s_touch_buttons[ i ].long_press_time && ( now_ticks - _s_touch_buttons[ i ].last_press_time > _s_touch_buttons[ i ].long_press_time ) )
+                        if ( _touch_buttons[ i ].long_press_time && ( now_ticks - _touch_buttons[ i ].last_press_time > _touch_buttons[ i ].long_press_time ) )
                         {
-                            _s_touch_buttons[ i ].state |= LONGPRESS;
+                            _touch_buttons[ i ].state |= LONGPRESS;
                         }
                         else
                         {
-                            _s_touch_buttons[ i ].state |= RELEASE;
+                            _touch_buttons[ i ].state |= RELEASE;
                         }
                     }
-                    _s_touch_buttons[ i ].last_touched = touched;
+                    _touch_buttons[ i ].last_touched = touched;
                 }
-                _s_touch_buttons[ i ].last_touched = touched;
-                _s_touch_buttons[ i ].is_touched = touched;
+                _touch_buttons[ i ].last_touched = touched;
+                _touch_buttons[ i ].is_touched = touched;
 
-                xSemaphoreGive(_s_button_mutex);   
+                xSemaphoreGive(_button_mutex);   
             }
         }
     }
@@ -115,13 +115,13 @@ static void button_press_task( void *pvParameters )
 esp_err_t core2foraws_button_tapped( enum core2foraws_button_btns button, bool *state )
 {
     BaseType_t err;
-    err = xSemaphoreTake(_s_button_mutex, portMAX_DELAY);
+    err = xSemaphoreTake(_button_mutex, portMAX_DELAY);
     
     if ( err == pdPASS )
     {
-        *state = ( _s_touch_buttons[ button ].state & PRESS ) > 0;
-        _s_touch_buttons[ button ].state &= ~PRESS;
-        xSemaphoreGive( _s_button_mutex );
+        *state = ( _touch_buttons[ button ].state & PRESS ) > 0;
+        _touch_buttons[ button ].state &= ~PRESS;
+        xSemaphoreGive( _button_mutex );
     }
     
     return core2foraws_common_error( err );
@@ -130,12 +130,12 @@ esp_err_t core2foraws_button_tapped( enum core2foraws_button_btns button, bool *
 esp_err_t core2foraws_button_pressing( enum core2foraws_button_btns button, bool *state )
 {
     BaseType_t err;
-    err = xSemaphoreTake(_s_button_mutex, portMAX_DELAY);
+    err = xSemaphoreTake(_button_mutex, portMAX_DELAY);
     
     if ( err == pdPASS )
     {
-        *state = _s_touch_buttons[ button ].is_touched;
-        xSemaphoreGive( _s_button_mutex );
+        *state = _touch_buttons[ button ].is_touched;
+        xSemaphoreGive( _button_mutex );
     }
 
     return core2foraws_common_error( err );
@@ -144,16 +144,16 @@ esp_err_t core2foraws_button_pressing( enum core2foraws_button_btns button, bool
 esp_err_t core2foraws_button_held( enum core2foraws_button_btns button, bool *state )
 {
     BaseType_t err;
-    err = xSemaphoreTake(_s_button_mutex, portMAX_DELAY);
+    err = xSemaphoreTake(_button_mutex, portMAX_DELAY);
     
     if ( err == pdPASS )
     {
     uint32_t ticks = pdMS_TO_TICKS( LV_INDEV_DEF_LONG_PRESS_TIME );
     
-        _s_touch_buttons[ button ].long_press_time = ticks;
-        *state = ( _s_touch_buttons[ button ].state & LONGPRESS ) > 0;
-        _s_touch_buttons[ button ].state &= ~LONGPRESS;
-        xSemaphoreGive( _s_button_mutex );
+        _touch_buttons[ button ].long_press_time = ticks;
+        *state = ( _touch_buttons[ button ].state & LONGPRESS ) > 0;
+        _touch_buttons[ button ].state &= ~LONGPRESS;
+        xSemaphoreGive( _button_mutex );
     }
     
     return core2foraws_common_error( err );
@@ -162,13 +162,13 @@ esp_err_t core2foraws_button_held( enum core2foraws_button_btns button, bool *st
 esp_err_t core2foraws_button_released( enum core2foraws_button_btns button, bool *state )
 {
     BaseType_t err;
-    err = xSemaphoreTake(_s_button_mutex, portMAX_DELAY);
+    err = xSemaphoreTake(_button_mutex, portMAX_DELAY);
     
     if ( err == pdPASS )
     {
-        *state = (_s_touch_buttons[ button ].state & RELEASE) > 0;
-        _s_touch_buttons[ button ].state &= ~RELEASE;
-        xSemaphoreGive(_s_button_mutex);
+        *state = (_touch_buttons[ button ].state & RELEASE) > 0;
+        _touch_buttons[ button ].state &= ~RELEASE;
+        xSemaphoreGive(_button_mutex);
     }
 
     return core2foraws_common_error( err );
@@ -176,17 +176,17 @@ esp_err_t core2foraws_button_released( enum core2foraws_button_btns button, bool
 
 esp_err_t core2foraws_button_init( void )
 {
-    ESP_LOGI( _s_TAG, "\tInitializing" );
+    ESP_LOGI( _TAG, "\tInitializing" );
     BaseType_t err = pdFAIL;
 #if CONFIG_LV_FT6X36_COORDINATES_QUEUE
-    _s_button_mutex = xSemaphoreCreateMutex();
+    _button_mutex = xSemaphoreCreateMutex();
 
-    if ( _s_button_mutex != NULL )
+    if ( _button_mutex != NULL )
     {
         err = xTaskCreatePinnedToCore( button_press_task, "buttonPress", configMINIMAL_STACK_SIZE * 3, NULL, 0, ( TaskHandle_t * ) NULL, 1 );
     }
 #else
-    ESP_LOGE( _s_TAG, "Must enable CONFIG_LV_FT6X36_COORDINATES_QUEUE using menuconfig to use this driver" );
+    ESP_LOGE( _TAG, "Must enable CONFIG_LV_FT6X36_COORDINATES_QUEUE using menuconfig to use this driver" );
 #endif
     return core2foraws_common_error( !err );
 }

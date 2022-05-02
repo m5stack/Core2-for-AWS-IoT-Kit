@@ -38,13 +38,13 @@
 #include "core2foraws_common.h"
 #include "core2foraws_rgb_led.h"
 
-static const char *_s_TAG = "CORE2FORAWS_RGB_LED";
+static const char *_TAG = "CORE2FORAWS_RGB_LED";
 
 #define RGB_LED_TYPE LED_STRIP_SK6812
 #define RGB_LED_GPIO_DATA_PIN GPIO_NUM_25
 #define RGB_LED_BRIGHTNESS_DEFAULT 255
 
-static led_strip_t _s_led_strip = 
+static led_strip_t _led_strip = 
 {
     .type = RGB_LED_TYPE,
     .length = RGB_LED_NUMS,
@@ -57,12 +57,12 @@ static led_strip_t _s_led_strip =
 
 esp_err_t core2foraws_rgb_led_init( void )
 {
-    ESP_LOGI( _s_TAG, "\tInitializing" );
+    ESP_LOGI( _TAG, "\tInitializing" );
     esp_err_t err = ESP_OK;
 
     led_strip_install();
 
-    err = led_strip_init(&_s_led_strip);
+    err = led_strip_init(&_led_strip);
 
     return err;
 }
@@ -71,7 +71,7 @@ esp_err_t core2foraws_rgb_led_single_color_set( uint8_t led_num, uint32_t color 
 {
     esp_err_t err = ESP_OK;
 
-    err = led_strip_set_pixel( &_s_led_strip, led_num, rgb_from_code( color ) );
+    err = led_strip_set_pixel( &_led_strip, led_num, rgb_from_code( color ) );
 
     return err;
 }
@@ -82,11 +82,11 @@ esp_err_t core2foraws_rgb_led_side_color_set( rgb_led_side_type_t side, uint32_t
 
     if ( side == RGB_LED_SIDE_RIGHT )
     {
-        err |= led_strip_fill( &_s_led_strip, 0, RGB_LED_NUMS / 2, rgb_from_code( color ) );
+        err |= led_strip_fill( &_led_strip, 0, RGB_LED_NUMS / 2, rgb_from_code( color ) );
     }
     else
     {
-        err |= led_strip_fill( &_s_led_strip, RGB_LED_NUMS / 2, RGB_LED_NUMS / 2, rgb_from_code( color ) );
+        err |= led_strip_fill( &_led_strip, RGB_LED_NUMS / 2, RGB_LED_NUMS / 2, rgb_from_code( color ) );
     }
 
     return core2foraws_common_error( err );
@@ -96,7 +96,7 @@ esp_err_t core2foraws_rgb_led_brightness_set( uint8_t brightness )
 {
 #ifdef LED_STRIP_BRIGHTNESS
     esp_err_t err = ESP_OK;
-    _s_led_strip.brightness = brightness;
+    _led_strip.brightness = brightness;
 #else
     esp_err_t err = ESP_ERR_NOT_SUPPORTED;
 #endif
@@ -108,7 +108,7 @@ esp_err_t core2foraws_rgb_led_write( void )
 {
     esp_err_t err = ESP_OK;
 
-    err = led_strip_flush( &_s_led_strip );
+    err = led_strip_flush( &_led_strip );
 
     return err;
 }
@@ -117,7 +117,7 @@ esp_err_t core2foraws_rgb_led_clear( void )
 {
     esp_err_t err = ESP_OK;
     
-    err = led_strip_fill( &_s_led_strip, 0, RGB_LED_NUMS, rgb_from_code( 0x00000000 ) );
+    err = led_strip_fill( &_led_strip, 0, RGB_LED_NUMS, rgb_from_code( 0x00000000 ) );
 
     return err;
 }
@@ -126,7 +126,7 @@ esp_err_t core2foraws_rgb_led_deinit( void )
 {
     esp_err_t err = ESP_OK;
     
-    err = led_strip_free( &_s_led_strip );
+    err = led_strip_free( &_led_strip );
 
     return err;
 }

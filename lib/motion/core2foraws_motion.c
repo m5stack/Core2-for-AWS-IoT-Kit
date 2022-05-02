@@ -37,11 +37,11 @@
 #include "core2foraws_common.h"
 #include "core2foraws_motion.h"
 
-static const char *_s_TAG = "CORE2FORAWS_MOTION";
+static const char *_TAG = "CORE2FORAWS_MOTION";
 
 esp_err_t core2foraws_motion_init( void )
 {
-    ESP_LOGI( _s_TAG, "\tInitializing" );
+    ESP_LOGI( _TAG, "\tInitializing" );
     i2c_port_t port = COMMON_I2C_INTERNAL;
     return mpu6886_init( &port );
 }

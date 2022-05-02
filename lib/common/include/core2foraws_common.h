@@ -60,6 +60,46 @@ extern "C" {
 /* @[declare_core2foraws_common_i2s_internal] */
 
 /**
+ * @brief FreeRTOS semaphore to be used when performing any
+ * operation on the display.
+ *
+ * @note To avoid conflicts with multiple threads attempting to
+ * write to the display, take this FreeRTOS semaphore first,
+ * use the [LVGL API(s)](https://docs.lvgl.io/7.11/overview/index.html)
+ * of choice, and then give the semaphore.
+ * The FreeRTOS task, guiTask(), will write to the ILI9342C display
+ * controller to update the display once it is in the running
+ * state.
+ *
+ * **Example:**
+ *
+ * Create a LVGL label widget, set the text of the label to "Hello 
+ * World!", and align the label to the center of the screen.
+ * @code{c}
+ *  #include <stdint.h>
+ *  #include <stdbool.h>
+ *  #include "core2foraws.h"
+ * 
+ *  void app_main( void )
+ *  {
+ *      core2foraws_init();
+ * 
+ *      xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
+ *
+ *      lv_obj_t * hello_label = lv_label_create( NULL, NULL );
+ *      lv_label_set_text_static( hello_label, "Hello World!" );
+ *      lv_obj_align( hello_label, NULL, LV_ALIGN_CENTER, 0, 0 );
+ *
+ *      xSemaphoreGive( core2foraws_common_spi_semaphore );
+ *  }
+ *  
+ * @endcode
+ */
+/* @[declare_core2foraws_common_spi_semaphore] */
+extern SemaphoreHandle_t core2foraws_common_spi_semaphore;
+/* @[declare_core2foraws_common_spi_semaphore] */
+
+/**
  * @brief Function used to standardize error returns.
  * 
  * This is a helper function used to return any non-zero error codes as

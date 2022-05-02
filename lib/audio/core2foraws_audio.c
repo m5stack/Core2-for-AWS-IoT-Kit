@@ -43,26 +43,26 @@
 #define I2S_DATA_PIN 2
 #define I2S_DATA_IN_PIN 34
 
-static bool _s_speaker_initialized = false;
-static bool _s_microphone_initialized = false;
+static bool _speaker_initialized = false;
+static bool _microphone_initialized = false;
 
-static const char *_s_TAG = "CORE2FORAWS_AUDIO";
+static const char *_TAG = "CORE2FORAWS_AUDIO";
 
-static esp_err_t _s_core2foraws_audio_speaker_install( void );
-static esp_err_t _s_core2foraws_audio_speaker_remove( void );
-static esp_err_t _s_core2foraws_audio_mic_install( void );
-static esp_err_t _s_core2foraws_audio_mic_remove( void );
+static esp_err_t _core2foraws_audio_speaker_install( void );
+static esp_err_t _core2foraws_audio_speaker_remove( void );
+static esp_err_t _core2foraws_audio_mic_install( void );
+static esp_err_t _core2foraws_audio_mic_remove( void );
 
 esp_err_t core2foraws_audio_speaker_enable( bool state )
 {
-    esp_err_t err = state ? _s_core2foraws_audio_speaker_install() : _s_core2foraws_audio_speaker_remove();
+    esp_err_t err = state ? _core2foraws_audio_speaker_install() : _core2foraws_audio_speaker_remove();
 
     return err;
 }
 
 esp_err_t core2foraws_audio_mic_enable( bool state )
 {
-    esp_err_t err = state ? _s_core2foraws_audio_mic_install() : _s_core2foraws_audio_mic_remove();
+    esp_err_t err = state ? _core2foraws_audio_mic_install() : _core2foraws_audio_mic_remove();
 
     return err;
 }
@@ -71,7 +71,7 @@ esp_err_t core2foraws_audio_speaker_write( const uint8_t *sound_buffer, size_t t
 {
     esp_err_t err = ESP_FAIL;
 
-    if ( ( _s_microphone_initialized == false ) && ( _s_speaker_initialized == true ) )
+    if ( ( _microphone_initialized == false ) && ( _speaker_initialized == true ) )
     {
         size_t bytes_written = 0;
         err = i2s_write( AUDIO_I2S_PORT_NUM, sound_buffer, to_write_length, &bytes_written, portMAX_DELAY );
@@ -85,34 +85,34 @@ esp_err_t core2foraws_audio_mic_read( int8_t *sound_buffer, size_t to_read_lengt
 {
     esp_err_t err = ESP_FAIL;
 
-    if ( ( _s_speaker_initialized == false) && ( _s_microphone_initialized == true ) )
+    if ( ( _speaker_initialized == false) && ( _microphone_initialized == true ) )
     {
         err = i2s_read( AUDIO_I2S_PORT_NUM, sound_buffer, to_read_length, was_read_length, portMAX_DELAY );
     }
     else
     {
-        ESP_LOGE( _s_TAG, "Error writing to microphone. Either speaker is initialized or microphone has not been initialized yet." );
+        ESP_LOGE( _TAG, "Error writing to microphone. Either speaker is initialized or microphone has not been initialized yet." );
     }
 
     return err;
 }
 
-static esp_err_t _s_core2foraws_audio_speaker_install( void )
+static esp_err_t _core2foraws_audio_speaker_install( void )
 {
-    ESP_LOGI(_s_TAG, "\tInitializing speaker");
+    ESP_LOGI(_TAG, "\tInitializing speaker");
 
     esp_err_t err = ESP_FAIL;
     
-    if ( _s_microphone_initialized == true )
+    if ( _microphone_initialized == true )
     {
-        ESP_LOGD( _s_TAG, "Microphone is initialized. Cannot use speaker at the same time." );
+        ESP_LOGD( _TAG, "Microphone is initialized. Cannot use speaker at the same time." );
         return err;
     }
 
     err = core2foraws_power_speaker_enable( true );
     if (err != ESP_OK )
     {
-        ESP_LOGD( _s_TAG, "\tFailed to power on speaker amplifier. core2foraws_power_speaker returned 0x%x.", err );
+        ESP_LOGD( _TAG, "\tFailed to power on speaker amplifier. core2foraws_power_speaker returned 0x%x.", err );
         return err;
     }
 
@@ -138,7 +138,7 @@ static esp_err_t _s_core2foraws_audio_speaker_install( void )
     err |= i2s_driver_install( AUDIO_I2S_PORT_NUM, &i2s_config, 0, NULL );
     if ( err != ESP_OK )
     {
-        ESP_LOGD( _s_TAG, "\tFailed to install speaker i2s driver. i2s_driver_install returned 0x%x.", err );
+        ESP_LOGD( _TAG, "\tFailed to install speaker i2s driver. i2s_driver_install returned 0x%x.", err );
     }
 
     i2s_pin_config_t tx_pin_config;
@@ -152,12 +152,12 @@ static esp_err_t _s_core2foraws_audio_speaker_install( void )
     err |= i2s_set_pin( AUDIO_I2S_PORT_NUM, &tx_pin_config );
     err |= i2s_set_clk( AUDIO_I2S_PORT_NUM, AUDIO_SAMPLING_FREQ, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_MONO );
 
-    _s_speaker_initialized = true;
+    _speaker_initialized = true;
 
     return core2foraws_common_error( err );  
 }
 
-static esp_err_t _s_core2foraws_audio_speaker_remove( void )
+static esp_err_t _core2foraws_audio_speaker_remove( void )
 {
     esp_err_t err = ESP_FAIL;
 
@@ -165,7 +165,7 @@ static esp_err_t _s_core2foraws_audio_speaker_remove( void )
 
     if (err != ESP_OK )
     {
-        ESP_LOGD( _s_TAG, "\tFailed to power off speaker amplifier. core2foraws_power_speaker returned 0x%x.", err );
+        ESP_LOGD( _TAG, "\tFailed to power off speaker amplifier. core2foraws_power_speaker returned 0x%x.", err );
         
     }
     err |= i2s_driver_uninstall( AUDIO_I2S_PORT_NUM );
@@ -174,20 +174,20 @@ static esp_err_t _s_core2foraws_audio_speaker_remove( void )
     err |= gpio_reset_pin( I2S_BCK_PIN );
     err |= gpio_reset_pin( I2S_DATA_IN_PIN );
     
-    _s_speaker_initialized = false;
+    _speaker_initialized = false;
 
     return core2foraws_common_error( err );
 }
 
-static esp_err_t _s_core2foraws_audio_mic_install( void )
+static esp_err_t _core2foraws_audio_mic_install( void )
 {
-    ESP_LOGI( _s_TAG, "\tInitializing microphone" );
+    ESP_LOGI( _TAG, "\tInitializing microphone" );
 
     esp_err_t err = ESP_FAIL;
 
-    if ( _s_speaker_initialized == true )
+    if ( _speaker_initialized == true )
     {
-        ESP_LOGD( _s_TAG, "Speaker is initialized. Cannot use microphone at the same time." );
+        ESP_LOGD( _TAG, "Speaker is initialized. Cannot use microphone at the same time." );
         return err;
     }
 
@@ -220,12 +220,12 @@ static esp_err_t _s_core2foraws_audio_mic_install( void )
     err |= i2s_set_pin( AUDIO_I2S_PORT_NUM, &pin_config );
     err |= i2s_set_clk( AUDIO_I2S_PORT_NUM, AUDIO_SAMPLING_FREQ, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_MONO );
     
-    _s_microphone_initialized = true;
+    _microphone_initialized = true;
 
     return core2foraws_common_error( err );
 }
 
-static esp_err_t _s_core2foraws_audio_mic_remove( void )
+static esp_err_t _core2foraws_audio_mic_remove( void )
 {
     esp_err_t err = ESP_FAIL;
 
@@ -233,7 +233,7 @@ static esp_err_t _s_core2foraws_audio_mic_remove( void )
     err |= gpio_reset_pin( I2S_LRCK_PIN );
     err |= gpio_reset_pin( I2S_DATA_IN_PIN );
 
-    _s_microphone_initialized = false;
+    _microphone_initialized = false;
 
     return core2foraws_common_error( err );
 }

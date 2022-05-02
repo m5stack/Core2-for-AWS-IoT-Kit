@@ -36,12 +36,11 @@
 
 #include "core2foraws_sd.h"
 
-static sdmmc_card_t* _s_sd_card;
-static SemaphoreHandle_t _s_sd_mutex;
-static const char *_s_mount_path = "/sd_card";
-static size_t _s_mount_path_len;
+static sdmmc_card_t* _sd_card;
+static const char *_mount_path = "/sd_card";
+static size_t _mount_path_len;
 
-static const char *_s_TAG = "CORE2FORAWS_SD";
+static const char *_TAG = "CORE2FORAWS_SD";
 
 /**
  * @brief The SPI2 peripheral that controls the SPI bus.
@@ -69,8 +68,7 @@ esp_err_t core2foraws_sd_mount( void )
 {
     esp_err_t err = ESP_OK;
 
-    _s_sd_mutex = xSemaphoreCreateMutex();
-    _s_mount_path_len = strlen( _s_mount_path );
+    _mount_path_len = strlen( _mount_path );
 
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
     esp_vfs_fat_mount_config_t mount_config = {
@@ -89,17 +87,17 @@ esp_err_t core2foraws_sd_mount( void )
     sdspi_slot_config_t slot_config = SDSPI_SLOT_CONFIG_DEFAULT();
 #endif
     slot_config.gpio_cs = 4;
-    xSemaphoreTake( _s_sd_mutex, portMAX_DELAY );
+    xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL( 4, 1, 0 )
-    err = esp_vfs_fat_sdspi_mount( _s_mount_path, &host, &slot_config, &mount_config, &card );
+    err = esp_vfs_fat_sdspi_mount( _mount_path, &host, &slot_config, &mount_config, &card );
 #else
-    err = esp_vfs_fat_sdmmc_mount( _s_mount_path, &host, &slot_config, &mount_config, &card );
+    err = esp_vfs_fat_sdmmc_mount( _mount_path, &host, &slot_config, &mount_config, &card );
 #endif
-    xSemaphoreGive( _s_sd_mutex );
+    xSemaphoreGive( core2foraws_common_spi_semaphore );
     if ( err == ESP_OK )
     {
-        ESP_LOGD( _s_TAG, "Mounted SD card %s with mount point %s", card->cid.name, _s_mount_path );
-        _s_sd_card = card;
+        ESP_LOGD( _TAG, "Mounted SD card %s with mount point %s", card->cid.name, _mount_path );
+        _sd_card = card;
     }
     
     vTaskDelay( pdMS_TO_TICKS( SD_ACCESS_DELAY_MS ) );
@@ -112,28 +110,28 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
     
     
     const size_t file_name_len = strlen( file_name );
-    char *path = heap_caps_malloc( _s_mount_path_len + file_name_len + 1, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT );
-    memcpy( path, _s_mount_path, _s_mount_path_len );
-    memcpy( path + _s_mount_path_len, file_name, file_name_len + 1 );
+    char *path = heap_caps_malloc( _mount_path_len + file_name_len + 1, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT );
+    memcpy( path, _mount_path, _mount_path_len );
+    memcpy( path + _mount_path_len, file_name, file_name_len + 1 );
     
-    xSemaphoreTake( _s_sd_mutex, portMAX_DELAY );
+    xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
     
     FILE* f = fopen( path, "r" );
     if ( f == NULL )
     {
         err = ESP_FAIL;
-        ESP_LOGI( _s_TAG, "Failed to open SD card path %s", path );
+        ESP_LOGI( _TAG, "Failed to open SD card path %s", path );
         return err;
     }
 
     if ( fgets(message, to_read_length, f) == NULL )
     {
         err = ESP_FAIL;
-        ESP_LOGI( _s_TAG, "Failed to read from SD card" );
+        ESP_LOGI( _TAG, "Failed to read from SD card" );
     }
 
     fclose(f);
-    xSemaphoreGive( _s_sd_mutex );
+    xSemaphoreGive( core2foraws_common_spi_semaphore );
     free( path );
     vTaskDelay( pdMS_TO_TICKS( SD_ACCESS_DELAY_MS ) );
 
@@ -145,16 +143,16 @@ esp_err_t core2foraws_sd_write( const char *file_name, const char* message, size
     esp_err_t err = ESP_OK;
     
     const size_t file_name_len = strlen( file_name );
-    char *path = heap_caps_malloc( _s_mount_path_len + file_name_len + 1, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT );
-    memcpy( path, _s_mount_path, _s_mount_path_len );
-    memcpy( path + _s_mount_path_len, file_name, file_name_len + 1 );
+    char *path = heap_caps_malloc( _mount_path_len + file_name_len + 1, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT );
+    memcpy( path, _mount_path, _mount_path_len );
+    memcpy( path + _mount_path_len, file_name, file_name_len + 1 );
 
-    xSemaphoreTake( _s_sd_mutex, portMAX_DELAY );
+    xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
 
     FILE* f = fopen(path, "w+");
     if (f == NULL) {
         err = ESP_FAIL;
-        ESP_LOGD( _s_TAG, "Failed to open SD card" );
+        ESP_LOGD( _TAG, "Failed to open SD card" );
         return err;
     }
 
@@ -162,7 +160,7 @@ esp_err_t core2foraws_sd_write( const char *file_name, const char* message, size
     if ( wrote < 0 )
     {
         err = ESP_FAIL;
-        ESP_LOGD( _s_TAG, "Failed to write to SD card" );
+        ESP_LOGD( _TAG, "Failed to write to SD card" );
         *wrote_length = 0;
     }
     else
@@ -171,7 +169,7 @@ esp_err_t core2foraws_sd_write( const char *file_name, const char* message, size
     }
 
     fclose(f);
-    xSemaphoreGive( _s_sd_mutex );
+    xSemaphoreGive( core2foraws_common_spi_semaphore );
     free( path );
     vTaskDelay( pdMS_TO_TICKS( SD_ACCESS_DELAY_MS ) );
 
@@ -182,14 +180,13 @@ esp_err_t core2foraws_sd_unmount( void )
 {
     esp_err_t err = ESP_FAIL;
 
-    xSemaphoreTake( _s_sd_mutex, portMAX_DELAY );
-    err = esp_vfs_fat_sdcard_unmount( _s_mount_path, _s_sd_card );
-    xSemaphoreGive( _s_sd_mutex );
+    xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
+    err = esp_vfs_fat_sdcard_unmount( _mount_path, _sd_card );
+    xSemaphoreGive( core2foraws_common_spi_semaphore );
     
     if ( err == ESP_OK )
     {
-        _s_sd_mutex = NULL;
-        _s_sd_card = NULL;
+        _sd_card = NULL;
     }
 
     return err;

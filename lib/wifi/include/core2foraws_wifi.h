@@ -346,7 +346,7 @@ esp_err_t core2foraws_wifi_reset( void );
  *  {   
  *      core2foraws_init();
  * 
- *      xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY )
+ *      xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY )
  *      
  *      lv_coord_t qr_square_px = 200;
  *      lv_color_t amazon_squid_ink = lv_color_hex( 0x232F3E );
@@ -356,7 +356,7 @@ esp_err_t core2foraws_wifi_reset( void );
  *      if ( core2foraws_wifi_prov_str_get( wifi_provisioning_str ) == ESP_OK )
  *          lv_qrcode_update( display_wifi_qr, wifi_provisioning_str, strlen( wifi_provisioning_str ) );
  *      
- *      xSemaphoreGive( core2foraws_display_semaphore );
+ *      xSemaphoreGive( core2foraws_common_spi_semaphore );
  * 
  *      xEventGroupWaitBits(
  *          wifi_event_group,   // The event group being tested.
@@ -365,9 +365,9 @@ esp_err_t core2foraws_wifi_reset( void );
  *          pdTRUE,             // Don't wait for all bits (there's only one anyway).
  *          portMAX_DELAY );    // Wait indefinitely.
  *
- *		xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY );
+ *		xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
  *	    lv_obj_del( display_wifi_qr );
- *		xSemaphoreGive( core2foraws_display_semaphore );
+ *		xSemaphoreGive( core2foraws_common_spi_semaphore );
  *      
  *  }
  * @endcode

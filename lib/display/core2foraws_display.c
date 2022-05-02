@@ -47,24 +47,24 @@
 
 #define LV_TICK_PERIOD_MS 1
 
-SemaphoreHandle_t core2foraws_display_semaphore;
+SemaphoreHandle_t core2foraws_common_spi_semaphore;
 TaskHandle_t core2foraws_display_task_handle;
 lv_disp_t *core2foraws_display_ptr;
 
-static const char *_s_TAG = "CORE2FORAWS_DISPLAY";
-static lv_color_t *_s_buf1 = NULL;
-static lv_color_t *_s_buf2 = NULL;
+static const char *_TAG = "CORE2FORAWS_DISPLAY";
+static lv_color_t *_buf1 = NULL;
+static lv_color_t *_buf2 = NULL;
 
-static void _s_lv_tick_task( void *arg );
-static void _s_gui_task( void *pvParameter );
+static void _lv_tick_task( void *arg );
+static void _gui_task( void *pvParameter );
 
-static void _s_lv_tick_task( void *arg )
+static void _lv_tick_task( void *arg )
 {
     ( void ) arg;
     lv_tick_inc( LV_TICK_PERIOD_MS );
 }
 
-static void _s_gui_task( void *pvParameter )
+static void _gui_task( void *pvParameter )
 {
     
     ( void ) pvParameter;
@@ -75,29 +75,29 @@ static void _s_gui_task( void *pvParameter )
         vTaskDelay( pdMS_TO_TICKS( 10 ) );
 
         /* Try to take the semaphore, call lvgl related function on success */
-        if ( pdTRUE == xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY ) ) 
+        if ( pdTRUE == xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY ) ) 
 		{
             uint32_t ms_to_next_call = lv_task_handler();
-            ESP_LOGV( _s_TAG, "%dms until next LVGL timer call.", ms_to_next_call );
-            xSemaphoreGive( core2foraws_display_semaphore );
+            ESP_LOGV( _TAG, "%dms until next LVGL timer call.", ms_to_next_call );
+            xSemaphoreGive( core2foraws_common_spi_semaphore );
         }
     }
 
     /* A task should NEVER return */
-    free( _s_buf1 );
-    free( _s_buf2 );
+    free( _buf1 );
+    free( _buf2 );
     vTaskDelete( NULL );
 }
 
 esp_err_t core2foraws_display_init( void ) 
 {
-    ESP_LOGI( _s_TAG, "\tInitializing" );
+    ESP_LOGI( _TAG, "\tInitializing" );
 
     lvgl_i2c_locking( i2c_manager_locking() );
 
-	core2foraws_display_semaphore = xSemaphoreCreateMutex();
+	core2foraws_common_spi_semaphore = xSemaphoreCreateMutex();
 
-    xSemaphoreTake( core2foraws_display_semaphore, portMAX_DELAY );
+    xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
     	
 	lv_init();
 
@@ -114,14 +114,14 @@ esp_err_t core2foraws_display_init( void )
 
     static lv_disp_buf_t disp_buf;
     size_t display_buffer_size = lvgl_get_display_buffer_size();
-    _s_buf1 = heap_caps_malloc( display_buffer_size * sizeof( lv_color_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT ); //Assuming max size of lv_color_t = 16bit, display buffer size calculated from max horizontal display size 480
-    _s_buf2 = heap_caps_malloc( display_buffer_size * sizeof( lv_color_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT ); //Assuming max size of lv_color_t = 16bit, display buffer size calculated from max horizontal display size 480
-    assert( _s_buf1 != NULL );
-    assert( _s_buf2 != NULL );
+    _buf1 = heap_caps_malloc( display_buffer_size * sizeof( lv_color_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT ); //Assuming max size of lv_color_t = 16bit, display buffer size calculated from max horizontal display size 480
+    _buf2 = heap_caps_malloc( display_buffer_size * sizeof( lv_color_t ), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT ); //Assuming max size of lv_color_t = 16bit, display buffer size calculated from max horizontal display size 480
+    assert( _buf1 != NULL );
+    assert( _buf2 != NULL );
     
 	// Set up the frame buffers
     uint32_t size_in_px = display_buffer_size;
-	lv_disp_buf_init( &disp_buf, _s_buf1, _s_buf2, size_in_px );
+	lv_disp_buf_init( &disp_buf, _buf1, _buf2, size_in_px );
 
 	// Set up the display driver
 	lv_disp_drv_t disp_drv;
@@ -142,7 +142,7 @@ esp_err_t core2foraws_display_init( void )
 
 	/* Create and start a periodic timer interrupt to call lv_tick_inc */
     const esp_timer_create_args_t periodic_timer_args = {
-        .callback = &_s_lv_tick_task,
+        .callback = &_lv_tick_task,
         .name = "periodic_gui"
     };
     esp_timer_handle_t periodic_timer;
@@ -151,23 +151,23 @@ esp_err_t core2foraws_display_init( void )
 	err = esp_timer_create( &periodic_timer_args, &periodic_timer );
 	if ( err != ESP_OK )
 	{
-		ESP_LOGE( _s_TAG, "Error creating periodic ESP timer for LVGL" );
+		ESP_LOGE( _TAG, "Error creating periodic ESP timer for LVGL" );
 		return err;
 	}
 
     err = esp_timer_start_periodic( periodic_timer, LV_TICK_PERIOD_MS * 1000 );
 	if ( err != ESP_OK )
 	{
-		ESP_LOGE( _s_TAG, "Error starting periodic ESP timer for LVGL" );
+		ESP_LOGE( _TAG, "Error starting periodic ESP timer for LVGL" );
 		return err;
 	}
 
-	xSemaphoreGive( core2foraws_display_semaphore );
+	xSemaphoreGive( core2foraws_common_spi_semaphore );
 
 	/* If you want to use a task to create the graphic, you NEED to create a Pinned task
      * Otherwise there can be problem such as memory corruption and so on.
-     * NOTE: If you're not using Wi-Fi or Bluetooth, you can pin the _s_gui_task to core 0 */
-	xTaskCreatePinnedToCore( _s_gui_task, "gui", 4096*2, NULL, 4, &core2foraws_display_task_handle, 1 );
+     * NOTE: If you're not using Wi-Fi or Bluetooth, you can pin the _gui_task to core 0 */
+	xTaskCreatePinnedToCore( _gui_task, "gui", 4096*2, NULL, 4, &core2foraws_display_task_handle, 1 );
 
 	return ESP_OK;
 }

@@ -33,13 +33,13 @@
 
 #include "core2foraws_common.h"
 
-static const char *_s_TAG = "CORE2FORAWS_COMMON";
+static const char *_TAG = "CORE2FORAWS_COMMON";
 
 esp_err_t core2foraws_common_error( int8_t error_code )
 {
     esp_err_t ret = ESP_OK;
 
-    ESP_LOGV( _s_TAG, "Original error code: %d", error_code );
+    ESP_LOGV( _TAG, "Original error code: %d", error_code );
     
     if ( error_code != 0 )
     {

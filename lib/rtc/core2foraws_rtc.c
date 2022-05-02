@@ -36,11 +36,11 @@
 
 #define RTC_I2C	i2c_hal( COMMON_I2C_INTERNAL )
 
-static const char *_s_TAG = "CORE2FORAWS_RTC";
+static const char *_TAG = "CORE2FORAWS_RTC";
 
 esp_err_t core2foraws_rtc_init( void )
 {
-    ESP_LOGI( _s_TAG, "\tInitializing" );
+    ESP_LOGI( _TAG, "\tInitializing" );
     bm8563_t* bm8563_i2c_device = ( bm8563_t * )RTC_I2C;
     bm8563_err_t err = bm8563_init( bm8563_i2c_device );
     
