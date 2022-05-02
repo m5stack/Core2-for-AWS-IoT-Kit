@@ -44,6 +44,7 @@
 #include "lvgl_helpers.h"
 
 #include "core2foraws_display.h"
+#include "core2foraws_common.h"
 
 #define LV_TICK_PERIOD_MS 1
 

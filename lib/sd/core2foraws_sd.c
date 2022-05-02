@@ -35,6 +35,7 @@
 #include <esp_log.h>
 
 #include "core2foraws_sd.h"
+#include "core2foraws_common.h"
 
 static sdmmc_card_t* _sd_card;
 static const char *_mount_path = "/sd_card";
