@@ -69,22 +69,35 @@ extern "C" {
  *
  * **Example:**
  * @code{c}
- *  char *mount_point = "/sdcard";
- *  char *file_path = "/edukit.txt";
+ *  #include <stdint.h>
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_SD_DEMO";
+ * 
+ *  void app_main( void )
+ *  {
+ *      char *file_path = "/edukit.txt";
  *  
- *  esp_err_t err = core2foraws_sd_mount( mount_point );
- *  ESP_LOGI( TAG, "\tMounted SD %s", err == ESP_OK ? "success" : "fail" );
+ *      esp_err_t err = core2foraws_sd_mount();
+ *      if( err == ESP_OK )
+ *      {
+ *          ESP_LOGI( TAG, "\tMounted SD card" ); *  
+ *          size_t written_length = 0;
+ *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT EduKit!", &length );
+ *          ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
  *  
- *  size_t written_length = 0;
- *  err = core2foraws_sd_write( mount_point, file_path, "Hello from AWS IoT EduKit!", &length );
- *  ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
+ *          char str[64];
+ *          err = core2foraws_sd_read( file_path, str, 64 );
+ *          ESP_LOGI( TAG, "\tSD read %s,\nString: %s", err == ESP_OK ? "success" : "fail", str );
  *  
- *  char str[64];
- *  err = core2foraws_sd_read( mount_point, file_path, str, 64 );
- *  ESP_LOGI( TAG, "\tSD read %s,\nString: %s", err == ESP_OK ? "success" : "fail", str );
- *  
- *  err = core2foraws_sd_unmount( mount_point );
- *  ESP_LOGI( TAG, "\tSD unmount %s", err == ESP_OK ? "success" : "fail" );
+ *          err = core2foraws_sd_unmount();
+ *          ESP_LOGI( TAG, "\tSD unmount %s", err == ESP_OK ? "success" : "fail" );
+ *      }
+ *      else
+ *      {
+ *          ESP_LOGI( TAG, "\tFailed to mount SD" );
+ *      }
+ *  }
  * @endcode
  *
  * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
@@ -110,22 +123,36 @@ esp_err_t core2foraws_sd_mount( void );
  *
  * **Example:**
  * @code{c}
- *  char *mount_point = "/sdcard";
- *  char *file_path = "/edukit.txt";
+ *  #include <stdint.h>
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_SD_DEMO";
+ * 
+ *  void app_main( void )
+ *  {
+ *      char *file_path = "/edukit.txt";
  *  
- *  esp_err_t err = core2foraws_sd_mount( mount_point );
- *  ESP_LOGI( TAG, "\tMounted SD %s", err == ESP_OK ? "success" : "fail" );
+ *      esp_err_t err = core2foraws_sd_mount();
+ *      if( err == ESP_OK )
+ *      {
+ *          ESP_LOGI( TAG, "\tMounted SD card" );
  *  
- *  size_t written_length = 0;
- *  err = core2foraws_sd_write( mount_point, file_path, "Hello from AWS IoT EduKit!", &length );
- *  ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
+ *          size_t written_length = 0;
+ *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT EduKit!", &length );
+ *          ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
  *  
- *  char str[64];
- *  err = core2foraws_sd_read( mount_point, file_path, str, 64 );
- *  ESP_LOGI( TAG, "\tSD read %s,\nString: %s", err == ESP_OK ? "success" : "fail", str );
+ *          char str[64];
+ *          err = core2foraws_sd_read( file_path, str, 64 );
+ *          ESP_LOGI( TAG, "\tSD read %s,\nString: %s", err == ESP_OK ? "success" : "fail", str );
  *  
- *  err = core2foraws_sd_unmount( mount_point );
- *  ESP_LOGI( TAG, "\tSD unmount %s", err == ESP_OK ? "success" : "fail" );
+ *          err = core2foraws_sd_unmount();
+ *          ESP_LOGI( TAG, "\tSD unmount %s", err == ESP_OK ? "success" : "fail" );
+ *      }
+ *      else
+ *      {
+ *          ESP_LOGI( TAG, "\tFailed to mount SD" );
+ *      }
+ *  }
  * @endcode
  *
  * @param[in] file_name The pointer to the file name.
@@ -152,22 +179,36 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
  *
  * **Example:**
  * @code{c}
- *  char *mount_point = "/sdcard";
- *  char *file_path = "/edukit.txt";
+ *  #include <stdint.h>
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_SD_DEMO";
+ * 
+ *  void app_main( void )
+ *  {
+ *      char *file_path = "/edukit.txt";
  *  
- *  esp_err_t err = core2foraws_sd_mount( mount_point );
- *  ESP_LOGI( TAG, "\tMounted SD %s", err == ESP_OK ? "success" : "fail" );
+ *      esp_err_t err = core2foraws_sd_mount();
+ *      if( err == ESP_OK )
+ *      {
+ *          ESP_LOGI( TAG, "\tMounted SD card" );
  *  
- *  size_t written_length = 0;
- *  err = core2foraws_sd_write( mount_point, file_path, "Hello from AWS IoT EduKit!", &length );
- *  ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
+ *          size_t written_length = 0;
+ *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT EduKit!", &written_length );
+ *          ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
  *  
- *  char str[64];
- *  err = core2foraws_sd_read( mount_point, file_path, str, 64 );
- *  ESP_LOGI( TAG, "\tSD read %s,\nString: %s", err == ESP_OK ? "success" : "fail", str );
+ *          char str[64];
+ *          err = core2foraws_sd_read( file_path, str, 64 );
+ *          ESP_LOGI( TAG, "\tSD read %s,\nString: %s", err == ESP_OK ? "success" : "fail", str );
  *  
- *  err = core2foraws_sd_unmount( mount_point );
- *  ESP_LOGI( TAG, "\tSD unmount %s", err == ESP_OK ? "success" : "fail" );
+ *          err = core2foraws_sd_unmount();
+ *          ESP_LOGI( TAG, "\tSD unmount %s", err == ESP_OK ? "success" : "fail" );
+ *      }
+ *      else
+ *      {
+ *          ESP_LOGI( TAG, "\tFailed to mount SD" );
+ *      }
+ *  }
  * @endcode
  *
  * @param[in] file_name The pointer to the file name.
@@ -199,27 +240,34 @@ esp_err_t core2foraws_sd_write( const char *file_name, const char* message, size
  * docs for usage.
  *
  * The example code below, mounts the SD card, writes a file named
- * `hello.txt` on the path `/sdcard` with the contents "Hello
- * <<YOUR SD CARD'S PRODUCT NAME>>!", and then unmounts the card:
+ * `hello.txt` with the contents "Hello!", and then unmounts the card:
  *
  * **Example:**
  * @code{c}
- *  #define MOUNT_POINT "/sdcard"
- *  sdmmc_card_t* card;
- *  esp_err_t err;
+ *  #include <stdint.h>
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_SD_DEMO";
+ * 
+ *  void app_main( void )
+ *  {
+ *      esp_err_t err = core2foraws_sd_mount();
+ * 
+ *      if( err == ESP_OK )
+ *      {
+ *          ESP_LOGI( TAG, "\tMounted SD card" );
+ * 
+ *          size_t written_length = 0;
+ *          err = core2foraws_sd_write( file_path, "Hello!", &written_length );
  *
- *  xSemaphoreTake(spi_mutex, portMAX_DELAY);
- *
- *  spi_poll();
- *
- *  err = Core2ForAWS_Sdcard_Mount(MOUNT_POINT, &card);
- *
- *  FILE* f = fopen(MOUNT_POINT"/hello.txt", "w+")
- *  fprintf(f, "Hello %s!\n", card->cid.name);
- *  fclose(f);
- *
- *  err = Core2ForAWS_Sdcard_Unmount(MOUNT_POINT, &card);
- *  xSemaphoreGive(spi_mutex);
+ *          err = core2foraws_sd_unmount();
+ *          ESP_LOGI( TAG, "\tUnmounted SD card" );
+ *      }
+ *      else
+ *      {
+ *          ESP_LOGI( TAG, "\tFailed to mount SD" );
+ *      }
+ *  }
  * @endcode
  *
  * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
