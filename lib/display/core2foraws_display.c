@@ -76,7 +76,7 @@ static void _gui_task( void *pvParameter )
         vTaskDelay( pdMS_TO_TICKS( 10 ) );
 
         /* Try to take the semaphore, call lvgl related function on success */
-        if ( pdTRUE == xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY ) ) 
+        if ( pdTRUE == xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) ) ) 
 		{
             uint32_t ms_to_next_call = lv_task_handler();
             ESP_LOGV( _TAG, "%dms until next LVGL timer call.", ms_to_next_call );
@@ -94,11 +94,15 @@ esp_err_t core2foraws_display_init( void )
 {
     ESP_LOGI( _TAG, "\tInitializing" );
 
+    esp_timer_handle_t periodic_timer;
+    esp_err_t err;
+
+    if( core2foraws_common_spi_semaphore == NULL )
+	    core2foraws_common_spi_semaphore = xSemaphoreCreateMutex();
+
     lvgl_i2c_locking( i2c_manager_locking() );
 
-	core2foraws_common_spi_semaphore = xSemaphoreCreateMutex();
-
-    xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
+    xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) );
     	
 	lv_init();
 
@@ -146,8 +150,6 @@ esp_err_t core2foraws_display_init( void )
         .callback = &_lv_tick_task,
         .name = "periodic_gui"
     };
-    esp_timer_handle_t periodic_timer;
-    esp_err_t err;
 
 	err = esp_timer_create( &periodic_timer_args, &periodic_timer );
 	if ( err != ESP_OK )

@@ -37,6 +37,8 @@
 #include "core2foraws_sd.h"
 #include "core2foraws_common.h"
 
+SemaphoreHandle_t core2foraws_common_spi_semaphore;
+
 static sdmmc_card_t* _sd_card;
 static const char *_mount_path = "/sd_card";
 static size_t _mount_path_len;
@@ -68,6 +70,9 @@ static const char *_TAG = "CORE2FORAWS_SD";
 esp_err_t core2foraws_sd_mount( void )
 {
     esp_err_t err = ESP_OK;
+
+    if( core2foraws_common_spi_semaphore == NULL )
+	    core2foraws_common_spi_semaphore = xSemaphoreCreateMutex();
 
     _mount_path_len = strlen( _mount_path );
 
@@ -188,6 +193,10 @@ esp_err_t core2foraws_sd_unmount( void )
     if ( err == ESP_OK )
     {
         _sd_card = NULL;
+
+#ifndef CONFIG_SOFTWARE_DISPLAY_SUPPORT
+        core2foraws_common_spi_semaphore = NULL;
+#endif
     }
 
     return err;
