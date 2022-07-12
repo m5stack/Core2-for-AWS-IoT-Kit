@@ -85,9 +85,10 @@ extern "C" {
  *  {
  *      core2foraws_init();
  * 
- *      xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) );
- *
- *      lv_obj_t * hello_label = lv_label_create( NULL, NULL );
+ *      xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 40 ) );
+ * 
+ *      lv_obj_t * main_screen = lv_scr_act();
+ *      lv_obj_t * hello_label = lv_label_create( main_screen, NULL );
  *      lv_label_set_text_static( hello_label, "Hello World!" );
  *      lv_obj_align( hello_label, NULL, LV_ALIGN_CENTER, 0, 0 );
  *
