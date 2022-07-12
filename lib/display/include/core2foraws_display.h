@@ -102,7 +102,7 @@ extern TaskHandle_t core2foraws_display_task_handle;
  *  {
  *      core2foraws_init();
  * 
- *      xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
+ *      xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) );
  *
  *      lv_obj_t * hello_label = lv_label_create( NULL, NULL );
  *      lv_label_set_text_static( hello_label, "Hello World!" );
@@ -112,7 +112,7 @@ extern TaskHandle_t core2foraws_display_task_handle;
  * 
  *      vTaskDelay( pdMS_TO_TICKS( 1000 ) );
  * 
- *      xSemaphoreTake( core2foraws_common_spi_semaphore, portMAX_DELAY );
+ *      xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) );
  *      lv_disp_set_rotation( core2foraws_display_ptr, LV_DISP_ROT_180 );
  *      xSemaphoreGive( core2foraws_common_spi_semaphore );
  *  }

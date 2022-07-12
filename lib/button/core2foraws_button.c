@@ -70,13 +70,13 @@ static void button_press_task( void *pvParameters )
         xQueueReceive( ft6x36_touch_queue_handle, &touch_received, 0 );
         for ( uint8_t i = 0; i < sizeof( _touch_buttons ) / sizeof ( _touch_buttons[ 0 ] ); i++ )
         {
-            if ( xSemaphoreTake(_button_mutex, portMAX_DELAY) == pdPASS )
+            if ( xSemaphoreTake( _button_mutex, portMAX_DELAY )  == pdPASS )
             {
                 bool touched = ( touch_received.current_state == LV_INDEV_STATE_PR ) & 
-                                !((touch_received.last_x < _touch_buttons[ i ].x) || 
-                                (touch_received.last_x > (_touch_buttons[ i ].x + _touch_buttons[ i ].w)) || 
-                                (touch_received.last_y < _touch_buttons[ i ].y) || 
-                                (touch_received.last_y > (_touch_buttons[ i ].y + _touch_buttons[ i ].h)));
+                                !(( touch_received.last_x < _touch_buttons[ i ].x ) || 
+                                ( touch_received.last_x > ( _touch_buttons[ i ].x + _touch_buttons[ i ].w ) ) || 
+                                ( touch_received.last_y < _touch_buttons[ i ].y ) || 
+                                ( touch_received.last_y > (_touch_buttons[ i ].y + _touch_buttons[ i ].h ) ) );
                 ESP_LOGD( _TAG, "Touch button id=%i, touched=%d", i, touched );
 
                 uint32_t now_ticks = xTaskGetTickCount();
@@ -115,7 +115,7 @@ static void button_press_task( void *pvParameters )
 esp_err_t core2foraws_button_tapped( enum core2foraws_button_btns button, bool *state )
 {
     BaseType_t err;
-    err = xSemaphoreTake(_button_mutex, portMAX_DELAY);
+    err = xSemaphoreTake( _button_mutex, portMAX_DELAY );
     
     if ( err == pdPASS )
     {
@@ -130,7 +130,7 @@ esp_err_t core2foraws_button_tapped( enum core2foraws_button_btns button, bool *
 esp_err_t core2foraws_button_pressing( enum core2foraws_button_btns button, bool *state )
 {
     BaseType_t err;
-    err = xSemaphoreTake(_button_mutex, portMAX_DELAY);
+    err = xSemaphoreTake( _button_mutex, portMAX_DELAY );
     
     if ( err == pdPASS )
     {
@@ -144,7 +144,7 @@ esp_err_t core2foraws_button_pressing( enum core2foraws_button_btns button, bool
 esp_err_t core2foraws_button_held( enum core2foraws_button_btns button, bool *state )
 {
     BaseType_t err;
-    err = xSemaphoreTake(_button_mutex, portMAX_DELAY);
+    err = xSemaphoreTake( _button_mutex, portMAX_DELAY );
     
     if ( err == pdPASS )
     {
@@ -162,13 +162,13 @@ esp_err_t core2foraws_button_held( enum core2foraws_button_btns button, bool *st
 esp_err_t core2foraws_button_released( enum core2foraws_button_btns button, bool *state )
 {
     BaseType_t err;
-    err = xSemaphoreTake(_button_mutex, portMAX_DELAY);
+    err = xSemaphoreTake( _button_mutex, portMAX_DELAY );
     
     if ( err == pdPASS )
     {
-        *state = (_touch_buttons[ button ].state & RELEASE) > 0;
+        *state = ( _touch_buttons[ button ].state & RELEASE ) > 0;
         _touch_buttons[ button ].state &= ~RELEASE;
-        xSemaphoreGive(_button_mutex);
+        xSemaphoreGive( _button_mutex );
     }
 
     return core2foraws_common_error( err );

@@ -83,10 +83,11 @@ enum core2foraws_button_btns
  * @brief List of possible virtual button press events.
  */
 /* @[declare_button_press_event_t] */
-typedef enum {
-    PRESS = (1 << 0),       /**< @brief Virtual button was pressed. */
-    RELEASE = (1 << 1),     /**< @brief Virtual button was released. */
-    LONGPRESS = (1 << 2),   /**< @brief Virtual button was long pressed. */
+typedef enum
+{
+    PRESS = ( 1 << 0 ),     /**< @brief Virtual button was pressed. */
+    RELEASE = ( 1 << 1 ),   /**< @brief Virtual button was released. */
+    LONGPRESS = ( 1 << 2 ), /**< @brief Virtual button was long pressed. */
 } press_event_t;
 /* @[declare_button_press_event_t] */
 
