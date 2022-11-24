@@ -127,6 +127,7 @@ if( CONFIG_SOFTWARE_MOTION_SUPPORT )
                                                 )
     set( CORE2FORAWS_MOTION_INCLUDE_DIRS        "${CORE2FORAWS_LIB}/motion/include"
                                                 "${CORE2FORAWS_LIB}/motion/lib/MPU6886-idf"
+                                                "${CORE2FORAWS_LIB}/common/lib/esp-idf-lib/components/esp_idf_lib_helpers"
                                                 )
     list( APPEND CORE2FORAWS_SRCS               ${CORE2FORAWS_MOTION_SRCS} )
     list( APPEND CORE2FORAWS_INCLUDE_DIRS       ${CORE2FORAWS_MOTION_INCLUDE_DIRS} )
