@@ -366,7 +366,6 @@ esp_err_t core2foraws_expports_pin_reset( gpio_num_t pin );
  *      }
  *      
  *      core2foraws_expports_i2c_close();
- *      core2foraws_expports_pin_reset();
  *      vTaskDelete( NULL );
  *  }
  *  
@@ -446,7 +445,6 @@ esp_err_t core2foraws_expports_i2c_begin( void );
  *      }
  *      
  *      core2foraws_expports_i2c_close();
- *      core2foraws_expports_pin_reset();
  *      vTaskDelete( NULL );
  *  }
  *  
@@ -588,7 +586,6 @@ esp_err_t core2foraws_expports_i2c_write( uint16_t device_address, uint32_t regi
  *      }
  *      
  *      core2foraws_expports_i2c_close();
- *      core2foraws_expports_pin_reset();
  *      vTaskDelete( NULL );
  *  }
  *  

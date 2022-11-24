@@ -113,7 +113,7 @@ static uint8_t _core2foraws_expports_get_index( gpio_num_t pin )
 static esp_err_t _core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode )
 {
     esp_err_t err = ESP_FAIL;
-
+    
     if ( mode == OUTPUT || mode == INPUT )
     {
         gpio_config_t io_conf;
@@ -180,12 +180,15 @@ static esp_err_t _core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode
             ESP_LOGE( _TAG, "\tFailed to set pins %d, %d, to  UART%d. Error code: 0x%x.", PORT_C_UART_RX_PIN, PORT_C_UART_TX_PIN, PORT_C_UART_NUM, err );
         }
     }
+    else if ( mode == I2C )
+    {
+        err = i2c_manager_init( COMMON_I2C_EXTERNAL );
+    }
     else if ( mode == NONE )
     {
-        err = dac_output_disable(DAC_CHANNEL);
-        err |= gpio_reset_pin(pin);
-        err |= uart_driver_delete(UART_NUM_2);
-        err |= core2foraws_expports_i2c_close();
+        err = dac_output_disable( DAC_CHANNEL );
+        err |= gpio_reset_pin( pin );
+        err |= uart_driver_delete( UART_NUM_2 );
     }
 
     return err;
@@ -211,8 +214,10 @@ static esp_err_t _core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t m
     }
 
     uint8_t index = _core2foraws_expports_get_index( pin );
+    
+    ESP_LOGD( _TAG, "\n\n\tPin %d mode updating — new mode %d, current mode %d,\n\n", pin, mode, _port_pins[ index ].mode );
 
-    if ( _port_pins[ index ].mode != mode || _port_pins[ index ].mode != NONE )
+    if ( _port_pins[ index ].mode != mode && _port_pins[ index ].mode != NONE )
     {
         err = ESP_ERR_INVALID_STATE;
         ESP_LOGD( _TAG, "\tPin %d is currently set in a different mode. Resetting", pin );
@@ -259,10 +264,10 @@ esp_err_t core2foraws_expports_pin_reset( gpio_num_t pin )
 
 esp_err_t core2foraws_expports_i2c_begin( void )
 {
-    _core2foraws_expports_pin_handler( PORT_A_SDA_PIN, I2C );
-    _core2foraws_expports_pin_handler( PORT_A_SCL_PIN, I2C );
+    esp_err_t err = _core2foraws_expports_pin_handler( PORT_A_SDA_PIN, I2C );
+    err |= _core2foraws_expports_pin_handler( PORT_A_SCL_PIN, I2C );
 
-    return i2c_manager_init( COMMON_I2C_EXTERNAL );
+    return err;
 }
 
 esp_err_t core2foraws_expports_i2c_read( uint16_t device_address, uint32_t register_address, uint8_t *data, uint16_t length )
@@ -277,8 +282,8 @@ esp_err_t core2foraws_expports_i2c_write( uint16_t device_address, uint32_t regi
 
 esp_err_t core2foraws_expports_i2c_close( void )
 {
-    _core2foraws_expports_pin_handler( PORT_A_SDA_PIN, NONE );
-    _core2foraws_expports_pin_handler( PORT_A_SCL_PIN, NONE );
+    core2foraws_expports_pin_reset( PORT_A_SDA_PIN );
+    core2foraws_expports_pin_reset( PORT_A_SCL_PIN );
     return i2c_manager_close( COMMON_I2C_EXTERNAL );
 }
 
