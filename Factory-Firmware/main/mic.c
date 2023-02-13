@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * AWS IoT Kit - Core2 for AWS IoT Kit
  * Factory Firmware v2.2.0
  * mic.c
  * 
@@ -80,7 +80,7 @@ void display_microphone_tab(lv_obj_t* tv){
     /* Create the sensor information label object */
     lv_obj_t* body_label = lv_label_create(mic_bg, NULL);
     lv_label_set_long_mode(body_label, LV_LABEL_LONG_BREAK);
-    lv_label_set_static_text(body_label, "The SPM1423 is an enhanced far-field MEMS microphone.\n\nSay \"Hi EduKit\"");
+    lv_label_set_static_text(body_label, "The SPM1423 is an enhanced far-field MEMS microphone.\n\nSay \"Hi Kit\"");
     lv_obj_set_width(body_label, 252);
     lv_obj_align(body_label, mic_bg, LV_ALIGN_IN_TOP_LEFT, 20, 40);
 

@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * AWS IoT Kit - Core2 for AWS IoT Kit
  * Factory Firmware v2.2.0
  * home.c
  * 
@@ -68,7 +68,7 @@ void display_cta_tab(lv_obj_t* tv){
 
     lv_obj_t* cta_label = lv_label_create(cta_tab, NULL);
     lv_label_set_long_mode(cta_label, LV_LABEL_LONG_BREAK);
-    lv_label_set_text(cta_label, "Get hands-on experience building IoT solutions and learn about the AWS IoT EduKit program:");
+    lv_label_set_text(cta_label, "Get hands-on experience building IoT solutions and learn about the AWS IoT Kit program:");
     lv_obj_set_width(cta_label, 260);
     lv_obj_align(cta_label, cta_tab, LV_ALIGN_CENTER, 0 , 10);
 

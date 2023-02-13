@@ -1,6 +1,6 @@
 # ESP Alexa Certificates and Configuration
 
-Place the certificates you received from Espressif to use their sandbox account to try Alexa features on the M5Stack Core2 for AWS IoT EduKit. Files required:
+Place the certificates you received from Espressif to use their sandbox account to try Alexa features on the M5Stack Core2 for AWS IoT Kit. Files required:
 - account.info
 - device.cert
 - device.info

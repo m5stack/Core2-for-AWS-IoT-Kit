@@ -1,6 +1,6 @@
 /**
  * @file core2forAWS.h
- * @brief Functions to initialize and access Core2 for AWS IoT EduKit hardware features.
+ * @brief Functions to initialize and access Core2 for AWS IoT Kit hardware features.
  */
 
 #pragma once
@@ -744,7 +744,7 @@ esp_err_t Core2ForAWS_SDcard_Unmount(const char *mount_path, sdmmc_card_t *out_c
  * will use I2C port number 0 (I2C_NUM_0) as the on-board peripherals 
  * are on I2C port number 1 (I2C_NUM_1). The APIs provided utilize the
  * built-in pullup resistors on the SDA and SCL lines with the Core2
- * for AWS IoT EduKit as the I2C controller, and all attached devices
+ * for AWS IoT Kit as the I2C controller, and all attached devices
  * as the peripheral.
  * 
  * **ADC** sets the pin to analog single read mode. Single read mode is
@@ -770,7 +770,7 @@ esp_err_t Core2ForAWS_SDcard_Unmount(const char *mount_path, sdmmc_card_t *out_c
  * **NONE** resets the pin and removes frees memory.
  *
  * The example code below sets the ADC pin (GPIO 36) to ADC mode after
- * initializing the Core2 for AWS IoT EduKit and prints out the
+ * initializing the Core2 for AWS IoT Kit and prints out the
  * result of attempting to set the pin.
  *
  * **Example:**
@@ -1306,7 +1306,7 @@ esp_err_t Core2ForAWS_Port_B_DAC_WriteMilliVolts(uint16_t mvolts);
  * simplify development at the expense of compatibility and performance.
  * The configuration above may not be suitable for your application or
  * attached peripheral. For more information about UART communications
- * on the Core2 for AWS IoT EduKit using the ESP32 and how to create
+ * on the Core2 for AWS IoT Kit using the ESP32 and how to create
  * your own configuration, visit Espressif's official [documentation](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/uart.html).
  *
  * @note The ESP32 is a 3.3v device and requires 3.3v on the UART TX/RX 
@@ -1316,7 +1316,7 @@ esp_err_t Core2ForAWS_Port_B_DAC_WriteMilliVolts(uint16_t mvolts);
  * to UART transmit, which will also set PORT_C_UART_RX_PIN (GPIO 13)
  * to UART receiver, and sets the UART baud rate to 115200. It then
  * starts two FreeRTOS tasks — one that transmits "Hello from AWS IoT
- * EduKit" every two seconds and the other receives the message. The
+ * Kit" every two seconds and the other receives the message. The
  * receiver task outputs the number of bytes read from the buffer, the
  * number of bytes that remains unread in the ring buffer, and the
  * message.
@@ -1338,7 +1338,7 @@ esp_err_t Core2ForAWS_Port_B_DAC_WriteMilliVolts(uint16_t mvolts);
  *
  *  static void uart_tx_task(void *arg){
  *      while (1) {
- *          const char *message = "Hello from AWS IoT EduKit";
+ *          const char *message = "Hello from AWS IoT Kit";
  *          size_t message_len = strlen(message) + 1;
  *          Core2ForAWS_Port_C_UART_Send(message, message_len);
  *          vTaskDelay(pdMS_TO_TICKS(2000));
@@ -1385,14 +1385,14 @@ esp_err_t Core2ForAWS_Port_C_UART_Begin(uint32_t baud);
  * FIFO buffer, or already sent.
  *
  * For more information about UART communications on the Core2 for AWS
- * IoT EduKit using the ESP32, visit Espressif's official
+ * IoT Kit using the ESP32, visit Espressif's official
  * [documentation](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/uart.html).
  *
  * The example below sets the PORT_C_UART_TX_PIN (GPIO 14) pin mode
  * to UART transmit, which will also set PORT_C_UART_RX_PIN (GPIO 13)
  * to UART receiver, and sets the UART baud rate to 115200. It then
  * starts two FreeRTOS tasks — one that transmits "Hello from AWS IoT
- * EduKit" every two seconds and the other receives the message. The
+ * Kit" every two seconds and the other receives the message. The
  * receiver task outputs the number of bytes read from the buffer, the
  * number of bytes that remains unread in the ring buffer, and the
  * message.
@@ -1414,7 +1414,7 @@ esp_err_t Core2ForAWS_Port_C_UART_Begin(uint32_t baud);
  *
  *  static void uart_tx_task(void *arg){
  *      while (1) {
- *          const char *message = "Hello from AWS IoT EduKit";
+ *          const char *message = "Hello from AWS IoT Kit";
  *          size_t message_len = strlen(message) + 1;
  *          Core2ForAWS_Port_C_UART_Send(message, message_len);
  *          vTaskDelay(pdMS_TO_TICKS(2000));
@@ -1469,14 +1469,14 @@ int Core2ForAWS_Port_C_UART_Send(const char *message, size_t len);
  * messages. For some applications, it might offer significant
  * performance benefits to set up an interrupt for handling and
  * processing new data. For more information about UART communications
- * on the Core2 for AWS IoT EduKit using the ESP32 and how to create
+ * on the Core2 for AWS IoT Kit using the ESP32 and how to create
  * your own configuration, visit Espressif's official [documentation](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/uart.html).
  *
  * The example below sets the PORT_C_UART_TX_PIN (GPIO 14) pin mode
  * to UART transmit, which will also set PORT_C_UART_RX_PIN (GPIO 13)
  * to UART receiver, and sets the UART baud rate to 115200. It then
  * starts two FreeRTOS tasks — one that transmits "Hello from AWS IoT
- * EduKit" every two seconds and the other receives the message. The
+ * Kit" every two seconds and the other receives the message. The
  * receiver task outputs the number of bytes read from the buffer, the
  * number of bytes that remains unread in the ring buffer, and the
  * message.
@@ -1498,7 +1498,7 @@ int Core2ForAWS_Port_C_UART_Send(const char *message, size_t len);
  *
  *  static void uart_tx_task(void *arg){
  *      while (1) {
- *          const char *message = "Hello from AWS IoT EduKit";
+ *          const char *message = "Hello from AWS IoT Kit";
  *          size_t message_len = strlen(message) + 1;
  *          Core2ForAWS_Port_C_UART_Send(message, message_len);
  *          vTaskDelay(pdMS_TO_TICKS(2000));

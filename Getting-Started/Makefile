@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := AWS_IoT_EduKit-Getting_Started
+PROJECT_NAME := AWS_IoT_Kit-Getting_Started
 PROJECT_VER := 1.3.0
 
 include $(IDF_PATH)/make/project.mk

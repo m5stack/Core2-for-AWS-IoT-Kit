@@ -27,4 +27,4 @@ list(APPEND EXTRA_COMPONENT_DIRS
     ${AUDIO_HAL_PATH}/
     )
 
-idf_build_set_property(ENABLE_AWS_EDUKIT 1)
+idf_build_set_property(ENABLE_AWS_KIT 1)

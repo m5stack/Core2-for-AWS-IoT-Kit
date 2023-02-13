@@ -1,4 +1,4 @@
-menu "AWS IoT EduKit Configuration"
+menu "AWS IoT Kit Configuration"
 
     config WIFI_SSID
         string "WiFi SSID"

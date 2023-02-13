@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * AWS IoT Kit - Core2 for AWS IoT Kit
  * gauge_hand.c
  * 
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.

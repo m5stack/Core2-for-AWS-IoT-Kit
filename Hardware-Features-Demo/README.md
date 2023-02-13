@@ -1,7 +1,7 @@
 M5Stack Core2 ESP32 IoT Development Kit for AWS Features Demo
 ===
 
-A demonstration application and BSP library for the M5Stack Core2 ESP32 IoT Development Kit for AWS IoT EduKit. For use with ESP-IDF and part of the AWS IoT EduKit program.
+A demonstration application and BSP library for the M5Stack Core2 ESP32 IoT Development Kit for AWS IoT Kit. For use with ESP-IDF and part of the AWS IoT Kit program.
 
 ## Description
 

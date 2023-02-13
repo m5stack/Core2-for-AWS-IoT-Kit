@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * AWS IoT Kit - Core2 for AWS IoT Kit
  * Factory Firmware v2.2.0
  * home.c
  * 
@@ -51,7 +51,7 @@ void display_home_tab(lv_obj_t* tv){
     
     lv_obj_t* tab_title_label = lv_label_create(home_tab, NULL);
     lv_obj_add_style(tab_title_label, LV_OBJ_PART_MAIN, &title_style);
-    lv_label_set_static_text(tab_title_label, "M5Stack\nCore2 for AWS IoT EduKit");
+    lv_label_set_static_text(tab_title_label, "M5Stack\nCore2 for AWS IoT Kit");
     lv_label_set_align(tab_title_label, LV_LABEL_ALIGN_CENTER);
     lv_obj_align(tab_title_label, home_tab, LV_ALIGN_IN_TOP_MID, 0, 50);
 
@@ -78,5 +78,5 @@ void display_home_tab(lv_obj_t* tv){
     lv_obj_align(arrow_label, home_tab, LV_ALIGN_IN_BOTTOM_MID, 0 , -40);
     xSemaphoreGive(xGuiSemaphore);
     
-    ESP_LOGI(TAG, "\n\nWelcome to your M5Stack Core2 for AWS IoT EduKit reference hardware! Visit https://edukit.workshop.aws to view the tutorials and start learning how to build IoT solutions using AWS services.\n\n");
+    ESP_LOGI(TAG, "\n\nWelcome to your M5Stack Core2 for AWS IoT Kit reference hardware! Visit https://edukit.workshop.aws to view the tutorials and start learning how to build IoT solutions using AWS services.\n\n");
 }

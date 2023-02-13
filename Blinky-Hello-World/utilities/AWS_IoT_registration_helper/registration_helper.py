@@ -1,4 +1,4 @@
-# AWS IoT EduKit Pre-Provisioned MCU Device Registration Helper
+# AWS IoT Kit Pre-Provisioned MCU Device Registration Helper
 # v1.1.0
 #
 # Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -67,7 +67,7 @@ from Microchip_manifest_handler import *
 
 atecc608_i2c_sda_pin = 21
 atecc608_i2c_scl_pin = 22
-policy_name = 'EduKit_Policy'
+policy_name = 'Kit_Policy'
 
 iot = boto3.client('iot')
 
@@ -78,7 +78,7 @@ def replace_file_text( file_path, search_expr, replacement_expr, flags=0 ):
         sys.stdout.write( line )
 
 def check_environment():
-    """Checks to ensure environment is set per AWS IoT EduKit instructions.
+    """Checks to ensure environment is set per AWS IoT Kit instructions.
     Verifies Python 3.6.x+ is installed and is being used to execute this script.
     Verifies that the AWS CLI is installed and configured. Prints
     AWS IoT endpoint address.
@@ -163,7 +163,7 @@ def upload_manifest():
     applies the device certificate (public key) that is stored in the manifest
     file, and attaches a default policy.
     """
-    check_and_install_policy('EduKit_Policy')
+    check_and_install_policy('Kit_Policy')
 
     for file in os.listdir("output_files"):
         if re.match("\w+(\_manifest.json)", file):
@@ -172,19 +172,19 @@ def upload_manifest():
 
             signer_cert = open(os.path.join(os.path.dirname( __file__ ), "output_files","signer_cert.crt"), "r").read()
             signer_cert_bytes = str.encode(signer_cert)
-            invoke_import_manifest('EduKit_Policy', manifest_data, signer_cert_bytes)
+            invoke_import_manifest('Kit_Policy', manifest_data, signer_cert_bytes)
             invoke_validate_manifest_import(manifest_data, signer_cert_bytes)
 
 
 def main():
-    """AWS IoT EduKit MCU hardware device registration script
+    """AWS IoT Kit MCU hardware device registration script
     Checkes environment is set correctly, generates ECDSA certificates,
     ensures all required python libraries are included, retrieves on-board 
     device certificate using the esp-cryptoauth library and utility, creates 
     an AWS IoT thing using the AWS CLI and Microchip Trust Platform Design Suite.
     """
     app_binary = 'sample_bins/secure_cert_mfg.bin'
-    parser = argparse.ArgumentParser(description='''Provision the Core2 for AWS IoT EduKit with 
+    parser = argparse.ArgumentParser(description='''Provision the Core2 for AWS IoT Kit with 
         device_certificate and signer_certificate required for TLS authentication''')
 
     parser.add_argument(
@@ -192,7 +192,7 @@ def main():
         dest='port',
         metavar='[port]',
         required=True,
-        help='Serial comm port of the Core2 for AWS IoT EduKit device')
+        help='Serial comm port of the Core2 for AWS IoT Kit device')
 
     args = parser.parse_args()
 
