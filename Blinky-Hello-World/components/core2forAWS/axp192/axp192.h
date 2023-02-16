@@ -119,7 +119,7 @@ typedef enum {
 
 /**
  * @brief List of possible durations the power button must
- * be held to power on the Core2 for AWS IoT EduKit.
+ * be held to power on the Core2 for AWS IoT Kit.
  */
 /* @[declare_axp192_startuptime] */
 typedef enum {
@@ -132,7 +132,7 @@ typedef enum {
 
 /**
  * @brief List of possible durations the power button must 
- * be held to power off the Core2 for AWS IoT EduKit.
+ * be held to power off the Core2 for AWS IoT Kit.
  */
 /* @[declare_axp192_powerofftime] */
 typedef enum {

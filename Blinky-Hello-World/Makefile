@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := AWS_IoT_EduKit-Cloud_Connected_Blinky
+PROJECT_NAME := AWS_IoT_Kit-Cloud_Connected_Blinky
 PROJECT_VER := 1.4.1
 
 include $(IDF_PATH)/make/project.mk

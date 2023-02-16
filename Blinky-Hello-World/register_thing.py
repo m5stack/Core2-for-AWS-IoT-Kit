@@ -1,4 +1,4 @@
-# AWS IoT EduKit Pre-Provisioned MCU Device Registration Helper for PlatformIO
+# AWS IoT Kit Pre-Provisioned MCU Device Registration Helper for PlatformIO
 # v1.0.0
 #
 # Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -81,7 +81,7 @@ temp_folder = os.path.join( cwd, "output_files" )
 dest_folder = os.path.join( cwd, "utilities", "AWS_IoT_registration_helper", "output_files" )
 atecc608_i2c_sda_pin = 21
 atecc608_i2c_scl_pin = 22
-policy_name = 'EduKit_Policy'
+policy_name = 'Kit_Policy'
 
 iot = boto3.client('iot')
 
@@ -92,7 +92,7 @@ def replace_file_text( file_path, search_expr, replacement_expr, flags=0 ):
         sys.stdout.write( line )
 
 def check_environment():
-    """Checks to ensure environment is set per AWS IoT EduKit instructions.
+    """Checks to ensure environment is set per AWS IoT Kit instructions.
     Verifies Python 3.6.x+ is installed and is being used to execute this script.
     Verifies that the AWS CLI is installed and configured. Prints
     AWS IoT endpoint address.
@@ -181,7 +181,7 @@ def upload_manifest():
     applies the device certificate (public key) that is stored in the manifest
     file, and attaches a default policy.
     """
-    check_and_install_policy('EduKit_Policy')
+    check_and_install_policy('Kit_Policy')
 
     for file in os.listdir( dest_folder ):
         if re.match("\w+(\_manifest.json)", file):
@@ -190,7 +190,7 @@ def upload_manifest():
 
             signer_cert = open(os.path.join( dest_folder, "signer_cert.crt"), "r").read()
             signer_cert_bytes = str.encode(signer_cert)
-            invoke_import_manifest('EduKit_Policy', manifest_data, signer_cert_bytes)
+            invoke_import_manifest('Kit_Policy', manifest_data, signer_cert_bytes)
             invoke_validate_manifest_import(manifest_data, signer_cert_bytes)
 
 class manifest_args:
@@ -205,7 +205,7 @@ def move_temp_files():
     os.rmdir( temp_folder )
 
 def create_device_cert_and_manifest():
-    """AWS IoT EduKit MCU hardware device registration script
+    """AWS IoT Kit MCU hardware device registration script
     Checkes environment is set correctly, generates ECDSA certificates,
     ensures all required python libraries are included, retrieves on-board 
     device certificate using the esp-cryptoauth library and utility, creates 

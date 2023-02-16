@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * AWS IoT Kit - Core2 for AWS IoT Kit
  * Cloud Connected Blinky v1.4.1
  * main.c
  * 
@@ -19,7 +19,7 @@
  */
 /**
  * @file main.c
- * @brief simple MQTT publish and subscribe for use with AWS IoT EduKit reference hardware.
+ * @brief simple MQTT publish and subscribe for use with AWS IoT Kit reference hardware.
  *
  * This example takes the parameters from the build configuration and establishes a connection to AWS IoT Core over MQTT.
  *
@@ -120,7 +120,7 @@ static void publisher(AWS_IoT_Client *client, char *base_topic, uint16_t base_to
     paramsQOS0.isRetained = 0;
 
     // Publish and ignore if "ack" was received or  from AWS IoT Core
-    sprintf(cPayload, "%s : %d ", "Hello from AWS IoT EduKit (QOS0)", i++);
+    sprintf(cPayload, "%s : %d ", "Hello from AWS IoT Kit (QOS0)", i++);
     paramsQOS0.payloadLen = strlen(cPayload);
     IoT_Error_t rc = aws_iot_mqtt_publish(client, base_topic, base_topic_len, &paramsQOS0);
     if (rc != SUCCESS){
@@ -132,7 +132,7 @@ static void publisher(AWS_IoT_Client *client, char *base_topic, uint16_t base_to
     paramsQOS1.payload = (void *) cPayload;
     paramsQOS1.isRetained = 0;
     // Publish and check if "ack" was sent from AWS IoT Core
-    sprintf(cPayload, "%s : %d ", "Hello from AWS IoT EduKit (QOS1)", i++);
+    sprintf(cPayload, "%s : %d ", "Hello from AWS IoT Kit (QOS1)", i++);
     paramsQOS1.payloadLen = strlen(cPayload);
     rc = aws_iot_mqtt_publish(client, base_topic, base_topic_len, &paramsQOS1);
     if (rc == MQTT_REQUEST_TIMEOUT_ERROR) {

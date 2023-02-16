@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * AWS IoT Kit - Core2 for AWS IoT Kit
  * Smart Thermostat v1.3.1
  * main.c
  * 
@@ -19,7 +19,7 @@
  */
 /**
  * @file main.c
- * @brief simple MQTT publish, subscribe, and device shadows for use with AWS IoT EduKit reference hardware.
+ * @brief simple MQTT publish, subscribe, and device shadows for use with AWS IoT Kit reference hardware.
  *
  * This example takes the parameters from the build configuration and establishes a connection to AWS IoT Core over MQTT.
  *

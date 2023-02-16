@@ -52,7 +52,7 @@ void Button_Init();
 
 /**
  * @brief Create a virtual button based on locations and size of the 
- * button area. The Core2 for AWS IoT EduKit has 3 buttons on the 
+ * button area. The Core2 for AWS IoT Kit has 3 buttons on the 
  * face of the device that these virtual buttons are mapped to. 
  * 
  * @param[in] x Virtual button touch starting point in the X-coordinate plane.

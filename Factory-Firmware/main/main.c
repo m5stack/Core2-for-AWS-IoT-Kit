@@ -1,5 +1,5 @@
 /*
- * AWS IoT EduKit - Core2 for AWS IoT EduKit
+ * AWS IoT Kit - Core2 for AWS IoT Kit
  * Factory Firmware v2.2.0
  * main.c
  * 
@@ -70,7 +70,7 @@ LV_IMG_DECLARE(powered_by_aws_logo);
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "\n***************************************************\n M5Stack Core2 for AWS IoT EduKit Factory Firmware\n***************************************************");
+    ESP_LOGI(TAG, "\n***************************************************\n M5Stack Core2 for AWS IoT Kit Factory Firmware\n***************************************************");
 
     // Initialize NVS for Wi-Fi stack to store data
     esp_err_t ret = nvs_flash_init();

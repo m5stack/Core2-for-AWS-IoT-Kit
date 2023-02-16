@@ -151,7 +151,7 @@ esp_err_t app_smart_home_init()
     alexa_smart_home_device_info_t device_info = {
         .device_serial_num = mac_str,
         .manufacturer_name = "M5Stack",
-        .device_description = "Core2 for AWS IoT EduKit",
+        .device_description = "Core2 for AWS IoT Kit",
         .model_name = "ESP32",
         .product_id = CONFIG_ALEXA_PRODUCT_ID,
     };
