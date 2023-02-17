@@ -134,7 +134,7 @@ static void event_handler(lv_obj_t* obj, lv_event_t event)
         /* Create the message box as a child of the modal background */
         mbox = lv_msgbox_create(obj, NULL);
         lv_msgbox_add_btns(mbox, btns1);
-        lv_msgbox_set_text(mbox, "Visit https://edukit.workshop.aws\n first to start building IoT apps");
+        lv_msgbox_set_text(mbox, "Visit https://aws-iot-kit-docs.m5stack.com\n first to start building IoT apps");
         lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_event_cb(mbox, mbox_event_cb);
 

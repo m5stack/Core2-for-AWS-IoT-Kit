@@ -85,7 +85,7 @@ void display_cta_tab(lv_obj_t* tv){
 
     lv_obj_t* url_label = lv_label_create(cta_tab, NULL);
     lv_obj_add_style(url_label, LV_OBJ_PART_MAIN, &url_style);
-    lv_label_set_text(url_label, "https://edukit.workshop.aws");
+    lv_label_set_text(url_label, "https://aws-iot-kit-docs.m5stack.com");
     lv_obj_align(url_label, cta_tab, LV_ALIGN_IN_BOTTOM_MID, 0, -40);
     
     xSemaphoreGive(xGuiSemaphore);
