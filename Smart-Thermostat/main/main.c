@@ -23,7 +23,7 @@
  *
  * This example takes the parameters from the build configuration and establishes a connection to AWS IoT Core over MQTT.
  *
- * Some configuration is required. Visit https://edukit.workshop.aws
+ * Some configuration is required. Visit https://aws-iot-kit-docs.m5stack.com
  *
  */
 #include <stdio.h>

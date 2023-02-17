@@ -1,14 +1,14 @@
 # Intro to Alexa for IoT for AWS IoT Kit
-This is the corresponding code for AWS IoT Kit's [Intro to Alexa for IoT](https://edukit.workshop.aws/en/blinky-hello-world.html) tutorial. This code is made to work exclusively with the M5Stack Core2 ESP32 IoT Development Kit for AWS IoT Kit available on [Amazon.com](https://www.amazon.com/dp/B08VGRZYJR) or on the [M5Stack store](https://m5stack.com/products/m5stack-core2-esp32-iot-development-kit-for-aws-iot-edukit).
+This is the corresponding code for AWS IoT Kit's [Intro to Alexa for IoT](https://aws-iot-kit-docs.m5stack.com/en/blinky-hello-world/) tutorial. This code is made to work exclusively with the M5Stack Core2 ESP32 IoT Development Kit for AWS IoT Kit available on [Amazon.com](https://www.amazon.com/dp/B08VGRZYJR) or on the [M5Stack store](https://m5stack.com/products/m5stack-core2-esp32-iot-development-kit-for-aws-iot-kit).
 
-To find out more about the AWS IoT Kit program, visit [https://aws.amazon.com/iot/edukit](https://aws.amazon.com/iot/edukit).
+To find out more about the AWS IoT Kit program, visit [https://aws-iot-kit-docs.m5stack.com](https://aws-iot-kit-docs.m5stack.com).
 
 This is a beta project. It's a port of the [ESP-VA-SDK](https://github.com/espressif/esp-va-sdk/) made to work with the M5Stack Core2 for AWS IoT Kit.
 
 
 # Table Of Contents
 
-- [Intro to Alexa for IoT for AWS IoT Kit](#intro-to-alexa-for-iot-for-aws-iot-edukit)
+- [Intro to Alexa for IoT for AWS IoT Kit](#intro-to-alexa-for-iot-for-aws-iot-kit)
 - [Table Of Contents](#table-of-contents)
 - [0. Important Note](#0-important-note)
 - [1. Introduction](#1-introduction)

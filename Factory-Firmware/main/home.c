@@ -78,5 +78,5 @@ void display_home_tab(lv_obj_t* tv){
     lv_obj_align(arrow_label, home_tab, LV_ALIGN_IN_BOTTOM_MID, 0 , -40);
     xSemaphoreGive(xGuiSemaphore);
     
-    ESP_LOGI(TAG, "\n\nWelcome to your M5Stack Core2 for AWS IoT Kit reference hardware! Visit https://edukit.workshop.aws to view the tutorials and start learning how to build IoT solutions using AWS services.\n\n");
+    ESP_LOGI(TAG, "\n\nWelcome to your M5Stack Core2 for AWS IoT Kit reference hardware! Visit https://aws-iot-kit-docs.m5stack.com to view the tutorials and start learning how to build IoT solutions using AWS services.\n\n");
 }
