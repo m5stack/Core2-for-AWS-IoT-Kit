@@ -1,5 +1,5 @@
 /*
- * Core2 for AWS IoT EduKit BSP v2.0.0
+ * Core2 for AWS IoT Kit BSP v2.0.0
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -18,14 +18,11 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * https://aws.amazon.com/iot/edukit
- *
  */
 
 /**
  * @file core2foraws_crypto.c
- * @brief Core2 for AWS IoT EduKit cryptographic hardware driver APIs
+ * @brief Core2 for AWS IoT Kit cryptographic hardware driver APIs
  */
 
 #include <stdint.h>
@@ -60,7 +57,7 @@ static void _close_mbedtls_rng( void );
 static esp_err_t _configure_mbedtls_rng( void )
 {
     esp_err_t err;
-    const char * seed = "\tAWS IoT EduKit random seed string";
+    const char * seed = "\tAWS IoT Kit random seed string";
     mbedtls_ctr_drbg_init( &_ctr_drbg );
 
     ESP_LOGD(_TAG, "\tSeeding mbedTLS random number generator");

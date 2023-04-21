@@ -1,5 +1,5 @@
 #
-# CMakeLists.txt file for Core2 for AWS IoT EduKit Board Support Package
+# CMakeLists.txt file for Core2 for AWS IoT Kit Board Support Package
 #
 cmake_minimum_required( VERSION 3.16.0 )
 

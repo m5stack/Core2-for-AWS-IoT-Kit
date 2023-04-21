@@ -1,6 +1,6 @@
 
 /*
- * Core2 for AWS IoT EduKit BSP v2.0.0
+ * Core2 for AWS IoT Kit BSP v2.0.0
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -19,14 +19,11 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * https://aws.amazon.com/iot/edukit
- *
  */
 
 /**
  * @file core2foraws_rgb_led.c
- * @brief Core2 for AWS IoT EduKit RGB LEDs hardware driver APIs
+ * @brief Core2 for AWS IoT Kit RGB LEDs hardware driver APIs
  */
 
 #include <freertos/FreeRTOS.h>

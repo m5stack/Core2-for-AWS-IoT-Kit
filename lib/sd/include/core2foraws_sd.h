@@ -1,5 +1,5 @@
 /*
- * Core2 for AWS IoT EduKit BSP v2.0.0
+ * Core2 for AWS IoT Kit BSP v2.0.0
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -18,14 +18,11 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * https://aws.amazon.com/iot/edukit
- *
  */
 
 /**
  * @file core2foraws_sd.h
- * @brief Core2 for AWS IoT EduKit SD card hardware driver APIs
+ * @brief Core2 for AWS IoT Kit SD card hardware driver APIs
  */
 
 #ifndef _CORE2FORAWS_SD_H_
@@ -64,8 +61,8 @@ extern "C" {
  * multiple tasks attempting to access the device at once.
  *
  * The example code below mounts the SD card on the mount point 
- * `/sdcard` and then writes a file named `edukit.txt` with the 
- * contents "Hello from AWS IoT EduKit!":
+ * `/sdcard` and then writes a file named `kit.txt` with the 
+ * contents "Hello from AWS IoT Kit!":
  *
  * **Example:**
  * @code{c}
@@ -76,14 +73,14 @@ extern "C" {
  * 
  *  void app_main( void )
  *  {
- *      char *file_path = "/edukit.txt";
+ *      char *file_path = "/kit.txt";
  *  
  *      esp_err_t err = core2foraws_sd_mount();
  *      if( err == ESP_OK )
  *      {
  *          ESP_LOGI( TAG, "\tMounted SD card" ); *  
  *          size_t written_length = 0;
- *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT EduKit!", &length );
+ *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT Kit!", &length );
  *          ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
  *  
  *          char str[64];
@@ -118,8 +115,8 @@ esp_err_t core2foraws_sd_mount( void );
  * once the EOF character is read.
  *
  * The example code below mounts the SD card on the mount point 
- * `/sdcard` and then writes a file named `edukit.txt` with the 
- * contents "Hello from AWS IoT EduKit!":
+ * `/sdcard` and then writes a file named `kit.txt` with the 
+ * contents "Hello from AWS IoT Kit!":
  *
  * **Example:**
  * @code{c}
@@ -130,7 +127,7 @@ esp_err_t core2foraws_sd_mount( void );
  * 
  *  void app_main( void )
  *  {
- *      char *file_path = "/edukit.txt";
+ *      char *file_path = "/kit.txt";
  *  
  *      esp_err_t err = core2foraws_sd_mount();
  *      if( err == ESP_OK )
@@ -138,7 +135,7 @@ esp_err_t core2foraws_sd_mount( void );
  *          ESP_LOGI( TAG, "\tMounted SD card" );
  *  
  *          size_t written_length = 0;
- *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT EduKit!", &length );
+ *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT Kit!", &length );
  *          ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
  *  
  *          char str[64];
@@ -174,8 +171,8 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
  * FAT/FAT32 file system.
  *
  * The example code below mounts the SD card on the mount point 
- * `/sdcard` and then writes a file named `edukit.txt` with the 
- * contents "Hello from AWS IoT EduKit!":
+ * `/sdcard` and then writes a file named `kit.txt` with the 
+ * contents "Hello from AWS IoT Kit!":
  *
  * **Example:**
  * @code{c}
@@ -186,7 +183,7 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
  * 
  *  void app_main( void )
  *  {
- *      char *file_path = "/edukit.txt";
+ *      char *file_path = "/kit.txt";
  *  
  *      esp_err_t err = core2foraws_sd_mount();
  *      if( err == ESP_OK )
@@ -194,7 +191,7 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
  *          ESP_LOGI( TAG, "\tMounted SD card" );
  *  
  *          size_t written_length = 0;
- *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT EduKit!", &written_length );
+ *          err = core2foraws_sd_write( file_path, "Hello from AWS IoT Kit!", &written_length );
  *          ESP_LOGI( TAG, "\tSD write %s, wrote %d bytes", err == ESP_OK ? "success" : "fail", written_length );
  *  
  *          char str[64];

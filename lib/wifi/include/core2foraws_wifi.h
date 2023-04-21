@@ -1,5 +1,5 @@
 /*
- * Core2 for AWS IoT EduKit BSP v2.0.0
+ * Core2 for AWS IoT Kit BSP v2.0.0
  * Copyright (C) 2022 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -18,9 +18,6 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * https://aws.amazon.com/iot/edukit
- *
  */
 
 /* This library referenced the Espressif Systems (Shanghai) PTE LTD's, Public Domain
@@ -30,7 +27,7 @@
 
 /**
  * @file core2foraws_wifi.h
- * @brief Core2 for AWS IoT EduKit Wi-Fi helper APIs
+ * @brief Core2 for AWS IoT Kit Wi-Fi helper APIs
  */
 
 #ifndef _CORE2FORAWS_WIFI_H_
@@ -154,7 +151,7 @@ esp_err_t core2foraws_wifi_prov_ble_init( void );
  * 
  * **Example:**
  * 
- * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), wait
+ * Initialize the Core2 for AWS IoT Kit (including the enabled Wi-Fi), wait
  * 5 seconds, and then disconnect from the Wi-Fi network.
  * @code{c}
  *  #include <stdint.h>
@@ -194,7 +191,7 @@ esp_err_t core2foraws_wifi_deinit( void );
  * 
  * **Example:**
  * 
- * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), 
+ * Initialize the Core2 for AWS IoT Kit (including the enabled Wi-Fi), 
  * which is already provisioned and connected to an available network. Wait 5 
  * seconds and disconnect from the Wi-Fi network.
  * @code{c}
@@ -241,7 +238,7 @@ esp_err_t core2foraws_wifi_disconnect( void );
  * 
  * **Example:**
  * 
- * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), 
+ * Initialize the Core2 for AWS IoT Kit (including the enabled Wi-Fi), 
  * which is already provisioned to an available network. Wait 5 seconds, 
  * disconnect from the Wi-Fi network, then after another 5 seconds, reconnect.
  * @code{c}
@@ -288,7 +285,7 @@ esp_err_t core2foraws_wifi_connect( void );
  * 
  * **Example:**
  * 
- * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), wait
+ * Initialize the Core2 for AWS IoT Kit (including the enabled Wi-Fi), wait
  * 5 seconds, and then reset the Wi-Fi to enter new credentials using the mobile
  * app.
  * @code{c}
@@ -330,7 +327,7 @@ esp_err_t core2foraws_wifi_reset( void );
  * 
  * **Example:**
  * 
- * Initialize the Core2 for AWS IoT EduKit (including the enabled Wi-Fi), display
+ * Initialize the Core2 for AWS IoT Kit (including the enabled Wi-Fi), display
  * the provisioning payload as a QR code on the screen to scan with companion 
  * mobile app. 
  * Removes the QR code once the device connects to Wi-Fi.

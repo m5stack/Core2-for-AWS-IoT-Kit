@@ -1,5 +1,5 @@
 /*
- * Core2 for AWS IoT EduKit BSP v2.0.0
+ * Core2 for AWS IoT Kit BSP v2.0.0
  * Copyright (C) 2022 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -18,9 +18,6 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * https://aws.amazon.com/iot/edukit
- *
  */
 
 /* This library referenced the Espressif Systems (Shanghai) PTE LTD's, Public Domain
@@ -30,7 +27,7 @@
 
 /**
  * @file core2foraws_wifi.c
- * @brief Core2 for AWS IoT EduKit Wi-Fi helper APIs
+ * @brief Core2 for AWS IoT Kit Wi-Fi helper APIs
  */
 
 #include <stdio.h>
@@ -50,7 +47,7 @@
 
 #define PROV_QR_VERSION "v1"
 #define PROV_TRANSPORT  "ble"
-#define PROV_POP        "EduKit1234"
+#define PROV_POP        "Kit1234"
 #define QRCODE_BASE_URL "https://espressif.github.io/esp-jumpstart/qrcode.html"
 
 static const char *_TAG = "CORE2AWS_WIFI";

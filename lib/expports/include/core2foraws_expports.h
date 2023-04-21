@@ -1,5 +1,5 @@
 /*
- * Core2 for AWS IoT EduKit BSP v2.0.0
+ * Core2 for AWS IoT Kit BSP v2.0.0
  * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -18,14 +18,11 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * https://aws.amazon.com/iot/edukit
- *
  */
 
 /**
  * @file core2foraws_expports.h
- * @brief Core2 for AWS IoT EduKit expansion ports hardware driver APIs
+ * @brief Core2 for AWS IoT Kit expansion ports hardware driver APIs
  */
 
 #ifndef _core2foraws_expports_H_
@@ -764,7 +761,7 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts );
  * to simplify development at the expense of compatibility and 
  * performance. The configuration above may not be suitable for your 
  * application or attached peripheral. For more information about 
- * UART communications on the Core2 for AWS IoT EduKit using the 
+ * UART communications on the Core2 for AWS IoT Kit using the 
  * ESP32 and how to create your own configuration, visit Espressif's 
  * official [documentation](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/uart.html).
  *
@@ -776,7 +773,7 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts );
  * The example below sets @ref PORT_C_UART_TX_PIN (GPIO 14 to 
  * transmit) and PORT_C_UART_RX_PIN (GPIO 13 to receive), and sets 
  * the UART baud rate to 115200. It then starts two FreeRTOS tasks — 
- * one that transmits "Hello from AWS IoT EduKit" every two seconds 
+ * one that transmits "Hello from AWS IoT Kit" every two seconds 
  * and the other receives the message. The receiver task outputs the 
  * number of bytes read from the buffer, the number of bytes that 
  * remains unread in the ring buffer, and the message.
@@ -798,7 +795,7 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts );
  *  {
  *      while ( 1 )
  *      {
- *          const char *message = "Hello from AWS IoT EduKit";
+ *          const char *message = "Hello from AWS IoT Kit";
  *          size_t message_len = strlen( message ) + 1;
  *          size_t written_len = 0;
  * 
@@ -862,7 +859,7 @@ esp_err_t core2foraws_expports_uart_begin( uint32_t baud );
  * to simplify development at the expense of compatibility and 
  * performance. The configuration above may not be suitable for your 
  * application or attached peripheral. For more information about 
- * UART communications on the Core2 for AWS IoT EduKit using the 
+ * UART communications on the Core2 for AWS IoT Kit using the 
  * ESP32 and how to create your own configuration, visit Espressif's 
  * official [documentation](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/uart.html).
  *
@@ -874,7 +871,7 @@ esp_err_t core2foraws_expports_uart_begin( uint32_t baud );
  * The example below sets @ref PORT_C_UART_TX_PIN (GPIO 14 to 
  * transmit) and PORT_C_UART_RX_PIN (GPIO 13 to receive), and sets 
  * the UART baud rate to 115200. It then starts two FreeRTOS tasks — 
- * one that transmits "Hello from AWS IoT EduKit" every two seconds 
+ * one that transmits "Hello from AWS IoT Kit" every two seconds 
  * and the other receives the message. The receiver task outputs the 
  * number of bytes read from the buffer, the number of bytes that 
  * remains unread in the ring buffer, and the message.
@@ -894,7 +891,7 @@ esp_err_t core2foraws_expports_uart_begin( uint32_t baud );
  *  {
  *      while ( 1 )
  *      {
- *          const char *message = "Hello from AWS IoT EduKit";
+ *          const char *message = "Hello from AWS IoT Kit";
  *          size_t message_len = strlen( message ) + 1;
  *          size_t written_len = 0;
  * 
@@ -963,7 +960,7 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
  * to simplify development at the expense of compatibility and 
  * performance. The configuration above may not be suitable for your 
  * application or attached peripheral. For more information about 
- * UART communications on the Core2 for AWS IoT EduKit using the 
+ * UART communications on the Core2 for AWS IoT Kit using the 
  * ESP32 and how to create your own configuration, visit Espressif's 
  * official [documentation](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/uart.html).
  *
@@ -975,7 +972,7 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
  * The example below sets @ref PORT_C_UART_TX_PIN (GPIO 14 to 
  * transmit) and PORT_C_UART_RX_PIN (GPIO 13 to receive), and sets 
  * the UART baud rate to 115200. It then starts two FreeRTOS tasks — 
- * one that transmits "Hello from AWS IoT EduKit" every two seconds 
+ * one that transmits "Hello from AWS IoT Kit" every two seconds 
  * and the other receives the message. The receiver task outputs the 
  * number of bytes read from the buffer, the number of bytes that 
  * remains unread in the ring buffer, and the message.
@@ -995,7 +992,7 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
  *  {
  *      while ( 1 )
  *      {
- *          const char *message = "Hello from AWS IoT EduKit";
+ *          const char *message = "Hello from AWS IoT Kit";
  *          size_t message_len = strlen( message ) + 1;
  *          size_t written_len = 0;
  * 
