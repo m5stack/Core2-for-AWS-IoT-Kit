@@ -343,7 +343,7 @@ esp_err_t core2foraws_wifi_reset( void );
  *  {   
  *      core2foraws_init();
  * 
- *      xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) )
+ *      xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) );
  *      
  *      lv_coord_t qr_square_px = 200;
  *      lv_color_t amazon_squid_ink = lv_color_hex( 0x232F3E );

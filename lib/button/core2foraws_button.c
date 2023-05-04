@@ -64,43 +64,45 @@ static void button_press_task( void *pvParameters )
     ft6x36_touch_t touch_received;
     for ( ;; )
     {
-        xQueueReceive( ft6x36_touch_queue_handle, &touch_received, 0 );
-        for ( uint8_t i = 0; i < sizeof( _touch_buttons ) / sizeof ( _touch_buttons[ 0 ] ); i++ )
+        if( xQueueReceive( ft6x36_touch_queue_handle, &touch_received, ( TickType_t ) 2 ) ==  pdPASS )
         {
-            if ( xSemaphoreTake( _button_mutex, portMAX_DELAY )  == pdPASS )
+            for ( uint8_t i = 0; i < sizeof( _touch_buttons ) / sizeof ( _touch_buttons[ 0 ] ); i++ )
             {
-                bool touched = ( touch_received.current_state == LV_INDEV_STATE_PR ) & 
-                                !(( touch_received.last_x < _touch_buttons[ i ].x ) || 
-                                ( touch_received.last_x > ( _touch_buttons[ i ].x + _touch_buttons[ i ].w ) ) || 
-                                ( touch_received.last_y < _touch_buttons[ i ].y ) || 
-                                ( touch_received.last_y > (_touch_buttons[ i ].y + _touch_buttons[ i ].h ) ) );
-                ESP_LOGD( _TAG, "Touch button id=%i, touched=%d", i, touched );
-
-                uint32_t now_ticks = xTaskGetTickCount();
-                if ( touched != _touch_buttons[ i ].last_touched )
+                if ( xSemaphoreTake( _button_mutex, portMAX_DELAY )  == pdPASS )
                 {
-                    if ( touched == 1 )
+                    bool touched = ( touch_received.current_state == LV_INDEV_STATE_PR ) & 
+                                    !(( touch_received.last_x < _touch_buttons[ i ].x ) || 
+                                    ( touch_received.last_x > ( _touch_buttons[ i ].x + _touch_buttons[ i ].w ) ) || 
+                                    ( touch_received.last_y < _touch_buttons[ i ].y ) || 
+                                    ( touch_received.last_y > (_touch_buttons[ i ].y + _touch_buttons[ i ].h ) ) );
+                    ESP_LOGD( _TAG, "Touch button id=%i, touched=%d", i, touched );
+
+                    uint32_t now_ticks = xTaskGetTickCount();
+                    if ( touched != _touch_buttons[ i ].last_touched )
                     {
-                        _touch_buttons[ i ].state |= PRESS;
-                        _touch_buttons[ i ].last_press_time = now_ticks;
-                    }
-                    else
-                    {
-                        if ( _touch_buttons[ i ].long_press_time && ( now_ticks - _touch_buttons[ i ].last_press_time > _touch_buttons[ i ].long_press_time ) )
+                        if ( touched == 1 )
                         {
-                            _touch_buttons[ i ].state |= LONGPRESS;
+                            _touch_buttons[ i ].state |= PRESS;
+                            _touch_buttons[ i ].last_press_time = now_ticks;
                         }
                         else
                         {
-                            _touch_buttons[ i ].state |= RELEASE;
+                            if ( _touch_buttons[ i ].long_press_time && ( now_ticks - _touch_buttons[ i ].last_press_time > _touch_buttons[ i ].long_press_time ) )
+                            {
+                                _touch_buttons[ i ].state |= LONGPRESS;
+                            }
+                            else
+                            {
+                                _touch_buttons[ i ].state |= RELEASE;
+                            }
                         }
+                        _touch_buttons[ i ].last_touched = touched;
                     }
                     _touch_buttons[ i ].last_touched = touched;
-                }
-                _touch_buttons[ i ].last_touched = touched;
-                _touch_buttons[ i ].is_touched = touched;
+                    _touch_buttons[ i ].is_touched = touched;
 
-                xSemaphoreGive(_button_mutex);   
+                    xSemaphoreGive(_button_mutex);   
+                }
             }
         }
     }

@@ -73,7 +73,7 @@ static void _gui_task( void *pvParameter )
         vTaskDelay( pdMS_TO_TICKS( 10 ) );
 
         /* Try to take the semaphore, call lvgl related function on success */
-        if ( pdTRUE == xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) ) ) 
+        if ( pdTRUE == xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( CONFIG_ESP_TASK_WDT_TIMEOUT_S * 1000 - 1000 ) ) ) 
 		{
             uint32_t ms_to_next_call = lv_task_handler();
             ESP_LOGV( _TAG, "%dms until next LVGL timer call.", ms_to_next_call );
