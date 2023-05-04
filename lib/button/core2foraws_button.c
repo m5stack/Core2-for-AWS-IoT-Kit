@@ -105,9 +105,8 @@ static void button_press_task( void *pvParameters )
                 }
             }
         }
+        vTaskDelay( pdMS_TO_TICKS( 30 ) );
     }
-
-    vTaskDelay( pdMS_TO_TICKS( 30 ) );
 }
 #endif
 
