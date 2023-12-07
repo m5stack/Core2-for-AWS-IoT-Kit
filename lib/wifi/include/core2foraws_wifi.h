@@ -115,10 +115,35 @@ EventGroupHandle_t wifi_event_group;
 /* @[declare_core2foraws_wifi_event_group] */
 
 /**
- * @brief Starts Wi-Fi provisioning using BLE.
+ * @brief Initializes Wi-Fi and Wi-Fi provisioning manager over BLE.
  * 
  * @note This function is automatically called by @ref core2foraws_init if the feature
  * is enabled.
+ * 
+ * This function will initialize all required hardware for BLE provisioning process to 
+ * collect Wi-Fi credentials using the 
+ * [iOS](https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141) 
+ * or [Android](https://play.google.com/store/apps/details?id=com.espressif.provble) app. 
+ * 
+ * Requires @ref core2foraws_wifi_start to be called after to start the radio(s) and/or 
+ * begin the provisioning process. If there are credentials already stored on the device,
+ * it will attemp to connect to the stored network with the available credentials.
+ * 
+ * After @ref WIFI_RETRIES_MAX_FAILS failures to connect, the app will restart the 
+ * provisioning cycle over BLE.
+ *
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK                : Success
+ *  - ESP_ERR_WIFI_NOT_INIT : WiFi is not initialized
+ *  - ESP_ERR_NO_MEM        : Out of memory
+ *  - ESP_FAIL              : Failed to start up the provisioning manager.
+ */
+/* @[declare_core2foraws_wifi_init] */
+esp_err_t core2foraws_wifi_init( void );
+/* @[declare_core2foraws_wifi_init] */
+
+/**
+ * @brief Starts Wi-Fi and/or Wi-Fi provisioning process over BLE.
  * 
  * This function will start up BLE provisioning process to collect Wi-Fi credentials 
  * using the [iOS](https://apps.apple.com/in/app/esp-ble-provisioning/id1473590141) 
@@ -140,9 +165,9 @@ EventGroupHandle_t wifi_event_group;
  *  - ESP_ERR_WIFI_CONN     : Internal error, station or soft-AP control block wrong
  *  - ESP_FAIL              : Failed to connect to Wi-Fi or start up the provisioning manager.
  */
-/* @[declare_core2foraws_wifi_prov_ble_init] */
-esp_err_t core2foraws_wifi_prov_ble_init( void );
-/* @[declare_core2foraws_wifi_prov_ble_init] */
+/* @[declare_core2foraws_wifi_start] */
+esp_err_t core2foraws_wifi_start( void );
+/* @[declare_core2foraws_wifi_start] */
 
 /**
  * @brief Deinitializes the Wi-Fi driver.
@@ -165,6 +190,7 @@ esp_err_t core2foraws_wifi_prov_ble_init( void );
  *  void app_main( void )
  *  {   
  *      core2foraws_init();
+ *      core2foraws_wifi_start();
  * 
  *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
  * 
@@ -206,6 +232,7 @@ esp_err_t core2foraws_wifi_deinit( void );
  *  void app_main( void )
  *  {   
  *      core2foraws_init();
+ *      core2foraws_wifi_start();
  * 
  *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
  * 
@@ -253,6 +280,7 @@ esp_err_t core2foraws_wifi_disconnect( void );
  *  void app_main( void )
  *  {   
  *      core2foraws_init();
+ *      core2foraws_wifi_start();
  * 
  *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
  * 
@@ -300,6 +328,7 @@ esp_err_t core2foraws_wifi_connect( void );
  *  void app_main( void )
  *  {   
  *      core2foraws_init();
+ *      core2foraws_wifi_start();
  * 
  *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
  * 
@@ -342,6 +371,7 @@ esp_err_t core2foraws_wifi_reset( void );
  *  void app_main( void )
  *  {   
  *      core2foraws_init();
+ *      core2foraws_wifi_start();
  * 
  *      xSemaphoreTake( core2foraws_common_spi_semaphore, pdMS_TO_TICKS( 80 ) );
  *      

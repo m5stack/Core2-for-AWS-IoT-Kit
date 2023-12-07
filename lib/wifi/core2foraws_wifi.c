@@ -47,7 +47,7 @@
 
 #define PROV_QR_VERSION "v1"
 #define PROV_TRANSPORT  "ble"
-#define PROV_POP        "Kit1234"
+#define PROV_POP_STR_SIZE    9
 #define QRCODE_BASE_URL "https://espressif.github.io/esp-jumpstart/qrcode.html"
 
 static const char *_TAG = "CORE2AWS_WIFI";
@@ -56,6 +56,7 @@ static esp_netif_t *_wifi_netif = NULL;
 static SemaphoreHandle_t _service_name_mutex;
 static char service_name[ 19 ];
 
+static char *_get_pop( void );
 static void _on_prov_event_handler( void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data );
 static void _on_got_ip( void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data );
 static void _on_wifi_start( void *esp_netif, esp_event_base_t event_base, int32_t event_id, void *event_data );
@@ -63,6 +64,30 @@ static void _on_wifi_connect( void *esp_netif, esp_event_base_t event_base, int3
 static void _on_wifi_disconnect( void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data );
 static void _device_service_name_set( void );
 static void _wifi_prov_qr_print( void );
+
+static char *_get_pop( void )
+{
+    char *pop = calloc( 1, PROV_POP_STR_SIZE );
+    if ( !pop )
+    {
+        ESP_LOGE( _TAG, "Failed to allocate memory for Proof of Possession." );
+        return NULL;
+    }
+    
+    uint8_t eth_mac[ 6 ];
+    esp_err_t err = esp_wifi_get_mac( WIFI_IF_STA, eth_mac );
+    if ( err == ESP_OK )
+    {
+        snprintf( pop, PROV_POP_STR_SIZE, "%02x%02x%02x%02x", eth_mac[ 2 ], eth_mac[ 3 ], eth_mac[ 4 ], eth_mac[ 5 ] );
+        return pop;
+    }
+    else
+    {
+        ESP_LOGE( _TAG, "Failed to get MAC address to generate PoP." );
+    }
+    free( pop );
+    return NULL;
+}
 
 static void _on_prov_event_handler( void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data )
 {
@@ -175,7 +200,7 @@ static void _wifi_prov_qr_print( void )
     }
 }
 
-esp_err_t core2foraws_wifi_prov_ble_init( void )
+esp_err_t core2foraws_wifi_init( void )
 {
     // Initialize NVS
     esp_err_t err = nvs_flash_init();
@@ -204,7 +229,16 @@ esp_err_t core2foraws_wifi_prov_ble_init( void )
     _wifi_netif = esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK( esp_wifi_init( &cfg ) );
+    err = esp_wifi_init( &cfg );
+    ESP_ERROR_CHECK( err );
+    ESP_LOGD( _TAG, "Initialized" );
+
+    return err;
+}
+
+esp_err_t core2foraws_wifi_start( void )
+{
+    esp_err_t err = ESP_OK;
 
     /* Configuration for the provisioning manager */
     wifi_prov_mgr_config_t config = 
@@ -224,7 +258,7 @@ esp_err_t core2foraws_wifi_prov_ble_init( void )
     _service_name_mutex = xSemaphoreCreateMutex();
 
     _device_service_name_set();
-    ESP_LOGI( _TAG, "\tService Name: %s", service_name );
+    ESP_LOGD( _TAG, "\tService Name: %s", service_name );
 
     /* If device is not yet provisioned start provisioning service */
     if ( !wifi_is_provisioned )
@@ -256,7 +290,7 @@ esp_err_t core2foraws_wifi_prov_ble_init( void )
         err = xSemaphoreTake( _service_name_mutex, portMAX_DELAY );
         if (  err == pdTRUE )
         {
-            err = wifi_prov_mgr_start_provisioning( security, PROV_POP, service_name, service_key );
+            err = wifi_prov_mgr_start_provisioning( security, _get_pop(), service_name, service_key );
             xSemaphoreGive( _service_name_mutex );
         }
         else
@@ -322,7 +356,7 @@ esp_err_t core2foraws_wifi_prov_str_get( char *wifi_prov_str )
     {        
         err = snprintf( wifi_prov_str, WIFI_PROV_STR_LEN, "{\"ver\":\"%s\",\"name\":\"%s\"" \
                     ",\"pop\":\"%s\",\"transport\":\"%s\"}",
-                    PROV_QR_VERSION, service_name, PROV_POP, PROV_TRANSPORT );
+                    PROV_QR_VERSION, service_name, _get_pop(), PROV_TRANSPORT );
         xSemaphoreGive( _service_name_mutex );
 
         if ( err > 0 )

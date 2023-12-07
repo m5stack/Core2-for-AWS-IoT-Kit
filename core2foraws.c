@@ -48,7 +48,7 @@ esp_err_t core2foraws_init( void )
 #endif
 
 #ifdef CONFIG_SOFTWARE_WIFI_SUPPORT
-    err = core2foraws_wifi_prov_ble_init();
+    err = core2foraws_wifi_init();
     if ( err != ESP_OK )
         ESP_LOGE( TAG, "\tError initializing Wi-Fi provisioning over BLE. Error 0x%x", err );
     ret |= err;
