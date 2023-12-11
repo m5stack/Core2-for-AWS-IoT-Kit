@@ -207,8 +207,9 @@ esp_err_t core2foraws_wifi_init( void )
     if ( err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND )
     {
         ESP_ERROR_CHECK( nvs_flash_erase() );
-        ESP_ERROR_CHECK( nvs_flash_init() );
+        err = nvs_flash_init();
     }
+    ESP_ERROR_CHECK( err );
 
     ESP_LOGI( _TAG, "\tInitializing" );
 

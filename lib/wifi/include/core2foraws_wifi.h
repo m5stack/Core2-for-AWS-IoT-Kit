@@ -157,6 +157,32 @@ esp_err_t core2foraws_wifi_init( void );
  * 
  * After @ref WIFI_RETRIES_MAX_FAILS failures to connect, the app will restart the 
  * provisioning cycle over BLE.
+ * 
+ * * **Example:**
+ * 
+ * Initialize the Core2 for AWS IoT Kit (including the enabled Wi-Fi) and start
+ * Wi-Fi provisioning. If the device is already provisioned, it will attempt connection.
+ *  
+ * @code{c}
+ *  #include <stdint.h>
+ *  #include <esp_log.h>
+ *  #include <freertos/FreeRTOS.h>
+ * 
+ *  #include "core2foraws.h"
+ * 
+ *  static const char *TAG = "MAIN_WIFI_DEMO";
+ * 
+ *  void app_main( void )
+ *  {   
+ *      core2foraws_init();
+ *      core2foraws_wifi_start();
+ * 
+ *      vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+ * 
+ *      esp_err_t err = core2foraws_wifi_deinit();
+ *      ESP_LOGI( TAG, "\tWi-Fi reset returned %d", err );
+ *  }
+ * @endcode
  *
  * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
  *  - ESP_OK                : Success
