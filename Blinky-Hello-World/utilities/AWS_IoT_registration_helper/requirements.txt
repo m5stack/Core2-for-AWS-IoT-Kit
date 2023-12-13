@@ -11,4 +11,4 @@ asn1crypto==1.4.0
 pyOpenSSL==21.0.0
 requests-aws4auth==1.1.1
 hexrec==0.2.3
-hidapi==0.11.0.post2
+hidapi==0.14.0
