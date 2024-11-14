@@ -1044,6 +1044,98 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
 esp_err_t core2foraws_expports_uart_read( uint8_t *message_buffer, size_t *was_read_length );
 /* @[declare_core2foraws_expport_uart_read] */
 
+/**
+ * @brief Flushes the UART2 RX buffer.
+ *
+ * @note Usage of the UART convenience methods provided in this BSP aims 
+ * to simplify development at the expense of compatibility and 
+ * performance. The configuration above may not be suitable for your 
+ * application or attached peripheral. For more information about 
+ * UART communications on the Core2 for AWS IoT Kit using the 
+ * ESP32 and how to create your own configuration, visit Espressif's 
+ * official [documentation](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/peripherals/uart.html).
+ *
+ * @note The ESP32 is a 3.3v device and requires 3.3v on the UART 
+ * TX/RX lines. Higher voltages requires the use of a level shifter.
+ *
+ * **Example:**
+ * 
+ * The example below sets @ref PORT_C_UART_TX_PIN (GPIO 14 to 
+ * transmit) and PORT_C_UART_RX_PIN (GPIO 13 to receive), and sets 
+ * the UART baud rate to 115200. It then clears the RX buffer and then 
+ * starts two FreeRTOS tasks — one that transmits "Hello from AWS IoT 
+ * Kit" every two seconds and the other receives the message. The 
+ * receiver task outputs the number of bytes read from the buffer, the 
+ * number of bytes that remains unread in the ring buffer, and the 
+ * message.
+ *
+ * @note To receive the messages transmitted on the same device, run a
+ * female-female jumper wire from Port C's TX pin to PORT C's RX pin.
+ * @code{c}
+ *  #include <freertos/FreeRTOS.h>
+ *  #include <freertos/task.h>
+ *  #include <esp_log.h>
+ *
+ *  #include "core2foraws.h"
+ *
+ *  static const char *TAG = "MAIN_UART_DEMO";
+ *
+ *  static void uart_tx_task( void *pvParameters )
+ *  {
+ *      while ( 1 )
+ *      {
+ *          const char *message = "Hello from AWS IoT Kit";
+ *          size_t message_len = strlen( message ) + 1;
+ *          size_t written_len = 0;
+ * 
+ *          core2foraws_expports_uart_write( message, message_len, &written_len );
+ *          ESP_LOGI( TAG, "\tWrote %d out of % bytes", written_len, message_len );
+ * 
+ *          vTaskDelay( pdMS_TO_TICKS( 2000 ) );
+ *      }
+ *  }
+ *
+ *  static void uart_rx_task( void *arg )
+ *  {
+ *      size_t rxBytes;
+ *      uint8_t *data = heap_caps_malloc( UART_RX_BUF_SIZE, MALLOC_CAP_SPIRAM ); // Allocate space for message in external RAM
+ *      while ( 1 )
+ *      {
+ *          esp_err_t err = core2foraws_expports_uart_read( data, &rxBytes );
+ *          if ( err == ESP_OK )
+ *          {
+ *              ESP_LOGI( TAG, "\tRead %d bytes from UART. Received: '%s'", rxBytes, data );
+ *          }
+ *          vTaskDelay( pdMS_TO_TICKS( 500 ) ); // Read more frequently than transmit to ensure the messages are not erased from buffer.
+ *      }
+ *      free(data); // Free memory from external RAM
+ *  }
+ *
+ *  void app_main( void )
+ *  {
+ *      core2foraws_init();
+ *      esp_err_t err = ESP_FAIL;
+ *      err = core2foraws_expports_uart_begin( 115200 );
+ *      if ( err == ESP_OK )
+ *      {
+ *          bool cleared = false;
+ *          core2foraws_expports_uart_read_flush( &cleared );
+ *          xTaskCreatePinnedToCore( uart_rx_task, "uart_rx", 1024*2, NULL, configMAX_PRIORITIES-2, NULL, 1);
+ *          xTaskCreatePinnedToCore( uart_tx_task, "uart_tx", 1024*2, NULL, configMAX_PRIORITIES-3, NULL, 1);
+ *      }
+ *  }
+ * @endcode
+ *
+ * @param[out] was_flushed A pointer to a boolean that indicates
+ * whether the buffer was flushed.
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ *  - ESP_OK    : Success
+ *  - ESP_FAIL	: Failed to write
+ */
+/* @[declare_core2foraws_expport_uart_read_flush] */
+esp_err_t core2foraws_expports_uart_read_flush( bool *was_flushed );
+/* @[declare_core2foraws_expport_uart_read_flush] */
+
 #ifdef __cplusplus
 }
 #endif

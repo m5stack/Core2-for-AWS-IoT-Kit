@@ -405,3 +405,15 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
 
     return err;
 }
+
+esp_err_t core2foraws_expports_uart_read_flush( bool *was_flushed )
+{
+    *was_flushed = false;
+    esp_err_t err = uart_flush( PORT_C_UART_NUM );
+    if ( err == ESP_OK )
+    {
+        *was_flushed = true;
+    }
+
+    return err;
+}
