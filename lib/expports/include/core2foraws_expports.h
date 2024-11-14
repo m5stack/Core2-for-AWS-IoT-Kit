@@ -138,6 +138,19 @@ extern "C" {
 /* @[declare_core2foraws_expports_uart_rx_buf_size] */
 #endif
 
+#ifndef UART_TX_SEND_WAIT
+/**
+ * @brief The default time to wait for the UART TX to send.
+ *
+ * This is the default time to wait for the UART interface to send
+ * data.
+ * Read more about [UART communications with the ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html).
+ */
+/* @[declare_core2foraws_expports_uart_tx_send_wait] */
+#define UART_TX_SEND_WAIT 100
+/* @[declare_core2foraws_expports_uart_tx_send_wait] */
+#endif
+
 /**
  * @brief Reads the value from a specified digital pin — either 1 (high) or 0 (low).
  *
@@ -1045,7 +1058,71 @@ esp_err_t core2foraws_expports_uart_read( uint8_t *message_buffer, size_t *was_r
 /* @[declare_core2foraws_expport_uart_read] */
 
 /**
- * @brief Flushes the UART2 RX buffer.
+ * @brief Checks if the UART2 TX buffer is empty.
+ *
+ * This function checks if the UART2 TX buffer is empty and is a 
+ * blocking function.
+ *
+ * **Example:**
+ * 
+ * The example below sets @ref PORT_C_UART_TX_PIN (GPIO 14 to 
+ * transmit) and PORT_C_UART_RX_PIN (GPIO 13 to receive), and sets 
+ * the UART baud rate to 115200. It then starts a FreeRTOS task that 
+ * transmits "Hello from AWS IoT Kit" every two seconds and checks
+ * if the message has finished sending.
+ *
+ * @note To receive the messages transmitted on the same device, run a
+ * female-female jumper wire from Port C's TX pin to PORT C's RX pin.
+ * @code{c} *
+ * #include <freertos/FreeRTOS.h>
+ * #include <freertos/task.h>
+ * #include <esp_log.h>
+ * 
+ * #include "core2foraws.h"
+ * 
+ * static const char *TAG = "MAIN_UART_DEMO";
+ * 
+ * static void uart_tx_task( void *pvParameters )
+ * {
+ *    while ( 1 )
+ *   {
+ *      const char *message = "Hello from AWS IoT Kit";
+ *      size_t message_len = strlen( message ) + 1;
+ *      size_t written_len = 0;
+ * 
+ *      core2foraws_expports_uart_write( message, message_len, &written_len );
+ *      ESP_LOGI( TAG, "\tWrote %d out of % bytes", written_len, message_len );
+ *      
+ *      esp_err_t err = core2foraws_expports_uart_send_finished( );
+ *      if ( err == ESP_OK )
+ *      {
+ *        ESP_LOGI( TAG, "\tMessage has finished sending" );
+ *      }
+ *      vTaskDelay( pdMS_TO_TICKS( 2000 ) );
+ *    }
+ * }
+ * 
+ * void app_main( void )
+ * {
+ *   core2foraws_init();
+ *   esp_err_t err = ESP_FAIL;
+ *   err = core2foraws_expports_uart_begin( 115200 );
+ *   if ( err == ESP_OK )
+ *   {
+ *     xTaskCreatePinnedToCore( uart_tx_task, "uart_tx", 1024*2, NULL, configMAX_PRIORITIES-3, NULL, 1);
+ *   }
+ * }
+ * @endcode
+ * 
+ * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
+ * - ESP_OK    : Success
+ * - ESP_FAIL	: Parameter error
+ * - ESP_ERR_TIMEOUT : Timeout
+ */
+esp_err_t core2foraws_expports_uart_send_finished( void );
+
+/**
+ * @brief Flushes the UART2 RX buffer after all messages have finished sending.
  *
  * @note Usage of the UART convenience methods provided in this BSP aims 
  * to simplify development at the expense of compatibility and 
@@ -1131,6 +1208,7 @@ esp_err_t core2foraws_expports_uart_read( uint8_t *message_buffer, size_t *was_r
  * @return [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/api-reference/system/esp_err.html#macros).
  *  - ESP_OK    : Success
  *  - ESP_FAIL	: Failed to write
+ *  - ESP_ERR_TIMEOUT : Timeout
  */
 /* @[declare_core2foraws_expport_uart_read_flush] */
 esp_err_t core2foraws_expports_uart_read_flush( bool *was_flushed );

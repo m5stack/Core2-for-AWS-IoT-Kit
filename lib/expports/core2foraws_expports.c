@@ -406,14 +406,21 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
     return err;
 }
 
+esp_err_t core2foraws_expports_uart_send_finished( void )
+{
+    return uart_wait_tx_done( PORT_C_UART_NUM, pdMS_TO_TICKS( UART_TX_SEND_WAIT ) );
+}
+
 esp_err_t core2foraws_expports_uart_read_flush( bool *was_flushed )
 {
-    *was_flushed = false;
-    esp_err_t err = uart_flush( PORT_C_UART_NUM );
-    if ( err == ESP_OK )
+    esp_err_t err = core2foraws_expports_uart_send_finished();
+    if ( err != ESP_OK )
     {
-        *was_flushed = true;
+        err = uart_flush_input( PORT_C_UART_NUM );
+        if ( err == ESP_OK )
+        {
+            *was_flushed = true;
+        }
     }
-
     return err;
 }
