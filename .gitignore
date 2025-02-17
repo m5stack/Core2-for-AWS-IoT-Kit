@@ -5,6 +5,9 @@
 **/build
 **/sdkconfig
 **/sdkconfig.old
+sdkconfig.core2foraws
+sdkconfig.core2foraws.old
+dependencies.lock
 
 **/__pycache__
 *.py[cod]
@@ -19,3 +22,17 @@
 **/endpoint.info
 **/device.key
 **/mfg.bin
+
+
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+managed_components
