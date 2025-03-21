@@ -5,6 +5,15 @@ Each of the folders in this repository contains a separate project as described 
 
 For Arduino, UIFlow, or MicroPython content and code, please view the official [M5Stack Docs](https://docs.m5stack.com/#/).
 
+##!!!SECURITY WARNING!!!
+- [CVE-2019-16128](https://nvd.nist.gov/vuln/detail/CVE-2019-16128)
+- [ATECC608A](https://census-labs.com/news/2020/10/21/microchip-cryptoauthlib-atcab_sign_base-buffer-overflow/)
+- [cryptography@37.0.4](https://security.snyk.io/package/pip/cryptography/37.0.4)
+
+** DO NOT USE THIS SOFTWARE OR HARDWARE IN PRODUCTION **
+
+With those warnings in place I, [Bryan McWhirt](https://github.com/bmmcwhirt) have modified the code to force cryptography 37.0.4 to be used. Us this at your own risk. I am not entirely sure it's legal for M5 to still be selling this in the United States, but I'm no lawyer. I will be contacting Digikey about a refund. This will allow you to finish the Blinky-Hello-World tutorial.
+
 ## Included Projects
 ### Core2 for AWS IoT Kit Hardware Features Demo
 This project is a demo of the hardware features available on the M5Stack Core2 for AWS IoT Kit reference hardware. It uses at least one available API of each hardware feature in the board support package (BSP). The BSP drivers are located in the **/components/core2forAWS/** directory. There is also a ported version of Espressif's ESP-CRYPTOAUTHLIB to be used with the BSP for the Microchip ATECC608 Trust&GO secure element to function.
