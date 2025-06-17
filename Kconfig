@@ -78,19 +78,11 @@ menu "Core2 for AWS hardware features"
         help
           Enable Wi-Fi connection helper utilities.
 
-    # I2C Configuration for optimal performance
-    config BSP_I2C_FAST_MODE
-        bool "Use I2C Fast Mode (400kHz)"
-        depends on SOFTWARE_BSP_SUPPORT
-        default y
-        help
-          Enable I2C fast mode for better performance. Disable if experiencing issues.
-
     config BSP_INIT_PRIORITY
         int "BSP Initialization Priority"
         depends on SOFTWARE_BSP_SUPPORT
         range 0 10
-        default 5
+        default 0
         help
           Set initialization priority for BSP components (0=highest, 10=lowest).
 
