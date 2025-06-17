@@ -2,58 +2,96 @@ menu "Core2 for AWS hardware features"
     config SOFTWARE_BSP_SUPPORT
         bool "Enable Board Support Package APIs"
         default y
+        help
+          Enable the Core2 for AWS BSP. This is required for all other features.
 
     config SOFTWARE_AUDIO_SUPPORT
         bool "Audio (Speaker & Microphone)"
         depends on SOFTWARE_BSP_SUPPORT
         default y
+        help
+          Enable audio support including speaker and microphone drivers.
 
     config SOFTWARE_CRYPTO_SUPPORT
         bool "Cryptographic Encryption"
         depends on SOFTWARE_BSP_SUPPORT
         default y
+        help
+          Enable ATECC608A secure element support for cryptographic operations.
 
     config SOFTWARE_DISPLAY_SUPPORT
         bool "Display"
         depends on SOFTWARE_BSP_SUPPORT
         default y
+        help
+          Enable ILI9341 display and FT6336 touch controller support.
     rsource "lib/display/Kconfig"
 
     config SOFTWARE_BUTTON_SUPPORT
         bool "Touch Buttons"
         depends on SOFTWARE_DISPLAY_SUPPORT
         default y
+        help
+          Enable virtual touch button support on the display.
     rsource "lib/button/Kconfig"
 
     config SOFTWARE_MOTION_SUPPORT
         bool "6-Axis Motion"
         depends on SOFTWARE_BSP_SUPPORT
         default y
+        help
+          Enable MPU6886 6-axis IMU with temperature sensor support.
 
     config SOFTWARE_RTC_SUPPORT
         bool "Real Time Clock"
         depends on SOFTWARE_BSP_SUPPORT
         default y
+        help
+          Enable BM8563 real-time clock support.
 
     config SOFTWARE_RGB_LED_SUPPORT
         bool "RGB LEDs"
         depends on SOFTWARE_BSP_SUPPORT
         default y
+        help
+          Enable SK6812 RGB LED strip control on sides of device.
 
     config SOFTWARE_SDCARD_SUPPORT
         bool "SD Card"
         depends on SOFTWARE_BSP_SUPPORT
         default y
+        help
+          Enable SD card support via SPI interface.
 
-    config SOFTWARE_EXPPORTS_SUPPORT
+    config SOFTWARE_EXPANSION_PORTS_SUPPORT
         bool "Expansion Ports A, B, C"
         depends on SOFTWARE_BSP_SUPPORT
-        select I2C_MANAGER_1_ENABLED if SOFTWARE_EXPPORTS_SUPPORT
         default y
+        help
+          Enable expansion port GPIO and I2C access.
         rsource "lib/expports/Kconfig"
 
     config SOFTWARE_WIFI_SUPPORT
         bool "Wi-Fi Helper"
         depends on SOFTWARE_BSP_SUPPORT
         default y
+        help
+          Enable Wi-Fi connection helper utilities.
+
+    # I2C Configuration for optimal performance
+    config BSP_I2C_FAST_MODE
+        bool "Use I2C Fast Mode (400kHz)"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable I2C fast mode for better performance. Disable if experiencing issues.
+
+    config BSP_INIT_PRIORITY
+        int "BSP Initialization Priority"
+        depends on SOFTWARE_BSP_SUPPORT
+        range 0 10
+        default 5
+        help
+          Set initialization priority for BSP components (0=highest, 10=lowest).
+
 endmenu

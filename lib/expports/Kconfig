@@ -1,5 +1,5 @@
 menu "I2C Expansion Port A (RED)"
-	depends on SOFTWARE_EXPPORTS_SUPPORT
+	depends on SOFTWARE_EXPANSION_PORTS_SUPPORT
 	config I2C_MANAGER_1_FREQ_HZ
 		int "I2C bus frequency (Hz)"
 		default 400000

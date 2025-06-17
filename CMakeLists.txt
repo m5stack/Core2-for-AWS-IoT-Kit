@@ -112,7 +112,7 @@ if( CONFIG_SOFTWARE_DISPLAY_SUPPORT )
 endif()
 
 
-if( CONFIG_SOFTWARE_EXPPORTS_SUPPORT )
+if( CONFIG_SOFTWARE_EXPANSION_PORTS_SUPPORT )
     set( CORE2FORAWS_EXPPORTS_SRCS          "${CORE2FORAWS_LIB}/expports/core2foraws_expports.c" )
     set( CORE2FORAWS_EXPPORTS_INCLUDE_DIRS  "${CORE2FORAWS_LIB}/expports/include/" )
 
@@ -244,7 +244,7 @@ if( CONFIG_SOFTWARE_BSP_SUPPORT )
 endif()
 
 
-if( CONFIG_SOFTWARE_EXPPORTS_SUPPORT )
+if( CONFIG_SOFTWARE_EXPANSION_PORTS_SUPPORT )
     target_compile_definitions( ${COMPONENT_LIB} PRIVATE    "-DCONFIG_I2C_MANAGER_1_ENABLED=y"
                                                             "-DCONFIG_I2C_MANAGER_1_SDA=32"
                                                             "-DCONFIG_I2C_MANAGER_1_SCL=33"
