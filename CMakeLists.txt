@@ -114,7 +114,7 @@ endif()
 
 if( CONFIG_SOFTWARE_EXPANSION_PORTS_SUPPORT )
     set( CORE2FORAWS_EXPPORTS_SRCS          "${CORE2FORAWS_LIB}/expports/core2foraws_expports.c" )
-    set( CORE2FORAWS_EXPPORTS_INCLUDE_DIRS  "${CORE2FORAWS_LIB}/expports/include/" )
+    set( CORE2FORAWS_EXPPORTS_INCLUDE_DIRS  "${CORE2FORAWS_LIB}/expports/include/")
 
     list( APPEND CORE2FORAWS_SRCS           ${CORE2FORAWS_EXPPORTS_SRCS} )
     list( APPEND CORE2FORAWS_INCLUDE_DIRS   ${CORE2FORAWS_EXPPORTS_INCLUDE_DIRS} )
@@ -154,12 +154,8 @@ endif()
 
 
 if( CONFIG_SOFTWARE_RTC_SUPPORT )
-    set( CORE2FORAWS_RTC_SRCS               "${CORE2FORAWS_LIB}/rtc/core2foraws_rtc.c"
-                                            "${CORE2FORAWS_LIB}/rtc/lib/bm8563/bm8563.c"
-                                            )
-    set( CORE2FORAWS_RTC_INCLUDE_DIRS       "${CORE2FORAWS_LIB}/rtc/include"
-                                            "${CORE2FORAWS_LIB}/rtc/lib/bm8563"
-                                            )
+    set( CORE2FORAWS_RTC_SRCS               "${CORE2FORAWS_LIB}/rtc/core2foraws_rtc.c" )
+    set( CORE2FORAWS_RTC_INCLUDE_DIRS       "${CORE2FORAWS_LIB}/rtc/include" )
     list( APPEND CORE2FORAWS_SRCS           ${CORE2FORAWS_RTC_SRCS} )
     list( APPEND CORE2FORAWS_INCLUDE_DIRS   ${CORE2FORAWS_RTC_INCLUDE_DIRS} )
 endif()
