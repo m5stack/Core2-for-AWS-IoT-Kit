@@ -49,6 +49,14 @@ menu "Core2 for AWS hardware features"
         help
           Enable BM8563 real-time clock support.
 
+    config TIME_ZONE
+        string "Time Zone"
+        default "PST8PDT"
+        depends on SOFTWARE_RTC_SUPPORT
+        help
+            Time zone string in POSIX format (e.g., "PST8PDT", "EST5EDT", "CST6CDT", "MST7MDT")
+            PST8PDT automatically handles daylight saving time transitions.
+
     config SOFTWARE_RGB_LED_SUPPORT
         bool "RGB LEDs"
         depends on SOFTWARE_BSP_SUPPORT

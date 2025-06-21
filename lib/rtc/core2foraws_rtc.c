@@ -22,7 +22,9 @@
  */
 
 #include <esp_log.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "core2foraws_common.h"
 #include "core2foraws_rtc.h"
@@ -30,10 +32,10 @@
 
 static const char *_TAG = "CORE2FORAWS_RTC";
 
-// BM8563 Configuration
+// BM8563 I2C Address
 #define BM8563_I2C_ADDR 0x51
 
-// Register addresses
+// BM8563 Register Addresses
 #define BM8563_REG_CTRL_STATUS1 0x00
 #define BM8563_REG_CTRL_STATUS2 0x01
 #define BM8563_REG_SECONDS      0x02
@@ -51,35 +53,46 @@ static const char *_TAG = "CORE2FORAWS_RTC";
 #define BM8563_REG_TIMER_CTRL   0x0E
 #define BM8563_REG_TIMER_COUNT  0x0F
 
-// Control/Status bits
-#define BM8563_CTRL1_TEST  0x80
-#define BM8563_CTRL1_STOP  0x20
-#define BM8563_CTRL1_TESTC 0x08
+// Control/Status Register Bits
+#define BM8563_CTRL1_STOP 0x20
+#define BM8563_CTRL2_AF   0x08 // Alarm Flag
+#define BM8563_CTRL2_TF   0x04 // Timer Flag
+#define BM8563_CTRL2_AIE  0x02 // Alarm Interrupt Enable
+#define BM8563_CTRL2_TIE  0x01 // Timer Interrupt Enable
 
-#define BM8563_CTRL2_TI_TP 0x10
-#define BM8563_CTRL2_AF    0x08
-#define BM8563_CTRL2_TF    0x04
-#define BM8563_CTRL2_AIE   0x02
-#define BM8563_CTRL2_TIE   0x01
+// Time Register Bits
+#define BM8563_SECONDS_VL    0x80 // Voltage Low
+#define BM8563_MONTH_CENTURY 0x80 // Century bit (0=20xx, 1=19xx)
 
-#define BM8563_SECONDS_VL    0x80
-#define BM8563_MONTH_CENTURY 0x80
-
-// Alarm and timer constants
+// Alarm and Timer Constants
 #define BM8563_ALARM_NONE    0x80
-#define BM8563_ALARM_DISABLE 0xFF
+#define BM8563_TIMER_TE      0x80 // Timer Enable
+#define BM8563_TIMER_TD_MASK 0x03 // Timer Frequency Mask
 
-#define BM8563_TIMER_TE      0x80
-#define BM8563_TIMER_TD_MASK 0x03
+// Timer Frequencies
+#define BM8563_TIMER_FREQ_4096HZ 0x00 // 4.096 kHz
+#define BM8563_TIMER_FREQ_64HZ   0x01 // 64 Hz
+#define BM8563_TIMER_FREQ_1HZ    0x02 // 1 Hz
+#define BM8563_TIMER_FREQ_1_60HZ 0x03 // 1/60 Hz (1 minute)
 
-#define BM8563_TIMER_FREQ_4096HZ 0x00
-#define BM8563_TIMER_FREQ_64HZ   0x01
-#define BM8563_TIMER_FREQ_1HZ    0x02
-#define BM8563_TIMER_FREQ_1_60HZ 0x03
+// Static function prototypes
+static uint8_t _dec_to_bcd( uint8_t dec );
+static uint8_t _bcd_to_dec( uint8_t bcd );
+static esp_err_t _bm8563_read_reg( uint8_t reg, uint8_t *data, size_t len );
+static esp_err_t _bm8563_write_reg( uint8_t reg, const uint8_t *data,
+                                    size_t len );
+static esp_err_t _bm8563_read_reg_internal( uint8_t reg, uint8_t *data,
+                                            size_t len );
+static esp_err_t _bm8563_write_reg_internal( uint8_t reg, const uint8_t *data,
+                                             size_t len );
+static void _tm_to_bm8563( const struct tm *tm_time, uint8_t *bm_regs );
+static void _bm8563_to_tm( const uint8_t *bm_regs, struct tm *tm_time );
+static esp_err_t _setup_timezone( void );
+static void _restore_timezone( void );
 
 static bool _rtc_initialized = false;
+static char *_saved_tz = NULL;
 
-// Helper functions
 static uint8_t _dec_to_bcd( uint8_t dec )
 {
   return ( ( dec / 10 ) << 4 ) | ( dec % 10 );
@@ -129,7 +142,7 @@ static esp_err_t _bm8563_write_reg_internal( uint8_t reg, const uint8_t *data,
 
 static void _tm_to_bm8563( const struct tm *tm_time, uint8_t *bm_regs )
 {
-  bm_regs[ 0 ] = _dec_to_bcd( tm_time->tm_sec ) & 0x7F;
+  bm_regs[ 0 ] = _dec_to_bcd( tm_time->tm_sec );
   bm_regs[ 1 ] = _dec_to_bcd( tm_time->tm_min );
   bm_regs[ 2 ] = _dec_to_bcd( tm_time->tm_hour );
   bm_regs[ 3 ] = _dec_to_bcd( tm_time->tm_mday );
@@ -137,7 +150,7 @@ static void _tm_to_bm8563( const struct tm *tm_time, uint8_t *bm_regs )
 
   uint8_t month = _dec_to_bcd( tm_time->tm_mon + 1 );
 
-  // Century bit: 0 = 20xx, 1 = 19xx (BM8563 limitation: 1900-2099)
+  // Century bit: 0 = 20xx, 1 = 19xx (tm_year is years since 1900)
   if( tm_time->tm_year >= 100 )
   {
     month &= ~BM8563_MONTH_CENTURY; // 20xx
@@ -147,12 +160,7 @@ static void _tm_to_bm8563( const struct tm *tm_time, uint8_t *bm_regs )
     month |= BM8563_MONTH_CENTURY; // 19xx
   }
   bm_regs[ 5 ] = month;
-
-  // Fix: Ensure year value is correctly clamped for BM8563
-  int year_2digit = tm_time->tm_year % 100;
-  if( year_2digit > 99 )
-    year_2digit = 99; // Safety clamp
-  bm_regs[ 6 ] = _dec_to_bcd( year_2digit );
+  bm_regs[ 6 ] = _dec_to_bcd( tm_time->tm_year % 100 );
 }
 
 static void _bm8563_to_tm( const uint8_t *bm_regs, struct tm *tm_time )
@@ -168,154 +176,59 @@ static void _bm8563_to_tm( const uint8_t *bm_regs, struct tm *tm_time )
   uint8_t month_reg = bm_regs[ 5 ];
   tm_time->tm_mon = _bcd_to_dec( month_reg & 0x1F ) - 1;
 
-  // More robust year handling with proper debugging
   int year_2digit = _bcd_to_dec( bm_regs[ 6 ] );
 
-  ESP_LOGD( _TAG, "Raw year register: 0x%02X, decoded: %d", bm_regs[ 6 ],
-            year_2digit );
-  ESP_LOGD( _TAG, "Month register: 0x%02X, century bit: %s", month_reg,
-            ( month_reg & BM8563_MONTH_CENTURY ) ? "SET (19xx)"
-                                                 : "CLEAR (20xx)" );
-
-  // Century handling: 0 = 20xx, 1 = 19xx
+  // Century handling: 0 = 20xx, 1 = 19xx according to datasheet
   if( !( month_reg & BM8563_MONTH_CENTURY ) )
   {
-    // Century bit is 0 = 20xx
-    tm_time->tm_year = year_2digit + 100; // 20xx
-    ESP_LOGD( _TAG, "Century 20xx: %d + 100 = %d", year_2digit,
-              tm_time->tm_year );
+    tm_time->tm_year = year_2digit + 100; // Years since 1900 for 20xx
   }
   else
   {
-    // Century bit is 1 = 19xx
-    tm_time->tm_year = year_2digit; // 19xx
-    ESP_LOGD( _TAG, "Century 19xx: %d", tm_time->tm_year );
+    tm_time->tm_year = year_2digit; // Years since 1900 for 19xx
   }
 
-  // Validate year range without clamping for test compatibility
-  if( tm_time->tm_year < 0 )
+  // Let mktime() determine DST. This is important for correct conversion
+  // from the RTC's UTC time to local time by the caller.
+  tm_time->tm_isdst = -1;
+}
+
+static esp_err_t _setup_timezone( void )
+{
+  // Save current TZ if exists
+  char *current_tz = getenv( "TZ" );
+  if( current_tz )
   {
-    ESP_LOGW( _TAG, "Invalid year < 0: %d, setting to 0", tm_time->tm_year );
-    tm_time->tm_year = 0;
-  }
-
-  ESP_LOGD( _TAG, "Final tm_year: %d (actual year: %d)", tm_time->tm_year,
-            tm_time->tm_year + 1900 );
-
-  // Fix: Don't call mktime() here as it can normalize/corrupt the date
-  // especially for edge case years like 2099. Just manually calculate tm_yday.
-
-  // Manually calculate day of year (tm_yday)
-  static const int days_in_month[] = { 31, 28, 31, 30, 31, 30,
-                                       31, 31, 30, 31, 30, 31 };
-  int year = tm_time->tm_year + 1900;
-  int is_leap =
-      ( ( year % 4 == 0 ) && ( year % 100 != 0 ) ) || ( year % 400 == 0 );
-
-  tm_time->tm_yday = tm_time->tm_mday - 1; // Start with current day (0-based)
-
-  for( int i = 0; i < tm_time->tm_mon; i++ )
-  {
-    tm_time->tm_yday += days_in_month[ i ];
-    if( i == 1 && is_leap )
-    { // February in leap year
-      tm_time->tm_yday += 1;
+    if( _saved_tz )
+    {
+      free( _saved_tz );
     }
+    _saved_tz = strdup( current_tz );
   }
 
-  ESP_LOGD( _TAG, "Calculated tm_yday: %d", tm_time->tm_yday );
-}
-
-// US DST rules: Second Sunday in March to First Sunday in November
-static bool _is_dst_active( const struct tm *tm_time )
-{
-  int year = tm_time->tm_year + 1900;
-  int month = tm_time->tm_mon + 1;
-  int day = tm_time->tm_mday;
-  int hour = tm_time->tm_hour;
-
-  if( month < 3 || month > 11 )
-    return false;
-  if( month > 3 && month < 11 )
-    return true;
-
-  if( month == 3 )
-  {
-    struct tm march_first = { 0 };
-    march_first.tm_year = year - 1900;
-    march_first.tm_mon = 2;
-    march_first.tm_mday = 1;
-    mktime( &march_first );
-
-    int first_sunday = 1 + ( 7 - march_first.tm_wday ) % 7;
-    if( first_sunday == 1 )
-      first_sunday = 8;
-    int second_sunday = first_sunday + 7;
-
-    if( day < second_sunday )
-      return false;
-    if( day > second_sunday )
-      return true;
-    return hour >= 3; // DST starts at 3:00 AM
-  }
-
-  if( month == 11 )
-  {
-    struct tm nov_first = { 0 };
-    nov_first.tm_year = year - 1900;
-    nov_first.tm_mon = 10;
-    nov_first.tm_mday = 1;
-    mktime( &nov_first );
-
-    int first_sunday = 1 + ( 7 - nov_first.tm_wday ) % 7;
-    if( first_sunday == 1 )
-      first_sunday = 8;
-
-    if( day < first_sunday )
-      return true;
-    if( day > first_sunday )
-      return false;
-
-    // Fix: Handle the ambiguous hour more carefully
-    // The test expects 1:30 AM on transition day to still be DST (first
-    // occurrence) Only times at 2:00 AM and later are standard time
-    return hour < 2; // DST ends at 2:00 AM
-  }
-
-  return false;
-}
-
-static void _apply_dst_offset( struct tm *tm_time )
-{
-  tm_time->tm_isdst = _is_dst_active( tm_time ) ? 1 : 0;
-}
-
-// Add a portable timegm implementation for ESP-IDF
-static time_t _portable_timegm( struct tm *tm )
-{
-  time_t ret;
-  char *tz;
-
-  tz = getenv( "TZ" );
-  if( tz )
-    tz = strdup( tz );
-  setenv( "TZ", "", 1 );
+  // Set to UTC for conversion
+  setenv( "TZ", "UTC0", 1 );
   tzset();
-  ret = mktime( tm );
-  if( tz )
+
+  return ESP_OK;
+}
+
+static void _restore_timezone( void )
+{
+  if( _saved_tz )
   {
-    setenv( "TZ", tz, 1 );
-    free( tz );
+    setenv( "TZ", _saved_tz, 1 );
+    free( _saved_tz );
+    _saved_tz = NULL;
   }
   else
   {
-    unsetenv( "TZ" );
+    // Set to configured timezone
+    setenv( "TZ", CONFIG_TIME_ZONE, 1 );
   }
   tzset();
-  return ret;
 }
 
-// Public API functions
 esp_err_t core2foraws_rtc_init( void )
 {
   ESP_LOGI( _TAG, "Initializing BM8563 RTC" );
@@ -330,8 +243,8 @@ esp_err_t core2foraws_rtc_init( void )
     return ret;
   }
 
-  // Start normal operation
-  ctrl_reg &= ~( BM8563_CTRL1_TEST | BM8563_CTRL1_STOP | BM8563_CTRL1_TESTC );
+  // Start RTC clock and disable test modes
+  ctrl_reg &= ~BM8563_CTRL1_STOP;
   ret = _bm8563_write_reg_internal( BM8563_REG_CTRL_STATUS1, &ctrl_reg, 1 );
   if( ret != ESP_OK )
   {
@@ -340,7 +253,7 @@ esp_err_t core2foraws_rtc_init( void )
     return ret;
   }
 
-  // Clear pending flags
+  // Clear all pending status flags
   ctrl_reg = 0x00;
   ret = _bm8563_write_reg_internal( BM8563_REG_CTRL_STATUS2, &ctrl_reg, 1 );
   if( ret != ESP_OK )
@@ -350,8 +263,13 @@ esp_err_t core2foraws_rtc_init( void )
     return ret;
   }
 
+  // Set the configured timezone
+  setenv( "TZ", CONFIG_TIME_ZONE, 1 );
+  tzset();
+
   _rtc_initialized = true;
-  ESP_LOGI( _TAG, "BM8563 RTC initialized successfully" );
+  ESP_LOGI( _TAG, "BM8563 RTC initialized successfully with timezone: %s",
+            CONFIG_TIME_ZONE );
   return ESP_OK;
 }
 
@@ -359,7 +277,54 @@ esp_err_t core2foraws_rtc_time_get( struct tm *time )
 {
   if( time == NULL )
   {
-    ESP_LOGE( _TAG, "Invalid parameter: time is NULL" );
+    ESP_LOGE( _TAG, "Time pointer is NULL" );
+    return ESP_ERR_INVALID_ARG;
+  }
+
+  // Get UTC time from RTC
+  esp_err_t ret = core2foraws_rtc_utc_time_get( time );
+  if( ret != ESP_OK )
+  {
+    return ret;
+  }
+
+  // Convert UTC to local time
+  time_t utc_time = mktime( time );
+  struct tm *local_time = localtime( &utc_time );
+  if( local_time == NULL )
+  {
+    ESP_LOGE( _TAG, "Failed to convert UTC to local time" );
+    return ESP_FAIL;
+  }
+
+  // Copy local time to output
+  memcpy( time, local_time, sizeof( struct tm ) );
+
+  return ESP_OK;
+}
+
+esp_err_t core2foraws_rtc_time_set( const struct tm time )
+{
+  // Convert local time to UTC
+  struct tm local_copy = time;
+  time_t local_time = mktime( &local_copy );
+
+  struct tm *utc_time = gmtime( &local_time );
+  if( utc_time == NULL )
+  {
+    ESP_LOGE( _TAG, "Failed to convert local time to UTC" );
+    return ESP_FAIL;
+  }
+
+  // Set UTC time to RTC
+  return core2foraws_rtc_utc_time_set( *utc_time );
+}
+
+esp_err_t core2foraws_rtc_utc_time_get( struct tm *time )
+{
+  if( time == NULL )
+  {
+    ESP_LOGE( _TAG, "Time pointer is NULL" );
     return ESP_ERR_INVALID_ARG;
   }
 
@@ -372,96 +337,25 @@ esp_err_t core2foraws_rtc_time_get( struct tm *time )
     return ret;
   }
 
-  // Check for power-down condition
+  // Check for power-down condition (Voltage Low flag)
   if( time_regs[ 0 ] & BM8563_SECONDS_VL )
   {
     ESP_LOGW( _TAG, "RTC power-down detected, time may be invalid" );
+    // Clear the flag after reading
     time_regs[ 0 ] &= ~BM8563_SECONDS_VL;
     _bm8563_write_reg( BM8563_REG_SECONDS, &time_regs[ 0 ], 1 );
   }
 
-  // Convert hardware registers to UTC time
-  struct tm utc_time;
-  _bm8563_to_tm( time_regs, &utc_time );
-
-  // Handle Y2038 problem by avoiding time_t conversion for years > 2037
-  if( utc_time.tm_year + 1900 > 2037 )
-  {
-    // For years beyond time_t range, we cannot reliably convert from UTC to
-    // local. The test suite currently stores local time directly into the RTC.
-    // For compatibility with the test, we return the RTC time as-is and just
-    // set the DST flag. This assumes the time in RTC is the desired local time.
-    ESP_LOGW( _TAG, "Year is > 2037. Bypassing UTC->local conversion due to "
-                    "time_t limitations." );
-    *time = utc_time;
-    _apply_dst_offset( time );
-    return ESP_OK;
-  }
-
-  // Convert UTC time to local time with proper timezone handling
-  setenv( "TZ", "PST8PDT", 1 );
-  tzset();
-
-  // For edge cases involving DST transitions, use a more robust approach
-  time_t utc_timestamp = _portable_timegm( &utc_time );
-  if( utc_timestamp != (time_t)-1 )
-  {
-    // Convert to local time using system timezone first
-    struct tm *local_time_ptr = localtime( &utc_timestamp );
-    if( local_time_ptr )
-    {
-      *time = *local_time_ptr;
-
-      // Enhanced DST handling for edge cases
-      int expected_dst = _is_dst_active( time ) ? 1 : 0;
-
-      // Special handling for midnight and late evening times during DST months
-      if( ( time->tm_hour == 0 || time->tm_hour == 23 ) &&
-          ( time->tm_mon >= 2 && time->tm_mon <= 9 ) )
-      {
-        // For edge case tests, be more permissive about DST detection
-        // Check if the date falls in DST period at all
-        struct tm noon_time = *time;
-        noon_time.tm_hour = 12;
-        noon_time.tm_min = 0;
-        noon_time.tm_sec = 0;
-
-        int noon_dst = _is_dst_active( &noon_time ) ? 1 : 0;
-
-        // For midnight times in DST months, use noon's DST status
-        if( time->tm_hour == 0 && noon_dst == 1 )
-        {
-          expected_dst = 1;
-        }
-        // For 23:xx times in DST months, also use noon's DST status
-        else if( time->tm_hour == 23 && noon_dst == 1 )
-        {
-          expected_dst = 1;
-        }
-      }
-
-      time->tm_isdst = expected_dst;
-    }
-    else
-    {
-      // Fallback if localtime fails
-      *time = utc_time;
-      _apply_dst_offset( time );
-    }
-  }
-  else
-  {
-    // If conversion fails, just return the UTC time with DST flag applied
-    *time = utc_time;
-    _apply_dst_offset( time );
-  }
+  // Convert hardware registers to UTC time struct
+  _setup_timezone();
+  _bm8563_to_tm( time_regs, time );
+  _restore_timezone();
 
   return ESP_OK;
 }
 
-esp_err_t core2foraws_rtc_time_set( const struct tm time )
+esp_err_t core2foraws_rtc_utc_time_set( const struct tm time )
 {
-  // Validate year range (BM8563 limitation: 1900-2099)
   int year = time.tm_year + 1900;
   if( year < 1900 || year > 2099 )
   {
@@ -469,19 +363,15 @@ esp_err_t core2foraws_rtc_time_set( const struct tm time )
     return ESP_ERR_INVALID_ARG;
   }
 
-  // Input time is assumed to be UTC - store it directly without any conversion
-  struct tm utc_time = time;
-
-  // Ensure DST flag is cleared for UTC storage
-  utc_time.tm_isdst = 0;
-
+  // Input time is expected to be UTC
   uint8_t time_regs[ 7 ];
-  _tm_to_bm8563( &utc_time, time_regs );
+  _tm_to_bm8563( &time, time_regs );
 
   esp_err_t ret = _bm8563_write_reg( BM8563_REG_SECONDS, time_regs, 7 );
   if( ret != ESP_OK )
   {
-    ESP_LOGE( _TAG, "Failed to set time: %s", esp_err_to_name( ret ) );
+    ESP_LOGE( _TAG, "Failed to write time registers: %s",
+              esp_err_to_name( ret ) );
     return ret;
   }
 
@@ -830,34 +720,32 @@ esp_err_t core2foraws_rtc_timer_get( uint32_t *seconds )
 
 esp_err_t core2foraws_rtc_timer_set( uint32_t seconds )
 {
+  // Max duration is 255 minutes (15300 seconds)
   if( seconds == 0 || seconds > 15300 )
-  { // Max ~255 minutes
-    ESP_LOGE( _TAG, "Invalid timer value: %u seconds", seconds );
+  {
+    ESP_LOGE( _TAG,
+              "Invalid timer value: %u seconds. Must be between 1 and 15300.",
+              seconds );
     return ESP_ERR_INVALID_ARG;
   }
 
   uint8_t timer_ctrl, timer_count;
   uint8_t freq;
 
-  // Choose appropriate frequency based on duration
+  // Choose appropriate frequency to maximize range and precision
   if( seconds <= 255 )
   {
-    freq = BM8563_TIMER_FREQ_1HZ;
+    freq = BM8563_TIMER_FREQ_1HZ; // 1-second resolution
     timer_count = (uint8_t)seconds;
   }
-  else if( seconds <= 255 * 60 )
+  else // seconds <= 15300
   {
-    freq = BM8563_TIMER_FREQ_1_60HZ;
+    freq = BM8563_TIMER_FREQ_1_60HZ; // 1-minute resolution
     timer_count = (uint8_t)( seconds / 60 );
   }
-  else
-  {
-    ESP_LOGE( _TAG, "Timer duration too long: %u seconds", seconds );
-    return ESP_ERR_INVALID_ARG;
-  }
 
-  // Disable timer first
-  timer_ctrl = freq; // TE bit cleared
+  // Disable timer before setting new values
+  timer_ctrl = freq; // TE bit is 0
   esp_err_t ret = _bm8563_write_reg( BM8563_REG_TIMER_CTRL, &timer_ctrl, 1 );
   if( ret != ESP_OK )
   {
@@ -865,7 +753,7 @@ esp_err_t core2foraws_rtc_timer_set( uint32_t seconds )
     return ret;
   }
 
-  // Set timer count
+  // Set timer countdown value
   ret = _bm8563_write_reg( BM8563_REG_TIMER_COUNT, &timer_count, 1 );
   if( ret != ESP_OK )
   {
@@ -873,7 +761,7 @@ esp_err_t core2foraws_rtc_timer_set( uint32_t seconds )
     return ret;
   }
 
-  // Enable timer and timer interrupt
+  // Enable timer
   timer_ctrl = BM8563_TIMER_TE | freq;
   ret = _bm8563_write_reg( BM8563_REG_TIMER_CTRL, &timer_ctrl, 1 );
   if( ret != ESP_OK )
@@ -882,7 +770,7 @@ esp_err_t core2foraws_rtc_timer_set( uint32_t seconds )
     return ret;
   }
 
-  // Enable timer interrupt
+  // Enable timer interrupt flag
   uint8_t ctrl2;
   ret = _bm8563_read_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
   if( ret != ESP_OK )

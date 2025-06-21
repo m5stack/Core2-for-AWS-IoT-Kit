@@ -87,37 +87,26 @@ extern "C"
   /* @[declare_core2foraws_rtc_init] */
 
   /**
-   * @brief Gets the date and time from the Real-Time Clock (RTC).
+   * @brief Gets the local date and time from the Real-Time Clock (RTC).
+   *
+   * The RTC stores time in UTC. This function converts it to local time
+   * using the timezone configured in CONFIG_TIME_ZONE.
    *
    * **Example:**
    *
-   * Get the current date and time and print it out.
+   * Get the current local time and print it.
    * @code{c}
-   *  #include <stdint.h>
-   *  #include <time.h>
-   *  #include <esp_log.h>
+   *  struct tm datetime;
+   *  char buffer[26];
    *
-   *  #include "core2foraws.h"
-   *
-   *  static const char *TAG = "MAIN_RTC_DEMO";
-   *
-   *  void app_main( void )
-   *  {
-   *      struct tm *datetime;
-   * 		char buffer[ 26 ];
-   *
-   *      core2foraws_init();
-   *      core2foraws_rtc_time_get( datetime );
-   *
-   *      strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", datetime);
-   * 		ESP_LOGI( TAG, "\tCurrent date time %s\n", buffer );
-   *  }
-
+   *  core2foraws_rtc_time_get(&datetime);
+   *  strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", &datetime);
+   *  ESP_LOGI(TAG, "Local time: %s", buffer);
    * @endcode
    *
-   * @param[out] time The date-time read from the RTC.
+   * @param[out] time The local date-time converted from RTC UTC time.
    * @return
-   [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+   * [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
    *  - ESP_OK                : Success
    *  - ESP_ERR_INVALID_ARG	: Input parameter error
    */
@@ -126,52 +115,93 @@ extern "C"
   /* @[declare_core2foraws_rtc_time_get] */
 
   /**
-   * @brief Sets the date-time to the Real-Time Clock (RTC).
+   * @brief Sets the local date-time to the Real-Time Clock (RTC).
+   *
+   * This function converts local time to UTC before storing in the RTC
+   * using the timezone configured in CONFIG_TIME_ZONE.
    *
    * **Example:**
    *
-   * Get the current date-time from the RTC, add 1 minute,
-   * set the RTC to the new date-time, print out the new time.
+   * Set the RTC to current local time + 1 hour.
    * @code{c}
-   *  #include <stdint.h>
-   *  #include <time.h>
-   *  #include <esp_err.h>
-   *  #include <esp_log.h>
+   *  struct tm datetime;
    *
-   *  #include "core2foraws.h"
+   *  core2foraws_rtc_time_get(&datetime);
+   *  datetime.tm_hour += 1;
+   *  mktime(&datetime); // Normalize the time
    *
-   *  static const char *TAG = "MAIN_RTC_DEMO";
-   *
-   *  void app_main( void )
-   *  {
-   *      struct tm datetime;
-   *      esp_err_t err = ESP_FAIL;
-   *
-   *      core2foraws_init();
-   *      core2foraws_rtc_time_get( &datetime );
-   *
-   *      datetime.second += 1;
-   *
-   *      err = core2foraws_rtc_time_set( datetime );
-   *      if ( err == ESP_OK )
-   *      {
-   *          char buffer[ 128 ];
-   *          strftime( buffer, 128 ,"%c (day %j)" , &datetime );
-                  ESP_LOGI( TAG, "\tCurrent date time: %s\n", buffer );
-   *      }
-   *  }
-
+   *  core2foraws_rtc_time_set(datetime);
+   *  ESP_LOGI(TAG, "Time updated");
    * @endcode
    *
-   * @param[in] time The date-time to set on the RTC.
+   * @param[in] time The local date-time to set on the RTC.
    * @return
-   [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+   * [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
    *  - ESP_OK                : Success
    *  - ESP_ERR_INVALID_ARG	: Input parameter error
    */
   /* @[declare_core2foraws_rtc_time_set] */
   esp_err_t core2foraws_rtc_time_set( const struct tm time );
   /* @[declare_core2foraws_rtc_time_set] */
+
+  /**
+   * @brief Gets the UTC date and time from the Real-Time Clock (RTC).
+   *
+   * This function returns the raw UTC time stored in the RTC without
+   * any timezone conversion.
+   *
+   * **Example:**
+   *
+   * Get UTC time for logging or network protocols.
+   * @code{c}
+   *  struct tm utc_time;
+   *
+   *  core2foraws_rtc_utc_time_get(&utc_time);
+   *  ESP_LOGI(TAG, "UTC: %04d-%02d-%02d %02d:%02d:%02d",
+   *           utc_time.tm_year + 1900, utc_time.tm_mon + 1,
+   *           utc_time.tm_mday, utc_time.tm_hour,
+   *           utc_time.tm_min, utc_time.tm_sec);
+   * @endcode
+   *
+   * @param[out] time The UTC date-time read from the RTC.
+   * @return
+   * [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+   *  - ESP_OK                : Success
+   *  - ESP_ERR_INVALID_ARG	: Input parameter error
+   */
+  /* @[declare_core2foraws_rtc_utc_time_get] */
+  esp_err_t core2foraws_rtc_utc_time_get( struct tm *time );
+  /* @[declare_core2foraws_rtc_utc_time_get] */
+
+  /**
+   * @brief Sets the UTC date-time to the Real-Time Clock (RTC).
+   *
+   * This function sets the RTC directly with UTC time without any
+   * timezone conversion.
+   *
+   * **Example:**
+   *
+   * Set RTC from SNTP UTC time.
+   * @code{c}
+   *  time_t now;
+   *  struct tm utc_time;
+   *
+   *  time(&now);
+   *  gmtime_r(&now, &utc_time);
+   *
+   *  core2foraws_rtc_utc_time_set(utc_time);
+   *  ESP_LOGI(TAG, "RTC synced with SNTP");
+   * @endcode
+   *
+   * @param[in] time The UTC date-time to set on the RTC.
+   * @return
+   * [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
+   *  - ESP_OK                : Success
+   *  - ESP_ERR_INVALID_ARG	: Input parameter error
+   */
+  /* @[declare_core2foraws_rtc_utc_time_set] */
+  esp_err_t core2foraws_rtc_utc_time_set( const struct tm time );
+  /* @[declare_core2foraws_rtc_utc_time_set] */
 
   /**
    * @brief Gets the alarm date-time from Real-Time Clock (RTC).
