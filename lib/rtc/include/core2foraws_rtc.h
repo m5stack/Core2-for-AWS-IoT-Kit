@@ -96,12 +96,24 @@ extern "C"
    *
    * Get the current local time and print it.
    * @code{c}
-   *  struct tm datetime;
-   *  char buffer[26];
+   *  #include "core2foraws.h"
+   *  #include <esp_log.h>
    *
-   *  core2foraws_rtc_time_get(&datetime);
-   *  strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", &datetime);
-   *  ESP_LOGI(TAG, "Local time: %s", buffer);
+   *  static const char *TAG = "RTC_DEMO";
+   *
+   *  void app_main(void) {
+   *      struct tm local_time;
+   *      char time_str[64];
+   *
+   *      core2foraws_init();
+   *
+   *      esp_err_t ret = core2foraws_rtc_time_get(&local_time);
+   *      if (ret == ESP_OK) {
+   *          strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S %Z",
+   * &local_time); ESP_LOGI(TAG, "Current local time: %s", time_str); } else {
+   *          ESP_LOGE(TAG, "Failed to get time: %s", esp_err_to_name(ret));
+   *      }
+   *  }
    * @endcode
    *
    * @param[out] time The local date-time converted from RTC UTC time.
@@ -122,16 +134,37 @@ extern "C"
    *
    * **Example:**
    *
-   * Set the RTC to current local time + 1 hour.
+   * Set the RTC to a specific local time.
    * @code{c}
-   *  struct tm datetime;
+   *  #include "core2foraws.h"
+   *  #include <esp_log.h>
+   *  #include <time.h>
    *
-   *  core2foraws_rtc_time_get(&datetime);
-   *  datetime.tm_hour += 1;
-   *  mktime(&datetime); // Normalize the time
+   *  static const char *TAG = "RTC_DEMO";
    *
-   *  core2foraws_rtc_time_set(datetime);
-   *  ESP_LOGI(TAG, "Time updated");
+   *  void app_main(void) {
+   *      struct tm set_time = {0};
+   *
+   *      core2foraws_init();
+   *
+   *      // Set to July 11, 2025, 10:45:00 AM local time
+   *      set_time.tm_year = 2025 - 1900;  // Years since 1900
+   *      set_time.tm_mon = 7 - 1;         // Month 0-11 (July = 6)
+   *      set_time.tm_mday = 11;           // Day of month
+   *      set_time.tm_hour = 10;           // Hour 0-23
+   *      set_time.tm_min = 45;            // Minute 0-59
+   *      set_time.tm_sec = 0;             // Second 0-59
+   *      set_time.tm_isdst = -1;          // Let system determine DST
+   *
+   *      mktime(&set_time);  // Normalize the time structure
+   *
+   *      esp_err_t ret = core2foraws_rtc_time_set(set_time);
+   *      if (ret == ESP_OK) {
+   *          ESP_LOGI(TAG, "RTC time set successfully");
+   *      } else {
+   *          ESP_LOGE(TAG, "Failed to set time: %s", esp_err_to_name(ret));
+   *      }
+   *  }
    * @endcode
    *
    * @param[in] time The local date-time to set on the RTC.
@@ -154,13 +187,26 @@ extern "C"
    *
    * Get UTC time for logging or network protocols.
    * @code{c}
-   *  struct tm utc_time;
+   *  #include "core2foraws.h"
+   *  #include <esp_log.h>
    *
-   *  core2foraws_rtc_utc_time_get(&utc_time);
-   *  ESP_LOGI(TAG, "UTC: %04d-%02d-%02d %02d:%02d:%02d",
-   *           utc_time.tm_year + 1900, utc_time.tm_mon + 1,
-   *           utc_time.tm_mday, utc_time.tm_hour,
-   *           utc_time.tm_min, utc_time.tm_sec);
+   *  static const char *TAG = "RTC_DEMO";
+   *
+   *  void app_main(void) {
+   *      struct tm utc_time;
+   *
+   *      core2foraws_init();
+   *
+   *      esp_err_t ret = core2foraws_rtc_utc_time_get(&utc_time);
+   *      if (ret == ESP_OK) {
+   *          ESP_LOGI(TAG, "UTC: %04d-%02d-%02d %02d:%02d:%02d",
+   *                   utc_time.tm_year + 1900, utc_time.tm_mon + 1,
+   *                   utc_time.tm_mday, utc_time.tm_hour,
+   *                   utc_time.tm_min, utc_time.tm_sec);
+   *      } else {
+   *          ESP_LOGE(TAG, "Failed to get UTC time: %s", esp_err_to_name(ret));
+   *      }
+   *  }
    * @endcode
    *
    * @param[out] time The UTC date-time read from the RTC.
@@ -183,14 +229,27 @@ extern "C"
    *
    * Set RTC from SNTP UTC time.
    * @code{c}
-   *  time_t now;
-   *  struct tm utc_time;
+   *  #include "core2foraws.h"
+   *  #include "esp_sntp.h"
+   *  #include <esp_log.h>
    *
-   *  time(&now);
-   *  gmtime_r(&now, &utc_time);
+   *  static const char *TAG = "RTC_DEMO";
    *
-   *  core2foraws_rtc_utc_time_set(utc_time);
-   *  ESP_LOGI(TAG, "RTC synced with SNTP");
+   *  void sync_rtc_with_sntp(void) {
+   *      time_t now;
+   *      struct tm utc_time;
+   *
+   *      // Get current system time (assumed to be synced with SNTP)
+   *      time(&now);
+   *      gmtime_r(&now, &utc_time);
+   *
+   *      esp_err_t ret = core2foraws_rtc_utc_time_set(utc_time);
+   *      if (ret == ESP_OK) {
+   *          ESP_LOGI(TAG, "RTC synced with SNTP UTC time");
+   *      } else {
+   *          ESP_LOGE(TAG, "Failed to sync RTC: %s", esp_err_to_name(ret));
+   *      }
+   *  }
    * @endcode
    *
    * @param[in] time The UTC date-time to set on the RTC.
@@ -284,64 +343,40 @@ extern "C"
    *
    * The alarm only takes 4 parameters from the time struct:
    * * tm_hour — The hour the alarm will trigger. Range of 0 to 23. @ref
-   * RTC_ALARM_DISABLE (255) if not set.
+   * RTC_ALARM_DISABLE (255) to disable.
    * * tm_min — The minute the alarm will trigger. Range of 0 to 59. @ref
-   * RTC_ALARM_DISABLE (255) if not set.
-   * * tm_mday — The day of the month the alarm will trigger. Range of 0 to 31.
-   * @ref RTC_ALARM_DISABLE (255) if not set.
+   * RTC_ALARM_DISABLE (255) to disable.
+   * * tm_mday — The day of the month the alarm will trigger. Range of 1 to 31.
+   * @ref RTC_ALARM_DISABLE (255) to disable.
    * * tm_wday — The day of the week the alarm will trigger. Range of 0 to 6.
-   * @ref RTC_ALARM_DISABLE (255) if not set.
+   * @ref RTC_ALARM_DISABLE (255) to disable.
    *
    * **Example:**
    *
-   * Get the current alarm date-time from the RTC, set alarm to
-   * today, 1 minute from the current time, if successful, print out
-   * the date-time the alarm was set to.
+   * Set a daily alarm for 7:30 AM.
    * @code{c}
-   *  #include <stdint.h>
-   *  #include <time.h>
-   *  #include <esp_err.h>
+   *  #include "core2foraws.h"
    *  #include <esp_log.h>
    *
-   *  #include "core2foraws.h"
+   *  static const char *TAG = "RTC_DEMO";
    *
-   *  static const char *TAG = "MAIN_RTC_DEMO";
-   *
-   *  void app_main( void )
-   *  {
-   *      struct tm datetime;
-   *      struct tm alarm_time = { 0 };
-   *      esp_err_t err = ESP_FAIL;
+   *  void app_main(void) {
+   *      struct tm alarm_time = {0};
    *
    *      core2foraws_init();
-   *      core2foraws_rtc_time_get( &datetime );
    *
+   *      // Set alarm for 7:30 AM every day
+   *      alarm_time.tm_hour = 7;                    // 7 AM
+   *      alarm_time.tm_min = 30;                    // 30 minutes
+   *      alarm_time.tm_mday = RTC_ALARM_DISABLE;    // Any day of month
+   *      alarm_time.tm_wday = RTC_ALARM_DISABLE;    // Any day of week
    *
-   *      if ( datetime.tm_min == 59 )
-   *      {
-   *          alarm_time.tm_hour = datetime.tm_hour + 1;
-   *          alarm_time.tm_min = 0;
-   *          if ( alarm_time.tm_hour == 25 )
-   *              alarm_time.tm_hour = 0;
+   *      esp_err_t ret = core2foraws_rtc_alarm_set(alarm_time);
+   *      if (ret == ESP_OK) {
+   *          ESP_LOGI(TAG, "Daily alarm set for 7:30 AM");
+   *      } else {
+   *          ESP_LOGE(TAG, "Failed to set alarm: %s", esp_err_to_name(ret));
    *      }
-   *      else
-   *      {
-   *          alarm_time.tm_hour = datetime.tm_hour;
-   *          alarm_time.tm_min = datetime.tm_min + 1;
-   *      }
-   *      alarm_time.tm_mday = RTC_ALARM_NONE;
-   *      alarm_time.tm_wday = RTC_ALARM_NONE;
-   *
-   *      datetime.tm_min += 1;
-   *
-   *      core2foraws_rtc_alarm_set( alarm_time );
-   *      alarm_time = { 0 };
-   *
-   *      err = core2foraws_rtc_alarm_get( &alarm_time );
-   *      if ( err == ESP_OK )
-   * 		    ESP_LOGI( TAG, "\tAlarm set for hour %d, minute %d, on the
-   * %d day of week, %d day of month\n", alarm_time.tm_hour, alarm_time.tm_min,
-   * alarm_time.tm_wday, alarm_time.tm_mday );
    *  }
    * @endcode
    *
@@ -361,32 +396,27 @@ extern "C"
    *
    * **Example:**
    *
-   * Check if alarm has been triggered and clear it if so.
+   * Check if alarm has been triggered in a periodic task.
    * @code{c}
-   *  #include <stdint.h>
-   *  #include <stdbool.h>
+   *  #include "core2foraws.h"
+   *  #include <esp_log.h>
    *  #include <freertos/FreeRTOS.h>
    *  #include <freertos/task.h>
-   *  #include <time.h>
-   *  #include <esp_err.h>
-   *  #include <esp_log.h>
    *
-   *  #include "core2foraws.h"
+   *  static const char *TAG = "RTC_DEMO";
    *
-   *  static const char *TAG = "MAIN_RTC_DEMO";
-   *
-   *  void rtc_demo_task( void *pvParameters )
-   *  {
+   *  void alarm_check_task(void *pvParameters) {
    *      bool alarm_triggered = false;
-   *      for ( ;; )
-   *      {
+   *
+   *      while (1) {
    *          // Check alarm status and clear if triggered
-   *          core2foraws_rtc_alarm_status( &alarm_triggered, true );
-   *          if ( alarm_triggered )
-   *          {
-   *              ESP_LOGI( TAG, "\tAlarm has been triggered and cleared!" );
+   *          esp_err_t ret = core2foraws_rtc_alarm_status(&alarm_triggered,
+   * true); if (ret == ESP_OK && alarm_triggered) { ESP_LOGI(TAG, "Alarm
+   * triggered! Time to wake up!");
+   *              // Handle alarm event here
    *          }
-   *          vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+   *
+   *          vTaskDelay(pdMS_TO_TICKS(1000));  // Check every second
    *      }
    *  }
    * @endcode
@@ -586,71 +616,51 @@ extern "C"
    * @brief Sets the timer on the Real-Time Clock (RTC) to specified
    * number of seconds.
    *
+   * The timer supports values from 1 to 15300 seconds (255 minutes).
+   * The RTC automatically selects the best frequency for the duration.
+   *
    * **Example:**
    *
-   * In a FreeRTOS task, set a 5 second timer, check periodically how
-   * much time is left on the timer, if the timer has been triggered,
-   * print a message to serial output, clear the timer, and suspend
-   * the FreeRTOS task so it's not using MCU cycles.
+   * Set a 5-minute timer and wait for it to expire.
    * @code{c}
-   *  #include <stdint.h>
-   *  #include <stdbool.h>
+   *  #include "core2foraws.h"
+   *  #include <esp_log.h>
    *  #include <freertos/FreeRTOS.h>
    *  #include <freertos/task.h>
-   *  #include <esp_err.h>
-   *  #include <esp_log.h>
    *
-   *  #include "core2foraws.h"
+   *  static const char *TAG = "RTC_DEMO";
    *
-   *  static const char *TAG = "MAIN_RTC_DEMO";
-   *
-   *  void rtc_demo_task( void *pvParameters )
-   *  {
-   *      core2foraws_rtc_timer_set( 5 );
-   *
-   *      for ( ;; )
-   *      {
-   *          uint32_t timer_seconds;
-   *          bool timer_trigger = false;
-   *          esp_err_t err = core2foraws_rtc_timer_get( &timer_seconds );
-   *          if ( err == ESP_OK )
-   *          {
-   *              ESP_LOGI( TAG,"\t%d seconds left on timer", timer_seconds );
-   *              core2foraws_rtc_timer_status( &timer_trigger, false );
-   *              if ( timer_trigger )
-   *              {
-   *                  ESP_LOGI( TAG, "\tTimer expired!" );
-   *                  core2foraws_rtc_timer_status( &timer_trigger, true );
-   *
-   *                  vTaskSuspend( NULL );
-   *              }
-   *
-   *              vTaskDelay( pdMS_TO_TICKS( 500 ) );
-   *          }
+   *  void timer_demo_task(void *pvParameters) {
+   *      // Set a 5-minute (300 second) timer
+   *      esp_err_t ret = core2foraws_rtc_timer_set(300);
+   *      if (ret != ESP_OK) {
+   *          ESP_LOGE(TAG, "Failed to set timer: %s", esp_err_to_name(ret));
+   *          return;
    *      }
-   *  }
    *
-   *  void app_main( void )
-   *  {
-   *      core2foraws_init();
+   *      ESP_LOGI(TAG, "5-minute timer started");
    *
-   *      xTaskCreatePinnedToCore(
-   * 		rtc_demo_task,
-   * 		"rtcTask",
-   * 		configMINIMAL_STACK_SIZE * 3,
-   * 		NULL,
-   * 		0,
-   * 		( TaskHandle_t * ) NULL,
-   * 		1
-   *      );
+   *      while (1) {
+   *          bool timer_triggered = false;
+   *          ret = core2foraws_rtc_timer_status(&timer_triggered, false);
+   *
+   *          if (ret == ESP_OK && timer_triggered) {
+   *              ESP_LOGI(TAG, "Timer expired!");
+   *              // Clear the timer flag
+   *              core2foraws_rtc_timer_status(&timer_triggered, true);
+   *              break;
+   *          }
+   *
+   *          vTaskDelay(pdMS_TO_TICKS(1000));  // Check every second
+   *      }
    *  }
    * @endcode
    *
-   * @param[in] seconds The number of seconds to set the current timer.
+   * @param[in] seconds The number of seconds to set the timer (1-15300).
    * @return
    * [esp_err_t](https://docs.espressif.com/projects/esp-idf/en/release-v4.3/esp32/api-reference/system/esp_err.html#macros).
    *  - ESP_OK                : Success
-   *  - ESP_ERR_INVALID_ARG	: Input parameter error
+   *  - ESP_ERR_INVALID_ARG	: Input parameter error (value out of range)
    */
   /* @[declare_core2foraws_rtc_timer_set] */
   esp_err_t core2foraws_rtc_timer_set( uint32_t seconds );

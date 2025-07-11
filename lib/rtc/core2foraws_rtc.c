@@ -206,7 +206,7 @@ static esp_err_t _setup_timezone( void )
     _saved_tz = strdup( current_tz );
   }
 
-  // Set to UTC for conversion
+  // Set to UTC for RTC operations since RTC uses UTC time
   setenv( "TZ", "UTC0", 1 );
   tzset();
 
@@ -223,7 +223,7 @@ static void _restore_timezone( void )
   }
   else
   {
-    // Set to configured timezone
+    // Set to configured timezone if no previous TZ was saved
     setenv( "TZ", CONFIG_TIME_ZONE, 1 );
   }
   tzset();
@@ -288,8 +288,11 @@ esp_err_t core2foraws_rtc_time_get( struct tm *time )
     return ret;
   }
 
-  // Convert UTC to local time
+  // Convert UTC to local time using mktime and localtime
+  _setup_timezone();
   time_t utc_time = mktime( time );
+  _restore_timezone();
+
   struct tm *local_time = localtime( &utc_time );
   if( local_time == NULL )
   {
@@ -309,15 +312,20 @@ esp_err_t core2foraws_rtc_time_set( const struct tm time )
   struct tm local_copy = time;
   time_t local_time = mktime( &local_copy );
 
+  _setup_timezone();
   struct tm *utc_time = gmtime( &local_time );
   if( utc_time == NULL )
   {
+    _restore_timezone();
     ESP_LOGE( _TAG, "Failed to convert local time to UTC" );
     return ESP_FAIL;
   }
 
   // Set UTC time to RTC
-  return core2foraws_rtc_utc_time_set( *utc_time );
+  esp_err_t ret = core2foraws_rtc_utc_time_set( *utc_time );
+  _restore_timezone();
+
+  return ret;
 }
 
 esp_err_t core2foraws_rtc_utc_time_get( struct tm *time )
@@ -346,10 +354,8 @@ esp_err_t core2foraws_rtc_utc_time_get( struct tm *time )
     _bm8563_write_reg( BM8563_REG_SECONDS, &time_regs[ 0 ], 1 );
   }
 
-  // Convert hardware registers to UTC time struct
-  _setup_timezone();
+  // Convert hardware registers to UTC time struct (no timezone conversion here)
   _bm8563_to_tm( time_regs, time );
-  _restore_timezone();
 
   return ESP_OK;
 }
