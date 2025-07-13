@@ -86,12 +86,4 @@ menu "Core2 for AWS hardware features"
         help
           Enable Wi-Fi connection helper utilities.
 
-    config BSP_INIT_PRIORITY
-        int "BSP Initialization Priority"
-        depends on SOFTWARE_BSP_SUPPORT
-        range 0 10
-        default 0
-        help
-          Set initialization priority for BSP components (0=highest, 10=lowest).
-
 endmenu
