@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2022 Rashed Talukder
+# SPDX-FileCopyrightText: 2022 M5Stack
+# SPDX-License-Identifier: MIT
+
+# Expansion Ports Kconfig
+# The expansion port I2C bus is driven by the BSP's own core2foraws_i2c
+# driver (esp_driver_i2c master API). The per-device baud rate is set at
+# runtime via the scl_speed_hz argument to
+# core2foraws_expports_i2c_device_add(), so no Kconfig symbols are needed.
+# This file is kept to satisfy the rsource include in the parent Kconfig.

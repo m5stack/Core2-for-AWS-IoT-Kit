@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2022 Rashed Talukder
+# SPDX-FileCopyrightText: 2022 M5Stack
+# SPDX-License-Identifier: MIT
+
+# Display Kconfig
+# LVGL is now provided as a managed component (lvgl/lvgl via idf_component.yml).
+# LVGL's own Kconfig is exposed automatically by the component manager.
+
+config CORE2FORAWS_LCD_DRAW_BUF_LINES
+    int "LVGL draw buffer height (display lines)"
+    depends on SOFTWARE_DISPLAY_SUPPORT
+    range 10 60
+    default 20
+    help
+      Height, in display lines, of each LVGL draw buffer. The driver allocates
+      two of these (double buffering) as RGB565, so the internal DMA-capable
+      DRAM cost is:
+
+          lines * 320 * 2 bytes * 2 buffers
+
+      At the default of 20 lines that is 25,600 bytes, and each buffer needs a
+      single *contiguous* 12,800-byte DMA block. Contiguity, not total free
+      heap, is what typically fails once Wi-Fi and BLE are running.
+
+      Larger values reduce the number of partial transfers per frame and raise
+      throughput. Lower this if display initialization reports insufficient
+      DMA-capable DRAM; raise it if your application leaves internal DRAM to
+      spare.
+
+      These buffers must stay in internal DRAM; PSRAM is not DMA-addressable
+      and is not a fallback. See the memory budget section of the BSP README.

@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2022 Rashed Talukder
+# SPDX-FileCopyrightText: 2022 M5Stack
+# SPDX-License-Identifier: MIT
+
+menu "Virtual touch buttons"
+    depends on SOFTWARE_DISPLAY_SUPPORT && SOFTWARE_BUTTON_SUPPORT
+
+    config CORE2FORAWS_BUTTON_DEBOUNCE_MS
+        int "Virtual button debounce time (ms)"
+        default 10
+        range 0 200
+        help
+        Minimum time that a press or release state must remain stable before
+        the virtual button driver accepts the transition.
+endmenu

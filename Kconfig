@@ -1,0 +1,170 @@
+# SPDX-FileCopyrightText: 2022 Rashed Talukder
+# SPDX-FileCopyrightText: 2022 M5Stack
+# SPDX-License-Identifier: MIT
+
+menu "Core2 for AWS hardware features"
+    config SOFTWARE_BSP_SUPPORT
+        bool "Enable Board Support Package APIs"
+        default y
+        help
+          Enable the Core2 for AWS BSP. This is required for all other features.
+
+    config SOFTWARE_AUDIO_SUPPORT
+        bool "Audio (Speaker & Microphone)"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable audio support including speaker and microphone drivers.
+
+    config CORE2FORAWS_AUDIO_DMA_DESCRIPTORS
+        int "Audio I2S DMA descriptor count"
+        depends on SOFTWARE_AUDIO_SUPPORT
+        range 2 32
+        default 4
+        help
+          Number of I2S DMA buffers for the speaker and microphone. Total
+          buffered audio is descriptors x frames / sample rate; the default
+          4 x 128 frames holds about 11.6 ms at 44.1 kHz. If the writing task
+          is preempted for longer, the speaker underruns and clicks. Each
+          extra descriptor costs frames x 4 bytes of internal DMA-capable
+          DRAM while audio is enabled.
+
+    config CORE2FORAWS_AUDIO_DMA_FRAMES
+        int "Audio I2S DMA frames per descriptor"
+        depends on SOFTWARE_AUDIO_SUPPORT
+        range 8 1023
+        default 128
+        help
+          Frames in each I2S DMA buffer. One buffer must stay within the
+          4092-byte DMA descriptor limit, so frames x 4 bytes (16-bit stereo
+          speaker frames) must not exceed 4092. Larger buffers add latency
+          but tolerate longer scheduling gaps.
+
+    config SOFTWARE_CRYPTO_SUPPORT
+        bool "Cryptographic Encryption"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable ATECC608 secure element support for cryptographic operations.
+
+    config SOFTWARE_DISPLAY_SUPPORT
+        bool "Display"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable ILI9342C/ILI9342E display and FT6336 touch controller support.
+    rsource "lib/display/Kconfig"
+
+    config SOFTWARE_BUTTON_SUPPORT
+        bool "Touch Buttons"
+        depends on SOFTWARE_DISPLAY_SUPPORT
+        default y
+        help
+          Enable virtual touch button support on the display.
+    rsource "lib/button/Kconfig"
+
+    config SOFTWARE_MOTION_SUPPORT
+        bool "6-Axis Motion"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable the MPU6886 (Core2 for AWS) or BMI270 (Core2 for AWS v1.3)
+          6-axis IMU with temperature sensor support. The IMU is detected at
+          run time.
+
+    config SOFTWARE_RTC_SUPPORT
+        bool "Real Time Clock"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable BM8563 real-time clock support.
+
+    config TIME_ZONE
+        string "Time Zone"
+        default "PST8PDT"
+        depends on SOFTWARE_RTC_SUPPORT
+        help
+            Time zone string in POSIX format (e.g., "PST8PDT", "EST5EDT", "CST6CDT", "MST7MDT")
+            PST8PDT automatically handles daylight saving time transitions.
+
+    config SOFTWARE_RGB_LED_SUPPORT
+        bool "RGB LEDs"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable SK6812 RGB LED strip control on sides of device.
+
+    config SOFTWARE_SDCARD_SUPPORT
+        bool "SD Card"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable SD card support via SPI interface.
+
+    config SOFTWARE_EXPANSION_PORTS_SUPPORT
+        bool "Expansion Ports A, B, C"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable expansion port GPIO and I2C access.
+        rsource "lib/expports/Kconfig"
+
+    config SOFTWARE_WIFI_SUPPORT
+        bool "Wi-Fi Helper"
+        depends on SOFTWARE_BSP_SUPPORT
+        default y
+        help
+          Enable the Wi-Fi station helper: scan, connect, saved network, and
+          automatic reconnection.
+
+    config CORE2FORAWS_WIFI_RECONNECT_MAX_BACKOFF_S
+        int "Maximum automatic reconnect interval (seconds)"
+        depends on SOFTWARE_WIFI_SUPPORT
+        range 1 3600
+        default 32
+        help
+          After a link loss the first reconnect is immediate and later ones
+          double from 1 s up to this interval.
+
+    config CORE2FORAWS_WIFI_PROVISIONING
+        bool "BLE Wi-Fi provisioning"
+        depends on SOFTWARE_WIFI_SUPPORT && BT_ENABLED
+        default y
+        help
+          Build core2foraws_wifi_prov.h so a phone app can send Wi-Fi
+          credentials over BLE. Disable to drop the provisioning manager.
+
+    config CORE2FORAWS_WIFI_PROV_MAX_FAILS
+        int "Failed phone credential attempts before provisioning resets"
+        depends on CORE2FORAWS_WIFI_PROVISIONING
+        range 1 20
+        default 5
+        help
+          After this many consecutive failed credential attempts from the
+          phone, the provisioning state machine resets so the phone can retry.
+
+    config CORE2FORAWS_WIFI_PROV_CONSOLE_QR
+        bool "Print the provisioning QR code to the console"
+        depends on CORE2FORAWS_WIFI_PROVISIONING
+        default y
+        help
+          Print a QR code and URL for the provisioning app when a session
+          opens. Applications can instead render the payload from
+          core2foraws_wifi_provisioning_payload_get().
+
+    config CORE2FORAWS_WIFI_RELEASE_BLE_WHEN_PROVISIONED
+        bool "Release BLE controller memory once Wi-Fi connects"
+        depends on CORE2FORAWS_WIFI_PROVISIONING
+        default n
+        help
+          Frees the Bluetooth controller's reserved internal DRAM, typically
+          tens of KB, once the station connects outside a provisioning session
+          or when a provisioning session ends. This is the largest single lever
+          for LVGL draw-buffer headroom.
+
+          Once released, BLE cannot be used again until the next reboot, so
+          core2foraws_wifi_provisioning_start() returns ESP_ERR_NOT_SUPPORTED.
+          Leave this disabled if the application uses BLE for anything else or
+          must re-provision without restarting.
+
+endmenu

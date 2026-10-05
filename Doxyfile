@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2022 Rashed Talukder
+# SPDX-FileCopyrightText: 2022 M5Stack
+# SPDX-License-Identifier: MIT
+
+PROJECT_NAME           = "Core2 for AWS IoT Kit BSP"
+PROJECT_NUMBER         = 3.0.0
+OUTPUT_DIRECTORY       = generated-docs
+INPUT                  = README.md include lib docs tests/README.md tests/hardware/README.md tests/host/mocks/README.md datasheet/schematic.md .claude/rules
+FILE_PATTERNS          = *.h *.md
+EXCLUDE_PATTERNS       = */axp192.h */mpu6886.h */bmi270.h */core2foraws_i2c.h */core2foraws_wifi_priv.h */core2foraws_board_priv.h \
+                         */BMI270.md */ILI9342E.md */ATECC608A-TNGTLS.md */1027RFN01.md */LMD4737T261.md
+RECURSIVE              = YES
+FILTER_PATTERNS        = */.claude/rules/*.md="sed -n '/^# /,$p'"
+USE_MDFILE_AS_MAINPAGE = README.md
+EXTRACT_ALL            = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_NO_PARAMDOC       = NO
+WARN_AS_ERROR          = YES

@@ -1,0 +1,10 @@
+Core2 for AWS IoT Kit Board Support Package
+Copyright 2022 Rashed Talukder
+Copyright 2022 M5Stack
+
+This product includes software developed by Rashed Talukder.
+The BSP's own code is licensed under the MIT License; see LICENSE.
+Upstream attribution and license terms are retained in THIRD-PARTY-LICENSES.txt.
+The Bosch BMI270 configuration file remains BSD-3-Clause. Datasheets retain
+their publishers' copyright and terms; the BSP's MIT license does not apply
+to them or override managed dependencies' separate licenses.
