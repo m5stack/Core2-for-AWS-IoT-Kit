@@ -769,10 +769,12 @@ less.
   ESP-IDF components and is intentionally not attempted as an in-place tweak.
 - **Managed dependencies** ([idf_component.yml](../idf_component.yml)) are
   pinned to the validated revisions: `esp-cryptoauthlib` `3.7.9~2`,
-  `network_provisioning` `1.3.1`, `qrcode` `0.2.0`, LVGL `9.6.0~1`,
+  `qrcode` `0.2.0`, LVGL `9.6.0~1`,
   `esp_lvgl_port` `2.9.0`, `esp_lcd_touch` `1.2.1`, the FT5x06-compatible
   touch driver `1.1.1` for FT6336, and `esp_lcd_ili9341` `2.1.0` for the
-  ILI9342C/E level 1 command set.
+  ILI9342C/E level 1 command set. `network_provisioning` accepts
+  `>=1.2.5,<2.0.0` because ESP RainMaker's `rmaker_app_network` 1.4.5 requires
+  `~1.2.1`; standalone builds resolve to `1.3.1`.
   These are the latest direct stable releases verified on 2026-10-05.
   Transitive `json_generator` resolves to `2.0.0`. The LCD driver's `cmake_utilities`
   requirement is `0.*`, so `0.5.3` is retained instead of incompatible `1.1.1`.
