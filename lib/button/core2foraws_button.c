@@ -350,8 +350,7 @@ esp_err_t core2foraws_button_init( void )
     ESP_LOGI( _TAG, "\tInitializing" );
 
     SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
-        &_button_mutex_state, &_button_mutex, &_button_mutex_storage,
-        xSemaphoreCreateMutexStatic );
+        &_button_mutex_state, &_button_mutex, &_button_mutex_storage );
     if( mutex == NULL )
     {
         ESP_LOGE( _TAG, "Failed to create button mutex" );

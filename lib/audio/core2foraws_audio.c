@@ -86,8 +86,7 @@ enum
 static SemaphoreHandle_t _core2foraws_audio_mutex_get( void )
 {
     return core2foraws_common_mutex_ensure(
-        &_audio_mutex_state, &_audio_mutex, &_audio_mutex_buf,
-        xSemaphoreCreateMutexStatic );
+        &_audio_mutex_state, &_audio_mutex, &_audio_mutex_buf );
 }
 
 static const char *_TAG = "CORE2FORAWS_AUDIO";

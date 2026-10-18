@@ -47,8 +47,7 @@ static const char *_TAG = "CORE2FORAWS_SD";
 static esp_err_t _sd_lock( void )
 {
     SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
-        &_sd_mutex_state, &_sd_mutex, &_sd_mutex_storage,
-        xSemaphoreCreateMutexStatic );
+        &_sd_mutex_state, &_sd_mutex, &_sd_mutex_storage );
     if( mutex == NULL ) return ESP_ERR_NO_MEM;
     if( xSemaphoreTake( mutex,
                        pdMS_TO_TICKS( SD_LIFECYCLE_TIMEOUT_MS ) ) != pdTRUE )

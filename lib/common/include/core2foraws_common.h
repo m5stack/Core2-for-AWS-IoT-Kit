@@ -40,25 +40,13 @@ enum
 };
 
 /**
- * @brief Static semaphore creation callback signature.
+ * @brief Internal helper for lazy initialization of a static FreeRTOS
+ * semaphore or mutex.
  */
-typedef SemaphoreHandle_t ( *core2foraws_mutex_create_fn_t )(
-    StaticSemaphore_t *storage );
-
-/**
- * @brief Race-safe, allocation-free lazy initializer for a static FreeRTOS
- * mutex or recursive mutex.
- *
- * The first caller transitions @p state from `CORE2FORAWS_MUTEX_UNINITIALIZED`
- * to `CORE2FORAWS_MUTEX_INITIALIZING`, creates the mutex in @p storage via
- * @p create_fn, and publishes `CORE2FORAWS_MUTEX_READY`. Concurrent first-use
- * callers block for one RTOS tick at a time rather than spinning on
- * `taskYIELD()`, preventing a higher-priority waiter from starving a
- * lower-priority initializer on the same core.
- */
-static inline SemaphoreHandle_t core2foraws_common_mutex_ensure(
+static inline SemaphoreHandle_t _core2foraws_common_semaphore_ensure(
     atomic_uchar *state, SemaphoreHandle_t *mutex,
-    StaticSemaphore_t *storage, core2foraws_mutex_create_fn_t create_fn )
+    StaticSemaphore_t *storage,
+    SemaphoreHandle_t ( *create_fn )( StaticSemaphore_t * ) )
 {
     if( atomic_load( state ) == CORE2FORAWS_MUTEX_READY )
     {
@@ -81,6 +69,50 @@ static inline SemaphoreHandle_t core2foraws_common_mutex_ensure(
     }
 
     return atomic_load( state ) == CORE2FORAWS_MUTEX_READY ? *mutex : NULL;
+}
+
+static inline SemaphoreHandle_t _core2foraws_common_create_mutex_static(
+    StaticSemaphore_t *storage )
+{
+    return xSemaphoreCreateMutexStatic( storage );
+}
+
+static inline SemaphoreHandle_t
+_core2foraws_common_create_recursive_mutex_static( StaticSemaphore_t *storage )
+{
+    return xSemaphoreCreateRecursiveMutexStatic( storage );
+}
+
+/**
+ * @brief Race-safe, allocation-free lazy initializer for a static FreeRTOS
+ * mutex.
+ *
+ * The first caller transitions @p state from `CORE2FORAWS_MUTEX_UNINITIALIZED`
+ * to `CORE2FORAWS_MUTEX_INITIALIZING`, creates the mutex in @p storage, and
+ * publishes `CORE2FORAWS_MUTEX_READY`. Concurrent first-use callers block for
+ * one RTOS tick at a time rather than spinning on `taskYIELD()`, preventing a
+ * higher-priority waiter from starving a lower-priority initializer on the
+ * same core.
+ */
+static inline SemaphoreHandle_t core2foraws_common_mutex_ensure(
+    atomic_uchar *state, SemaphoreHandle_t *mutex,
+    StaticSemaphore_t *storage )
+{
+    return _core2foraws_common_semaphore_ensure(
+        state, mutex, storage, _core2foraws_common_create_mutex_static );
+}
+
+/**
+ * @brief Race-safe, allocation-free lazy initializer for a static FreeRTOS
+ * recursive mutex.
+ */
+static inline SemaphoreHandle_t core2foraws_common_recursive_mutex_ensure(
+    atomic_uchar *state, SemaphoreHandle_t *mutex,
+    StaticSemaphore_t *storage )
+{
+    return _core2foraws_common_semaphore_ensure(
+        state, mutex, storage,
+        _core2foraws_common_create_recursive_mutex_static );
 }
 
 /**

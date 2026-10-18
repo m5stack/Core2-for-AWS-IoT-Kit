@@ -70,7 +70,7 @@ static wifi_config_t _previous;
 esp_err_t core2foraws_wifi_priv_lock( void )
 {
     SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
-        &_lock_state, &_lock, &_lock_storage, xSemaphoreCreateMutexStatic );
+        &_lock_state, &_lock, &_lock_storage );
     if( mutex == NULL ) return ESP_ERR_NO_MEM;
     return xSemaphoreTake( mutex, pdMS_TO_TICKS( WIFI_LOCK_TIMEOUT_MS ) ) == pdTRUE
                ? ESP_OK

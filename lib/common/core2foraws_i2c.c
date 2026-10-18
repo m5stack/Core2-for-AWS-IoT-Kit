@@ -92,9 +92,9 @@ static const i2c_port_num_t _i2c_port[ CORE2FORAWS_I2C_PORT_MAX ] = { I2C_NUM_0,
 static esp_err_t _i2c_mutex_ensure( core2foraws_i2c_port_t port )
 {
     core2foraws_i2c_bus_state_t *state = &_bus_state[ port ];
-    return core2foraws_common_mutex_ensure(
-               &state->mutex_state, &state->mutex, &state->mutex_storage,
-               xSemaphoreCreateRecursiveMutexStatic ) != NULL
+    return core2foraws_common_recursive_mutex_ensure(
+               &state->mutex_state, &state->mutex, &state->mutex_storage ) !=
+                   NULL
                ? ESP_OK
                : ESP_ERR_NO_MEM;
 }

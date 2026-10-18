@@ -206,8 +206,7 @@ static esp_err_t _rgb_remove_locked( void );
 static esp_err_t _rgb_lock( void )
 {
     SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
-        &_rgb_mutex_state, &_rgb_mutex, &_rgb_mutex_storage,
-        xSemaphoreCreateMutexStatic );
+        &_rgb_mutex_state, &_rgb_mutex, &_rgb_mutex_storage );
     if( mutex == NULL )
     {
         return ESP_ERR_NO_MEM;

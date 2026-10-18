@@ -19,11 +19,10 @@ enum
     CORE2FORAWS_MUTEX_READY         = 2,
 };
 
-typedef SemaphoreHandle_t (*core2foraws_mutex_create_fn_t)(StaticSemaphore_t *storage);
-
-static inline SemaphoreHandle_t core2foraws_common_mutex_ensure(
+static inline SemaphoreHandle_t _core2foraws_common_semaphore_ensure(
     atomic_uchar *state, SemaphoreHandle_t *mutex,
-    StaticSemaphore_t *storage, core2foraws_mutex_create_fn_t create_fn)
+    StaticSemaphore_t *storage,
+    SemaphoreHandle_t (*create_fn)(StaticSemaphore_t *))
 {
     if (atomic_load(state) == CORE2FORAWS_MUTEX_READY)
     {
@@ -46,6 +45,35 @@ static inline SemaphoreHandle_t core2foraws_common_mutex_ensure(
     }
 
     return atomic_load(state) == CORE2FORAWS_MUTEX_READY ? *mutex : NULL;
+}
+
+static inline SemaphoreHandle_t _core2foraws_common_create_mutex_static(
+    StaticSemaphore_t *storage)
+{
+    return xSemaphoreCreateMutexStatic(storage);
+}
+
+static inline SemaphoreHandle_t
+_core2foraws_common_create_recursive_mutex_static(StaticSemaphore_t *storage)
+{
+    return xSemaphoreCreateRecursiveMutexStatic(storage);
+}
+
+static inline SemaphoreHandle_t core2foraws_common_mutex_ensure(
+    atomic_uchar *state, SemaphoreHandle_t *mutex,
+    StaticSemaphore_t *storage)
+{
+    return _core2foraws_common_semaphore_ensure(
+        state, mutex, storage, _core2foraws_common_create_mutex_static);
+}
+
+static inline SemaphoreHandle_t core2foraws_common_recursive_mutex_ensure(
+    atomic_uchar *state, SemaphoreHandle_t *mutex,
+    StaticSemaphore_t *storage)
+{
+    return _core2foraws_common_semaphore_ensure(
+        state, mutex, storage,
+        _core2foraws_common_create_recursive_mutex_static);
 }
 
 extern SemaphoreHandle_t core2foraws_common_spi_semaphore;

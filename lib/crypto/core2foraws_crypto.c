@@ -41,8 +41,7 @@ static atomic_uchar _crypto_mutex_state;
 static esp_err_t _crypto_lock( void )
 {
     SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
-        &_crypto_mutex_state, &_crypto_mutex, &_crypto_mutex_storage,
-        xSemaphoreCreateMutexStatic );
+        &_crypto_mutex_state, &_crypto_mutex, &_crypto_mutex_storage );
     if( mutex == NULL )
     {
         return ESP_ERR_NO_MEM;

@@ -83,9 +83,8 @@ static esp_err_t _core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t m
 
 static esp_err_t _expports_lock( void )
 {
-    SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
-        &_expports_mutex_state, &_expports_mutex, &_expports_mutex_storage,
-        xSemaphoreCreateRecursiveMutexStatic );
+    SemaphoreHandle_t mutex = core2foraws_common_recursive_mutex_ensure(
+        &_expports_mutex_state, &_expports_mutex, &_expports_mutex_storage );
     if( mutex == NULL )
     {
         return ESP_ERR_NO_MEM;
