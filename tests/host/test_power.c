@@ -57,8 +57,13 @@ int main(void)
 {
     registers[0x12] = 0x01;
     registers[0x26] = 0x68;
+    registers[0x30] = 0x60; /* Default VHOLD = 4.4V (bits 5:3 = 100) */
     assert(core2foraws_power_init() == ESP_OK);
     assert((registers[0x12] & 1) != 0 && (registers[0x26] & 0x7f) == 0x6a);
+    /* VHOLD bits[5:3] (0x20) are preserved while VBUS current limit (0x02) is enabled */
+    assert(registers[0x30] == 0x22);
+    /* Vibration motor (LDO3, bits[3:0] of 0x28) is preset to 3000mV (0x0c) */
+    assert((registers[0x28] & 0x0f) == 0x0c);
     /* Reset low for >= 100 ms, but init no longer blocks for the 300 ms boot. */
     assert(fake_time_us >= 100000 && fake_time_us < 200000);
     int64_t released_us = fake_time_us;
@@ -83,6 +88,8 @@ int main(void)
     const uint8_t crossing_voltage[] = { 0, 0 };
     assert(_axp192_i2c_write(NULL, 0x34, 0x25, crossing_voltage, 2) == ESP_ERR_NOT_SUPPORTED);
     assert(_axp192_i2c_write(NULL, 0x34, 0xff, crossing_voltage, 2) == ESP_ERR_INVALID_ARG);
+    assert(core2foraws_power_axp_read(AXP192_BATTERY_VOLTAGE, NULL) == ESP_ERR_INVALID_ARG);
+    assert(core2foraws_power_axp_write(AXP192_BATTERY_VOLTAGE, &unsafe_value) == ESP_ERR_NOT_SUPPORTED);
     assert(bus_writes == before);
     assert((registers[0x12] & 1) != 0 && (registers[0x26] & 0x7f) == 0x6a);
 

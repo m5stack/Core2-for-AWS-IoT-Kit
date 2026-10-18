@@ -40,11 +40,13 @@ static i2c_master_dev_handle_t _bm8563_dev = NULL;
 #define BM8563_REG_TIMER_COUNT  0x0F
 
 // Control/Status Register Bits
-#define BM8563_CTRL1_STOP 0x20
-#define BM8563_CTRL2_AF   0x08 // Alarm Flag
-#define BM8563_CTRL2_TF   0x04 // Timer Flag
-#define BM8563_CTRL2_AIE  0x02 // Alarm Interrupt Enable
-#define BM8563_CTRL2_TIE  0x01 // Timer Interrupt Enable
+#define BM8563_CTRL1_TESTC 0x08
+#define BM8563_CTRL1_STOP  0x20
+#define BM8563_CTRL2_MASK  0x1F
+#define BM8563_CTRL2_AF    0x08 // Alarm Flag
+#define BM8563_CTRL2_TF    0x04 // Timer Flag
+#define BM8563_CTRL2_AIE   0x02 // Alarm Interrupt Enable
+#define BM8563_CTRL2_TIE   0x01 // Timer Interrupt Enable
 
 // Time Register Bits
 #define BM8563_SECONDS_VL    0x80 // Voltage Low
@@ -204,6 +206,23 @@ static time_t _tm_utc_to_epoch( const struct tm *tm_time )
                    tm_time->tm_sec );
 }
 
+static bool _is_leap_year( int full_year )
+{
+  return ( full_year % 4 == 0 ) &&
+         ( ( full_year % 100 != 0 ) || ( full_year % 400 == 0 ) );
+}
+
+static int _days_in_month( int full_year, int mon )
+{
+  static const uint8_t days[ 12 ] = {
+      31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+  if( mon == 1 && _is_leap_year( full_year ) )
+  {
+    return 29;
+  }
+  return days[ mon ];
+}
+
 esp_err_t core2foraws_rtc_init( void )
 {
   ESP_LOGI( _TAG, "Initializing BM8563 RTC" );
@@ -231,7 +250,7 @@ esp_err_t core2foraws_rtc_init( void )
   // Start RTC clock, keep TESTC=1 (power-on reset enabled), clear STOP and
   // TEST1. Per the datasheet, TESTC=1 is the reset default and keeps the
   // internal power-on reset circuit active for normal operation.
-  uint8_t ctrl_reg = 0x08;
+  uint8_t ctrl_reg = BM8563_CTRL1_TESTC;
   ret =
       _bm8563_write_reg_internal( BM8563_REG_CTRL_STATUS1, &ctrl_reg, 1 );
   if( ret != ESP_OK )
@@ -247,6 +266,17 @@ esp_err_t core2foraws_rtc_init( void )
   if( ret != ESP_OK )
   {
     ESP_LOGE( _TAG, "Failed to clear BM8563 status flags: %s",
+              esp_err_to_name( ret ) );
+    return ret;
+  }
+
+  // Disable CLKOUT (pin 7 is unconnected on the Core2 board; BM8563 enables
+  // 32.768 kHz output on power-up, which draws extra current).
+  uint8_t clkout_reg = 0x00;
+  ret = _bm8563_write_reg_internal( BM8563_REG_CLKOUT_FREQ, &clkout_reg, 1 );
+  if( ret != ESP_OK )
+  {
+    ESP_LOGE( _TAG, "Failed to disable BM8563 CLKOUT: %s",
               esp_err_to_name( ret ) );
     return ret;
   }
@@ -314,6 +344,12 @@ esp_err_t core2foraws_rtc_time_get( struct tm *time )
 
 esp_err_t core2foraws_rtc_time_set( const struct tm time )
 {
+  if( !_rtc_initialized )
+  {
+    ESP_LOGE( _TAG, "RTC not initialized" );
+    return ESP_ERR_INVALID_STATE;
+  }
+
   // Convert local time to UTC
   struct tm local_copy = time;
   time_t local_epoch = mktime( &local_copy );
@@ -409,6 +445,18 @@ esp_err_t core2foraws_rtc_utc_time_set( const struct tm time )
     ESP_LOGE( _TAG, "tm_year %d out of supported range (0-199)", time.tm_year );
     return ESP_ERR_INVALID_ARG;
   }
+  if( time.tm_mday > _days_in_month( time.tm_year + 1900, time.tm_mon ) )
+  {
+    ESP_LOGE( _TAG, "Invalid day %d for month %d in year %d",
+              time.tm_mday, time.tm_mon + 1, time.tm_year + 1900 );
+    return ESP_ERR_INVALID_ARG;
+  }
+
+  if( !_rtc_initialized )
+  {
+    ESP_LOGE( _TAG, "RTC not initialized" );
+    return ESP_ERR_INVALID_STATE;
+  }
 
   // Input time is expected to be UTC
   uint8_t time_regs[ 7 ];
@@ -418,16 +466,35 @@ esp_err_t core2foraws_rtc_utc_time_set( const struct tm time )
   // The VL bit is bit 7 of the seconds register (time_regs[0]).
   time_regs[ 0 ] &= ~BM8563_SECONDS_VL;
 
-  esp_err_t ret = _bm8563_write_reg( BM8563_REG_SECONDS, time_regs, 7 );
+  esp_err_t ret = core2foraws_i2c_lock( COMMON_I2C_INTERNAL );
+  if( ret != ESP_OK ) return ret;
+
+  // Halt the divider chain (STOP=1, TESTC=1) while updating 0x02..0x08 so a
+  // 1 Hz rollover mid-write cannot corrupt registers (BM8563 datasheet §16.1).
+  uint8_t ctrl1 = BM8563_CTRL1_STOP | BM8563_CTRL1_TESTC;
+  ret = _bm8563_write_reg( BM8563_REG_CTRL_STATUS1, &ctrl1, 1 );
+  if( ret != ESP_OK )
+  {
+    return _rtc_transaction_end( ret );
+  }
+
+  ret = _bm8563_write_reg( BM8563_REG_SECONDS, time_regs, 7 );
+
+  ctrl1 = BM8563_CTRL1_TESTC;
+  esp_err_t start_ret = _bm8563_write_reg( BM8563_REG_CTRL_STATUS1, &ctrl1, 1 );
+  if( ret == ESP_OK )
+  {
+    ret = start_ret;
+  }
   if( ret != ESP_OK )
   {
     ESP_LOGE( _TAG, "Failed to write time registers: %s",
               esp_err_to_name( ret ) );
-    return ret;
+    return _rtc_transaction_end( ret );
   }
 
   ESP_LOGI( _TAG, "RTC time set successfully" );
-  return ESP_OK;
+  return _rtc_transaction_end( ESP_OK );
 }
 
 esp_err_t core2foraws_rtc_alarm_get( struct tm *alarm_time )
@@ -592,7 +659,11 @@ esp_err_t core2foraws_rtc_alarm_set( struct tm alarm_time )
     return _rtc_transaction_end( ret );
   }
 
-  ctrl2 &= ~( BM8563_CTRL2_AF | BM8563_CTRL2_AIE );
+  // On the BM8563, writing 0 to AF/TF clears the flag and writing 1 leaves it
+  // unchanged; bits 7:5 are reserved and must be written as 0. Set TF=1 in the
+  // written byte so an active or concurrent timer flag is never cleared here.
+  ctrl2 = ( ( ctrl2 & BM8563_CTRL2_MASK ) | BM8563_CTRL2_TF ) &
+          ~( BM8563_CTRL2_AF | BM8563_CTRL2_AIE );
   ret = _bm8563_write_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
   if( ret != ESP_OK )
   {
@@ -627,10 +698,11 @@ esp_err_t core2foraws_rtc_alarm_status( bool *triggered, bool clear_flag )
 
   *triggered = ( ctrl2 & BM8563_CTRL2_AF ) ? true : false;
 
-  // Clear alarm flag if requested and flag is set
+  // Clear alarm flag if requested and flag is set; write TF=1 to preserve TF.
   if( clear_flag && *triggered )
   {
-    ctrl2 &= ~BM8563_CTRL2_AF;
+    ctrl2 = ( ( ctrl2 & BM8563_CTRL2_MASK ) | BM8563_CTRL2_TF ) &
+            ~BM8563_CTRL2_AF;
     ret = _bm8563_write_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
     if( ret != ESP_OK )
     {
@@ -665,10 +737,11 @@ esp_err_t core2foraws_rtc_timer_status( bool *triggered, bool clear_flag )
 
   *triggered = ( ctrl2 & BM8563_CTRL2_TF ) ? true : false;
 
-  // Clear timer flag if requested and flag is set
+  // Clear timer flag if requested and flag is set; write AF=1 to preserve AF.
   if( clear_flag && *triggered )
   {
-    ctrl2 &= ~BM8563_CTRL2_TF;
+    ctrl2 = ( ( ctrl2 & BM8563_CTRL2_MASK ) | BM8563_CTRL2_AF ) &
+            ~BM8563_CTRL2_TF;
     ret = _bm8563_write_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
     if( ret != ESP_OK )
     {
@@ -716,10 +789,11 @@ esp_err_t core2foraws_rtc_get_status( uint8_t *flags, uint8_t clear_mask )
   if( seconds_reg & BM8563_SECONDS_VL )
     *flags |= RTC_STATUS_POWER_LOSS;
 
-  // Clear requested flags
+  // Clear requested flags; default AF=1 and TF=1 so unrequested flags are preserved.
   if( clear_mask != 0 )
   {
-    uint8_t ctrl2_new = ctrl2;
+    uint8_t ctrl2_new = ( ctrl2 & BM8563_CTRL2_MASK ) |
+                        BM8563_CTRL2_AF | BM8563_CTRL2_TF;
     uint8_t seconds_new = seconds_reg;
     bool need_ctrl2_update = false;
     bool need_seconds_update = false;
@@ -882,7 +956,8 @@ esp_err_t core2foraws_rtc_timer_set( uint32_t seconds )
     return _rtc_transaction_end( ret );
   }
 
-  ctrl2 &= ~( BM8563_CTRL2_TF | BM8563_CTRL2_TIE );
+  ctrl2 = ( ( ctrl2 & BM8563_CTRL2_MASK ) | BM8563_CTRL2_AF ) &
+          ~( BM8563_CTRL2_TF | BM8563_CTRL2_TIE );
   ret = _bm8563_write_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
   if( ret != ESP_OK )
   {
@@ -919,7 +994,7 @@ esp_err_t core2foraws_rtc_timer_stop( void )
     return _rtc_transaction_end( ret );
   }
 
-  // Disable timer interrupt and clear timer flag
+  // Disable timer interrupt and clear timer flag; write AF=1 to preserve AF.
   uint8_t ctrl2;
   ret = _bm8563_read_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
   if( ret != ESP_OK )
@@ -927,7 +1002,8 @@ esp_err_t core2foraws_rtc_timer_stop( void )
     return _rtc_transaction_end( ret );
   }
 
-  ctrl2 &= ~( BM8563_CTRL2_TIE | BM8563_CTRL2_TF );
+  ctrl2 = ( ( ctrl2 & BM8563_CTRL2_MASK ) | BM8563_CTRL2_AF ) &
+          ~( BM8563_CTRL2_TIE | BM8563_CTRL2_TF );
   ret = _bm8563_write_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
   if( ret != ESP_OK )
   {
@@ -955,7 +1031,7 @@ esp_err_t core2foraws_rtc_alarm_disable( void )
     return _rtc_transaction_end( ret );
   }
 
-  // Disable alarm interrupt and clear alarm flag
+  // Disable alarm interrupt and clear alarm flag; write TF=1 to preserve TF.
   uint8_t ctrl2;
   ret = _bm8563_read_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
   if( ret != ESP_OK )
@@ -963,7 +1039,8 @@ esp_err_t core2foraws_rtc_alarm_disable( void )
     return _rtc_transaction_end( ret );
   }
 
-  ctrl2 &= ~( BM8563_CTRL2_AIE | BM8563_CTRL2_AF );
+  ctrl2 = ( ( ctrl2 & BM8563_CTRL2_MASK ) | BM8563_CTRL2_TF ) &
+          ~( BM8563_CTRL2_AIE | BM8563_CTRL2_AF );
   ret = _bm8563_write_reg( BM8563_REG_CTRL_STATUS2, &ctrl2, 1 );
   if( ret != ESP_OK )
   {

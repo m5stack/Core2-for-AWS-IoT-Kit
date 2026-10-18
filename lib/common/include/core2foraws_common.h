@@ -18,7 +18,9 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdatomic.h>
 #include <sdkconfig.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
@@ -26,6 +28,60 @@ extern "C" {
 #include <esp_err.h>
 
 #include "core2foraws_i2c.h"
+
+/**
+ * @brief Initialization state values for lazy static FreeRTOS mutexes.
+ */
+enum
+{
+    CORE2FORAWS_MUTEX_UNINITIALIZED = 0,
+    CORE2FORAWS_MUTEX_INITIALIZING  = 1,
+    CORE2FORAWS_MUTEX_READY         = 2,
+};
+
+/**
+ * @brief Static semaphore creation callback signature.
+ */
+typedef SemaphoreHandle_t ( *core2foraws_mutex_create_fn_t )(
+    StaticSemaphore_t *storage );
+
+/**
+ * @brief Race-safe, allocation-free lazy initializer for a static FreeRTOS
+ * mutex or recursive mutex.
+ *
+ * The first caller transitions @p state from `CORE2FORAWS_MUTEX_UNINITIALIZED`
+ * to `CORE2FORAWS_MUTEX_INITIALIZING`, creates the mutex in @p storage via
+ * @p create_fn, and publishes `CORE2FORAWS_MUTEX_READY`. Concurrent first-use
+ * callers block for one RTOS tick at a time rather than spinning on
+ * `taskYIELD()`, preventing a higher-priority waiter from starving a
+ * lower-priority initializer on the same core.
+ */
+static inline SemaphoreHandle_t core2foraws_common_mutex_ensure(
+    atomic_uchar *state, SemaphoreHandle_t *mutex,
+    StaticSemaphore_t *storage, core2foraws_mutex_create_fn_t create_fn )
+{
+    if( atomic_load( state ) == CORE2FORAWS_MUTEX_READY )
+    {
+        return *mutex;
+    }
+
+    unsigned char expected = CORE2FORAWS_MUTEX_UNINITIALIZED;
+    if( atomic_compare_exchange_strong( state, &expected,
+                                        CORE2FORAWS_MUTEX_INITIALIZING ) )
+    {
+        *mutex = create_fn( storage );
+        atomic_store( state, *mutex != NULL ? CORE2FORAWS_MUTEX_READY
+                                            : CORE2FORAWS_MUTEX_UNINITIALIZED );
+        return *mutex;
+    }
+
+    while( atomic_load( state ) == CORE2FORAWS_MUTEX_INITIALIZING )
+    {
+        vTaskDelay( 1 );
+    }
+
+    return atomic_load( state ) == CORE2FORAWS_MUTEX_READY ? *mutex : NULL;
+}
 
 /**
  * @brief The port used by the internal I2C peripherals.

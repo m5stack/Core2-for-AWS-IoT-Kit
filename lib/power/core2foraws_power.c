@@ -46,26 +46,26 @@ static int32_t _axp192_i2c_read( void *handle, uint8_t address, uint8_t reg,
 }
 
 static int32_t _axp192_i2c_write( void *handle, uint8_t address, uint8_t reg,
-                                   const uint8_t *buffer, uint16_t size )
+                                  const uint8_t *buffer, uint16_t size )
 {
     (void)handle;
     (void)address;
-        if( buffer == NULL || size == 0 || size > 256U - reg )
+    if( buffer == NULL || size == 0 || size > 256U - reg )
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+    for( uint16_t offset = 0; offset < size; ++offset )
+    {
+        uint16_t target_reg = reg + offset;
+        uint8_t value = buffer[ offset ];
+        if( ( target_reg == AXP192_DCDC13_LDO23_CONTROL &&
+              ( value & 0x01U ) == 0 ) ||
+            ( target_reg == AXP192_DCDC1_VOLTAGE &&
+              ( value & 0x7fU ) != ( POWER_MCU_MILLIVOLTS - 700U ) / 25U ) )
         {
-                return ESP_ERR_INVALID_ARG;
+            return ESP_ERR_NOT_SUPPORTED;
         }
-        for( uint16_t offset = 0; offset < size; ++offset )
-        {
-                uint16_t target_reg = reg + offset;
-                uint8_t value = buffer[ offset ];
-                if( ( target_reg == AXP192_DCDC13_LDO23_CONTROL &&
-                            ( value & 0x01U ) == 0 ) ||
-                        ( target_reg == AXP192_DCDC1_VOLTAGE &&
-                            ( value & 0x7fU ) != ( POWER_MCU_MILLIVOLTS - 700U ) / 25U ) )
-                {
-                        return ESP_ERR_NOT_SUPPORTED;
-                }
-        }
+    }
     return ( int32_t )core2foraws_i2c_write( COMMON_I2C_INTERNAL, _axp192_dev,
                                              ( uint32_t )reg, buffer, size );
 }
@@ -169,11 +169,14 @@ esp_err_t core2foraws_power_init( void )
     esp_err_t err;
 
     /* REG30H: disable VHOLD pass-through limiting and enable the VBUS
-       current limit. Reserved bit 2 is preserved; the current-limit value
-       bit (bit 0) is left cleared, which selects the 500mA limit. */
-    err = core2foraws_power_axp_twiddle( AXP192_VBUS_IPSOUT_CHANNEL,
-            (uint8_t)~AXP192_STATUS_BAT_DIRECTION, /* preserve reserved bit 2 */
-            AXP192_VBUS_CTL_CUR_LIMIT_EN );
+       current limit. The VHOLD voltage setting (bits[5:3] = 4.4V default)
+       and reserved bit 2 are preserved; the current-limit value bit (bit 0)
+       is cleared, which selects the 500mA limit. */
+    err = core2foraws_power_axp_twiddle(
+        AXP192_VBUS_IPSOUT_CHANNEL,
+        AXP192_VBUS_CTL_INPUT_EN | AXP192_VBUS_CTL_PASS_THROUGH |
+            AXP192_VBUS_CTL_CUR_LIMIT_EN | AXP192_VBUS_CTL_CUR_LIMIT_SEL,
+        AXP192_VBUS_CTL_CUR_LIMIT_EN );
     if ( err == ESP_OK )
         ESP_LOGI(_TAG, "\tVBUS current limit configured");
     else if ( ret == ESP_OK )
@@ -223,9 +226,11 @@ esp_err_t core2foraws_power_init( void )
     else if ( ret == ESP_OK )
         ret = err;
 
-    err = core2foraws_power_rail_mv_set( POWER_RAIL_VIBRATOR, 2000 );
+    /* 1027RFN01-33d coin vibration motor rated voltage is 3.0V DC
+       (operating range 2.5V-3.6V, starting voltage 2.3V max). */
+    err = core2foraws_power_rail_mv_set( POWER_RAIL_VIBRATOR, 3000 );
     if ( err == ESP_OK )
-        ESP_LOGI( _TAG, "\tVibrator voltage preset to 2.0V" );
+        ESP_LOGI( _TAG, "\tVibrator voltage preset to 3.0V" );
     else if ( ret == ESP_OK )
         ret = err;
 
@@ -251,15 +256,15 @@ esp_err_t core2foraws_power_init( void )
         ESP_LOGI( _TAG, "\tBattery voltage now: %.2f volts", volts );
     }
 
-    /* PEK (power key) config: 0x4c = 128ms startup, 4s long-press shutdown,
-       1s shutdown delay, power-key auto-shutdown enabled. */
+    /* PEK (power key) config: 0x4c = 512ms startup, 1s long-press IRQ,
+       power-key auto-shutdown enabled, 64ms PWROK delay, 4s shutdown hold. */
     err = core2foraws_power_axp_twiddle( AXP192_PEK, 0xff, 0x4c );
     if ( err == ESP_OK )
         ESP_LOGI( _TAG, "\tPower key set, 4 seconds for hard shutdown" );
     else if ( ret == ESP_OK )
         ret = err;
 
-    /* Enable all ADC channels: battery, ACIN, VBUS, APS, TS voltages & currents. */
+    /* Enable all REG82H ADC channels: battery, ACIN, VBUS, APS, TS voltages & currents. */
     err = core2foraws_power_axp_twiddle( AXP192_ADC_ENABLE_1, 0xff, 0xff );
     if ( err == ESP_OK )
         ESP_LOGI( _TAG, "\tEnabled all ADC channels" );
@@ -290,7 +295,7 @@ esp_err_t core2foraws_power_init( void )
     err = core2foraws_power_axp_twiddle( AXP192_GPIO43_SIGNAL_STATUS, 0x02, 0x02 );
     if ( err == ESP_OK )
     {
-    	ESP_LOGI( _TAG, "\tDisplay and touch reset" );
+        ESP_LOGI( _TAG, "\tDisplay and touch reset" );
         _lcd_ready_us = esp_timer_get_time() + LCD_RESET_BOOT_MS * 1000;
     }
     else if ( ret == ESP_OK )
@@ -317,45 +322,44 @@ void core2foraws_power_lcd_ready_wait( void )
 
 static esp_err_t _core2foraws_power_int_5v_enable( bool state ) 
 {
+    /* To enable the on-board 5V supply, first N_VBUSEN needs to be pulled
+       high using GPIO0, then we can enable the EXTEN output, to enable
+       the SMPS.
+       To disable it (so either no 5V, or externally supplied 5V), we
+       do the opposite: First disable EXTEN, then leave GPIO0 floating.
+       N_VBUSEN will be pulled down by the on-board resistor.
+       Side note: The pull down is 10k according to the schematic, so that's
+       a 0.5 mA drain from the GPIO0 LDO as long as the bus supply is active. */
 
-	// To enable the on-board 5V supply, first N_VBUSEN needs to be pulled
-	// high using GPIO0, then we can enable the EXTEN output, to enable
-	// the SMPS.
-	// To disable it (so either no 5V, or externally supplied 5V), we
-	// do the opposite: First disable EXTEN, then leave GPIO0 floating.
-	// N_VBUSEN will be pulled down by the on-board resistor.
-	// Side note: The pull down is 10k according to the schematic, so that's
-	// a 0.5 mA drain from the GPIO0 LDO as long as the bus supply is active.
-	
-	esp_err_t ret = ESP_OK;
+    esp_err_t ret = ESP_OK;
 
-	if ( state )
+    if ( state )
     {
-		ret = core2foraws_power_axp_twiddle( AXP192_GPIO0_LDOIO0_VOLTAGE, 0xf0, 0xf0 );
-		if ( ret != ESP_OK )
+        ret = core2foraws_power_axp_twiddle( AXP192_GPIO0_LDOIO0_VOLTAGE, 0xf0, 0xf0 );
+        if ( ret != ESP_OK )
         {
-			return ret;
+            return ret;
         }
 
-		ret = core2foraws_power_axp_twiddle( AXP192_GPIO0_CONTROL, 0x07, 0x02 );
-		if ( ret != ESP_OK )
+        ret = core2foraws_power_axp_twiddle( AXP192_GPIO0_CONTROL, 0x07, 0x02 );
+        if ( ret != ESP_OK )
         {
-			return ret;
+            return ret;
         }
 
-		ret = core2foraws_power_rail_state_set( POWER_RAIL_EXTEN, true );
-	} 
+        ret = core2foraws_power_rail_state_set( POWER_RAIL_EXTEN, true );
+    } 
     else
     {
-		ret = core2foraws_power_rail_state_set( POWER_RAIL_EXTEN, false );
-		if ( ret != ESP_OK )
+        ret = core2foraws_power_rail_state_set( POWER_RAIL_EXTEN, false );
+        if ( ret != ESP_OK )
         {
-			return ret;
+            return ret;
         }
 
-		ret = core2foraws_power_axp_twiddle( AXP192_GPIO0_CONTROL, 0x07, 0x01 );
-	}
-	return ret;
+        ret = core2foraws_power_axp_twiddle( AXP192_GPIO0_CONTROL, 0x07, 0x01 );
+    }
+    return ret;
 }
 
 esp_err_t core2foraws_power_backlight_set( uint8_t brightness )
@@ -393,7 +397,7 @@ esp_err_t core2foraws_power_led_enable( bool state )
 
 esp_err_t core2foraws_power_vibration_enable( bool state )
 {
-	return core2foraws_power_rail_state_set( POWER_RAIL_LDO3, state );
+    return core2foraws_power_rail_state_set( POWER_RAIL_LDO3, state );
 }
 
 esp_err_t core2foraws_power_speaker_enable( bool state )
@@ -418,7 +422,7 @@ esp_err_t core2foraws_power_batt_current_get( float *m_amps )
         return ESP_ERR_INVALID_ARG;
     }
 
-    float current_in, current_out = 0.00;
+    float current_in = 0.0f, current_out = 0.0f;
 
     esp_err_t ret = axp192_read( &_axp, AXP192_CHARGE_CURRENT, ( void * ) &current_in );
     if ( ret != ESP_OK )
@@ -487,8 +491,12 @@ esp_err_t core2foraws_power_off( void )
 
 esp_err_t core2foraws_power_axp_reg_get( uint8_t reg, uint8_t *buffer )
 {
-	return core2foraws_i2c_read( COMMON_I2C_INTERNAL, _axp192_dev,
-	                            ( uint32_t )reg, buffer, 1 );
+    if( buffer == NULL )
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+    return core2foraws_i2c_read( COMMON_I2C_INTERNAL, _axp192_dev,
+                                 ( uint32_t )reg, buffer, 1 );
 }
 
 esp_err_t core2foraws_power_axp_reg_set( uint8_t reg, uint8_t value )
@@ -498,12 +506,25 @@ esp_err_t core2foraws_power_axp_reg_set( uint8_t reg, uint8_t value )
 
 esp_err_t core2foraws_power_axp_read( uint8_t reg, void *buffer )
 {
-	return axp192_read( &_axp, reg, buffer );
+    if( buffer == NULL )
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+    return ( esp_err_t )axp192_read( &_axp, reg, buffer );
 }
 
 esp_err_t core2foraws_power_axp_write( uint8_t reg, const uint8_t *buffer )
 {
-	return axp192_write( &_axp, reg, buffer );
+    if( buffer == NULL )
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+    axp192_err_t err = axp192_write( &_axp, reg, buffer );
+    if( err == AXP192_ERROR_ENOTSUP )
+    {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    return ( esp_err_t )err;
 }
 
 esp_err_t core2foraws_power_axp_twiddle( uint8_t reg, uint8_t affect, uint8_t value )
@@ -513,14 +534,14 @@ esp_err_t core2foraws_power_axp_twiddle( uint8_t reg, uint8_t affect, uint8_t va
     {
         return ret;
     }
-	uint8_t buffer;
-	ret = core2foraws_power_axp_reg_get( reg, &buffer );
-	if ( ret == ESP_OK )
+    uint8_t buffer;
+    ret = core2foraws_power_axp_reg_get( reg, &buffer );
+    if ( ret == ESP_OK )
     {
-		buffer &= ~affect;
-		buffer |= (value & affect);
-		ret = core2foraws_power_axp_reg_set( reg, buffer );
-	}
+        buffer &= ~affect;
+        buffer |= (value & affect);
+        ret = core2foraws_power_axp_reg_set( reg, buffer );
+    }
     esp_err_t unlock_err = core2foraws_i2c_unlock( COMMON_I2C_INTERNAL );
     return ret != ESP_OK ? ret : unlock_err;
 }

@@ -533,12 +533,23 @@ modules. When BSP support is disabled, only `core2foraws_init()` remains exposed
   internal-bus lock and caches it. The IMU decides the kit model. Microphones
   have no readable identity, so the microphone follows the model's schematic.
   The display driver reports the LCD controller through a BSP-private setter.
+- **power** configures the AXP192 rails and control lines, preserves VBUS
+  `VHOLD` voltage regulation (`4.4 V`) when setting the 100 mA VBUS current
+  limit (`REG30H`), and presets `LDO3` (`POWER_RAIL_VIBRATOR`) to `3000` mV
+  (matching the `1027RFN01` vibration motor's `3.0 V` rated voltage).
+- **rtc** disables the unconnected `BM8563` `CLKOUT` pin (`0x0D = 0x00`) on
+  init, stops and restarts the RTC core (`STOP` bit in `0x00`) across full
+  calendar writes to avoid mid-write rollover, validates calendar day-of-month
+  against month and leap year, and writes `1` to the unselected `AF`/`TF` flag
+  in `0x01` so updating one interrupt never clears the other pending flag.
 - **motion** dispatches to the detected IMU. The BMI270 needs Bosch's 8 KB
   configuration file after every power-on or soft reset. The driver keeps a
   file that is already loaded (an ESP32-only reset leaves the IMU powered) and
   otherwise soft-resets and uploads it in 256-byte chunks, about 0.26 s at
   400 kHz. Both IMUs already report in the same board frame, so no axis
-  remapping is applied.
+  remapping is applied. Startup readiness timestamps cover accelerometer,
+  gyroscope, and temperature reads (including the MPU6886 14 ms temperature
+  sensor stabilization window and BMI270 gyroscope/temperature startup).
 - **display** identifies the controller before choosing an init list. The
   ILI9342E stores and reads back Set EXTC (DDh) and Power Control 6 (CBh); the
   ILI9342C answers Read ID4 with 93h 42h once its own EXTC key is sent. The C
@@ -546,14 +557,20 @@ modules. When BSP support is disabled, only `core2foraws_init()` remains exposed
   use a temporary 4 MHz 3-wire IO: the panel answers on SDA (GPIO23), not on
   GPIO38. The ILI9342C keeps `esp_lcd_ili9341`'s default list (its level 2
   commands are NOPs without the C's EXTC key); the ILI9342E gets its own list.
+  Panel probe and initialization transfers take `core2foraws_common_spi_semaphore`
+  so display bring-up or re-init cannot collide with concurrent SD card activity.
 - **button** runs a dedicated 20 ms polling FreeRTOS task that reads up to two
   simultaneous FT6336 touch points and maps them to three rectangles below the
-  screen. A mutex protects the callback table, and debounce is configurable by
+  screen. When no button callbacks are registered and no button is currently
+  held, the task skips the I2C touch read to avoid idle bus traffic. A static
+  mutex protects the callback table, and debounce is configurable by
   `CONFIG_CORE2FORAWS_BUTTON_DEBOUNCE_MS` (30 ms by default).
 - **crypto** uses a linker `--wrap` trick to force the third-party
   `esp-cryptoauthlib` onto the BSP's shared internal I2C bus, instead of letting
   it open a second, unmanaged bus. This keeps *all* internal-bus devices behind
-  the one mutex. [CMakeLists.txt](../CMakeLists.txt) wraps the cryptoauthlib
+  the one mutex, and a module mutex serializes multi-step CryptoAuthLib command
+  sequences (`atcab_*`) across tasks while keeping `<cryptoauthlib.h>` private to
+  the implementation. [CMakeLists.txt](../CMakeLists.txt) wraps the cryptoauthlib
   `hal_i2c_*` entry points, and [core2foraws_crypto_hal.c](../lib/crypto/core2foraws_crypto_hal.c)
   implements them with the common I2C API. Initialization copies the library
   interface configuration and pins it to the board's 8-bit address `0x6A`
@@ -567,7 +584,8 @@ modules. When BSP support is disabled, only `core2foraws_init()` remains exposed
   LEDs), driven by the RMT peripheral with precise SK6812 timing. The strip is
   powered from 5 V, so it only works after the PMU enables the boost rail. A
   module mutex protects color state and channel lifetime; each write waits for
-  the prior asynchronous transfer before modifying its DMA source buffer.
+  the prior asynchronous transfer before modifying its DMA source buffer, and
+  deinit resets `GPIO25` after deleting the RMT channel.
 - **wifi** owns the station interface through one state machine. Exactly one
   of `WIFI_CONNECTED_BIT`, `WIFI_CONNECTING_BIT`, and `WIFI_DISCONNECTED_BIT`
   is set in `wifi_event_group`, which is created once and never deleted.
@@ -588,10 +606,14 @@ modules. When BSP support is disabled, only `core2foraws_init()` remains exposed
   scan return `ESP_ERR_INVALID_STATE`; a session still waiting for a phone is
   closed by device-side connect. `core2foraws_wifi_provisioning_stop()` is the
   explicit override.
-- **expports** serializes mode changes and I/O against reset. Port C UART reads
-  require destination capacity and never remove more bytes than fit. Port B
-  rolls back partial ADC/UART allocation failures and supports raw ADC reads
-  when eFuse calibration is unavailable.
+- **expports** serializes pin-mode changes and Port B/C I/O against reset, while
+  Port A I2C device registration and transfers delegate directly to the external
+  I2C bus lock so Port A and Port B/C do not block one another. Digital input on
+  Port A (`GPIO32`/`GPIO33`) disables internal pull-downs so they do not fight
+  the board's fixed 5.1 kΩ pull-ups. Port C UART reads require destination
+  capacity and never remove more bytes than fit. Port B rolls back partial
+  ADC/UART allocation failures, supports raw ADC reads when eFuse calibration is
+  unavailable, and maps 0–3300 mV linearly across the 8-bit DAC range.
 
 ---
 
@@ -666,6 +688,7 @@ non-sensitive metadata such as length is emitted.
 | RGB RMT channel/buffers | module mutex; previous TX completion required before buffer reuse/deinit |
 | Expansion pin modes | recursive module mutex across mode changes and I/O |
 | Button callback table | module mutex |
+| Crypto command sequences | module mutex across multi-step `atcab_*` operations + shared internal-I2C ownership per HAL transfer/wake |
 | Motion range and scaled reads | recursive internal-I2C ownership across register/cache update and sample conversion |
 | Board IMU probe cache | internal-I2C ownership across the one-time probe; LCD controller is an atomic value |
 | Wi-Fi connection state | event group for status + lifecycle mutex across init/start/deinit/provisioning-string retrieval |

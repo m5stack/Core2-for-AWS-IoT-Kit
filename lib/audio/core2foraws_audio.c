@@ -78,36 +78,16 @@ static atomic_uchar _audio_mutex_state;
 
 enum
 {
-    AUDIO_MUTEX_UNINITIALIZED = 0,
-    AUDIO_MUTEX_INITIALIZING,
-    AUDIO_MUTEX_READY,
+    AUDIO_MUTEX_UNINITIALIZED = CORE2FORAWS_MUTEX_UNINITIALIZED,
+    AUDIO_MUTEX_INITIALIZING  = CORE2FORAWS_MUTEX_INITIALIZING,
+    AUDIO_MUTEX_READY         = CORE2FORAWS_MUTEX_READY,
 };
 
 static SemaphoreHandle_t _core2foraws_audio_mutex_get( void )
 {
-    if( atomic_load( &_audio_mutex_state ) == AUDIO_MUTEX_READY )
-    {
-        return _audio_mutex;
-    }
-
-    unsigned char expected = AUDIO_MUTEX_UNINITIALIZED;
-    if( atomic_compare_exchange_strong( &_audio_mutex_state, &expected,
-                                        AUDIO_MUTEX_INITIALIZING ) )
-    {
-        _audio_mutex = xSemaphoreCreateMutexStatic( &_audio_mutex_buf );
-        atomic_store( &_audio_mutex_state,
-                      _audio_mutex != NULL ? AUDIO_MUTEX_READY
-                                           : AUDIO_MUTEX_UNINITIALIZED );
-        return _audio_mutex;
-    }
-
-    while( atomic_load( &_audio_mutex_state ) == AUDIO_MUTEX_INITIALIZING )
-    {
-        vTaskDelay( 1 );
-    }
-    return atomic_load( &_audio_mutex_state ) == AUDIO_MUTEX_READY
-               ? _audio_mutex
-               : NULL;
+    return core2foraws_common_mutex_ensure(
+        &_audio_mutex_state, &_audio_mutex, &_audio_mutex_buf,
+        xSemaphoreCreateMutexStatic );
 }
 
 static const char *_TAG = "CORE2FORAWS_AUDIO";
@@ -155,6 +135,36 @@ esp_err_t core2foraws_audio_mic_enable( bool state )
     return err;
 }
 
+#define AUDIO_DRAIN_CHUNK_BYTES 256U
+
+static esp_err_t _core2foraws_audio_speaker_write_locked(
+    const uint8_t *sound_buffer, size_t to_write_length )
+{
+    if ( ( _microphone_initialized == false ) && ( _speaker_initialized == true ) )
+    {
+        size_t bytes_written = 0;
+        esp_err_t err = i2s_channel_write( _tx_handle, sound_buffer,
+                                           to_write_length, &bytes_written,
+                                           AUDIO_IO_TIMEOUT_MS );
+        if ( ( err == ESP_OK ) && ( bytes_written != to_write_length ) )
+        {
+            ESP_LOGW( _TAG, "Speaker wrote %u of %u bytes.",
+                      ( unsigned int ) bytes_written,
+                      ( unsigned int ) to_write_length );
+            err = ESP_FAIL;
+        }
+        /* Per-buffer trace only (never per sample) to keep the UART quiet
+           even when verbose logging is enabled during audio streaming. */
+        ESP_LOGV( _TAG, "Speaker wrote %u of %u bytes (0x%x).",
+                  ( unsigned int ) bytes_written,
+                  ( unsigned int ) to_write_length, err );
+        return err;
+    }
+
+    ESP_LOGE( _TAG, "Cannot write to speaker. Enable the speaker first, and keep the microphone disabled because both share GPIO0." );
+    return ESP_ERR_INVALID_STATE;
+}
+
 esp_err_t core2foraws_audio_speaker_write( const uint8_t *sound_buffer, size_t to_write_length )
 {
     if ( ( sound_buffer == NULL ) || ( to_write_length == 0 ) )
@@ -173,37 +183,39 @@ esp_err_t core2foraws_audio_speaker_write( const uint8_t *sound_buffer, size_t t
         return ESP_ERR_TIMEOUT;
     }
 
-    esp_err_t err = ESP_FAIL;
-
-    if ( ( _microphone_initialized == false ) && ( _speaker_initialized == true ) )
-    {
-        size_t bytes_written = 0;
-        err = i2s_channel_write( _tx_handle, sound_buffer, to_write_length,
-                     &bytes_written,
-                     AUDIO_IO_TIMEOUT_MS );
-        if ( ( err == ESP_OK ) && ( bytes_written != to_write_length ) )
-        {
-            ESP_LOGW( _TAG, "Speaker wrote %u of %u bytes.", ( unsigned int ) bytes_written, ( unsigned int ) to_write_length );
-            err = ESP_FAIL;
-        }
-        /* Per-buffer trace only (never per sample) to keep the UART quiet
-           even when verbose logging is enabled during audio streaming. */
-        ESP_LOGV( _TAG, "Speaker wrote %u of %u bytes (0x%x).", ( unsigned int ) bytes_written, ( unsigned int ) to_write_length, err );
-    }
-    else
-    {
-        ESP_LOGE( _TAG, "Cannot write to speaker. Enable the speaker first, and keep the microphone disabled because both share GPIO0." );
-        err = ESP_ERR_INVALID_STATE;
-    }
-
+    esp_err_t err = _core2foraws_audio_speaker_write_locked( sound_buffer,
+                                                             to_write_length );
     xSemaphoreGive( mutex );
     return err;
 }
 
 esp_err_t core2foraws_audio_speaker_drain(void)
 {
-    static const uint8_t silence[(AUDIO_DMA_DESCRIPTORS + 1) * AUDIO_DMA_FRAMES * 4] = {0};
-    return core2foraws_audio_speaker_write(silence, sizeof(silence));
+    SemaphoreHandle_t mutex = _core2foraws_audio_mutex_get();
+    if( mutex == NULL )
+    {
+        return ESP_ERR_NO_MEM;
+    }
+    if( xSemaphoreTake( mutex, pdMS_TO_TICKS( AUDIO_IO_TIMEOUT_MS ) ) != pdTRUE )
+    {
+        return ESP_ERR_TIMEOUT;
+    }
+
+    uint8_t silence[ AUDIO_DRAIN_CHUNK_BYTES ] = { 0 };
+    size_t remaining =
+        ( size_t )( AUDIO_DMA_DESCRIPTORS + 1 ) * AUDIO_DMA_FRAMES * 4U;
+    esp_err_t err = ESP_OK;
+
+    while( remaining > 0 && err == ESP_OK )
+    {
+        size_t chunk = remaining < sizeof( silence ) ? remaining
+                                                     : sizeof( silence );
+        err = _core2foraws_audio_speaker_write_locked( silence, chunk );
+        remaining -= chunk;
+    }
+
+    xSemaphoreGive( mutex );
+    return err;
 }
 
 esp_err_t core2foraws_audio_mic_read( int8_t *sound_buffer, size_t to_read_length , size_t *was_read_length )

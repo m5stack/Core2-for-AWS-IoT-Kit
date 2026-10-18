@@ -83,7 +83,6 @@ _Static_assert( LCD_DRAW_BUF_BYTES <= CORE2FORAWS_SPI_MAX_TRANSFER_BYTES,
 
 /* FT6336U touch controller on internal I2C bus */
 #define TOUCH_INT_GPIO      GPIO_NUM_39
-#define TOUCH_I2C_XFER_TIMEOUT_MS 100
 /* The LVGL task skips a touch sample rather than stall behind another bus
  * user; the next input period retries. Other callers use the normal lock. */
 #define TOUCH_I2C_LOCK_TIMEOUT_MS 10
@@ -126,21 +125,16 @@ static esp_err_t _touch_io_rx( esp_lcd_panel_io_t *io, int command,
                                void *parameters, size_t parameter_size )
 {
     if( io == NULL || command < 0 || command > UINT8_MAX ||
-        parameters == NULL || parameter_size == 0 )
+        parameter_size == 0 || parameter_size > UINT16_MAX ||
+        parameters == NULL )
     {
         return ESP_ERR_INVALID_ARG;
     }
 
     core2foraws_touch_io_t *touch_io = ( core2foraws_touch_io_t * )io;
-    uint8_t register_address = ( uint8_t )command;
-    esp_err_t err = core2foraws_i2c_lock( COMMON_I2C_INTERNAL );
-    if( err != ESP_OK ) return err;
-
-    err = i2c_master_transmit_receive( touch_io->device,
-        &register_address, sizeof( register_address ), parameters,
-        parameter_size, TOUCH_I2C_XFER_TIMEOUT_MS );
-    esp_err_t unlock_err = core2foraws_i2c_unlock( COMMON_I2C_INTERNAL );
-    return err != ESP_OK ? err : unlock_err;
+    return core2foraws_i2c_read( COMMON_I2C_INTERNAL, touch_io->device,
+                                 ( uint8_t )command, parameters,
+                                 ( uint16_t )parameter_size );
 }
 
 static esp_err_t _touch_io_tx( esp_lcd_panel_io_t *io, int command,
@@ -283,7 +277,7 @@ static esp_err_t _display_draw_buffer_check( void )
     ESP_LOGE( _TAG,
               "Lower CONFIG_CORE2FORAWS_LCD_DRAW_BUF_LINES, or free internal "
               "DRAM with CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y and "
-              "CONFIG_ESP32_WIFI_TX_BUFFER=dynamic. PSRAM cannot hold these "
+              "CONFIG_LV_USE_CLIB_MALLOC=y. PSRAM cannot hold these "
               "buffers; it is not DMA-addressable." );
 
     return ESP_ERR_NO_MEM;
@@ -643,6 +637,13 @@ static core2foraws_board_lcd_t _lcd_controller_detect( void )
             vTaskDelay( CORE2FORAWS_DELAY_MS_TO_TICKS( 2 ) );
         }
 
+        if( xSemaphoreTake( core2foraws_common_spi_semaphore,
+                            pdMS_TO_TICKS( CORE2FORAWS_SPI_LOCK_TIMEOUT_MS ) ) !=
+            pdTRUE )
+        {
+            break;
+        }
+
         esp_lcd_panel_io_tx_param( io, ILI9342E_CMD_SET_EXTC,
                                    ( uint8_t[] ){ 0x01 }, 1 );
         esp_lcd_panel_io_tx_param( io, ILI9342E_CMD_POWER_CTRL_6,
@@ -653,6 +654,7 @@ static core2foraws_board_lcd_t _lcd_controller_detect( void )
                                           0x1C, &raw[ 1 ] );
         if( extc && pwr6 )
         {
+            xSemaphoreGive( core2foraws_common_spi_semaphore );
             lcd = BOARD_LCD_ILI9342E;
             break;
         }
@@ -663,13 +665,20 @@ static core2foraws_board_lcd_t _lcd_controller_detect( void )
                                            &raw[ 2 ] );
         bool id_lo = _lcd_ext_reg_matches( io, ILI9342C_CMD_READ_ID4, 3, 0x42,
                                            &raw[ 3 ] );
+        xSemaphoreGive( core2foraws_common_spi_semaphore );
         if( id_hi && id_lo )
         {
             lcd = BOARD_LCD_ILI9342C;
         }
     }
-    esp_lcd_panel_io_tx_param( io, ILI9342E_CMD_GET_EXT_REG,
-                               ( uint8_t[] ){ 0x00 }, 1 );
+    if( xSemaphoreTake( core2foraws_common_spi_semaphore,
+                        pdMS_TO_TICKS( CORE2FORAWS_SPI_LOCK_TIMEOUT_MS ) ) ==
+        pdTRUE )
+    {
+        esp_lcd_panel_io_tx_param( io, ILI9342E_CMD_GET_EXT_REG,
+                                   ( uint8_t[] ){ 0x00 }, 1 );
+        xSemaphoreGive( core2foraws_common_spi_semaphore );
+    }
     esp_lcd_panel_io_del( io );
 
     ESP_LOGI( _TAG, "\tLCD read-back DDh:%04x CBh:%04x ID4:%04x %04x -> %s",
@@ -756,12 +765,19 @@ static esp_err_t _init_lcd_panel( void )
         return err;
     }
 
-    ESP_RETURN_ON_ERROR( esp_lcd_panel_reset( _panel_handle ), _TAG, "panel reset" );
-    ESP_RETURN_ON_ERROR( esp_lcd_panel_init( _panel_handle ), _TAG, "panel init" );
-    ESP_RETURN_ON_ERROR( esp_lcd_panel_invert_color( _panel_handle, true ), _TAG, "invert color" );
-    ESP_RETURN_ON_ERROR( esp_lcd_panel_disp_on_off( _panel_handle, true ), _TAG, "disp on" );
+    if( xSemaphoreTake( core2foraws_common_spi_semaphore,
+                        pdMS_TO_TICKS( CORE2FORAWS_SPI_LOCK_TIMEOUT_MS ) ) !=
+        pdTRUE )
+    {
+        return ESP_ERR_TIMEOUT;
+    }
+    err = esp_lcd_panel_reset( _panel_handle );
+    if( err == ESP_OK ) err = esp_lcd_panel_init( _panel_handle );
+    if( err == ESP_OK ) err = esp_lcd_panel_invert_color( _panel_handle, true );
+    if( err == ESP_OK ) err = esp_lcd_panel_disp_on_off( _panel_handle, true );
+    xSemaphoreGive( core2foraws_common_spi_semaphore );
 
-    return ESP_OK;
+    return err;
 }
 
 /**

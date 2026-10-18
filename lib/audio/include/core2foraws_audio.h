@@ -73,14 +73,24 @@ extern "C" {
  */
 /* @[declare_core2foraws_audio_speaker_enable] */
 esp_err_t core2foraws_audio_speaker_enable( bool state );
-
-/** Enqueue silence exceeding the TX DMA ring (including both 16-bit slots).
- * After success all previously accepted samples have played, though trailing
- * silence may remain. Call before disabling the speaker, with no other writer.
- * Propagates write timeout/short-write errors; does not disable the channel.
- */
-esp_err_t core2foraws_audio_speaker_drain(void);
 /* @[declare_core2foraws_audio_speaker_enable] */
+
+/**
+ * @brief Enqueues silence exceeding the TX DMA ring so all previously
+ * accepted speaker samples have finished playing.
+ *
+ * Call before disabling the speaker, with no other writer. Propagates write
+ * timeout and short-write errors; does not disable the channel.
+ *
+ * @return
+ *  - ESP_OK                : Silence enqueued
+ *  - ESP_ERR_INVALID_STATE : Speaker not enabled
+ *  - ESP_ERR_TIMEOUT       : Lock or I2S transfer timed out
+ *  - ESP_FAIL              : Short write or driver error
+ */
+/* @[declare_core2foraws_audio_speaker_drain] */
+esp_err_t core2foraws_audio_speaker_drain( void );
+/* @[declare_core2foraws_audio_speaker_drain] */
 
 /**
  * @brief Enables or disables the device microphone driver.

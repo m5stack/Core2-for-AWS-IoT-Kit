@@ -48,7 +48,7 @@ extern "C" {
 /* ------------------------------------------------------------------ */
 #define AXP192_POWER_STATUS             (0x00)
 #define AXP192_CHARGE_STATUS            (0x01)
-#define AXP192_OTG_VBUS_STATUS          (0x04)
+#define AXP192_OTG_VBUS_STATUS          (0x02)
 #define AXP192_DATA_BUFFER0             (0x06)
 #define AXP192_DATA_BUFFER1             (0x07)
 #define AXP192_DATA_BUFFER2             (0x08)
@@ -90,8 +90,10 @@ extern "C" {
 #define AXP192_ADC_ENABLE_2             (0x83)
 #define AXP192_ADC_RATE_TS_PIN          (0x84)
 #define AXP192_GPIO30_INPUT_RANGE       (0x85)
-#define AXP192_GPIO0_ADC_IRQ_RISING     (0x86)
-#define AXP192_GPIO0_ADC_IRQ_FALLING    (0x87)
+#define AXP192_GPIO1_ADC_IRQ_RISING     (0x86)
+#define AXP192_GPIO1_ADC_IRQ_FALLING    (0x87)
+#define AXP192_GPIO0_ADC_IRQ_RISING     AXP192_GPIO1_ADC_IRQ_RISING
+#define AXP192_GPIO0_ADC_IRQ_FALLING    AXP192_GPIO1_ADC_IRQ_FALLING
 #define AXP192_TIMER_CONTROL            (0x8a)
 #define AXP192_VBUS_MONITOR             (0x8b)
 #define AXP192_TEMP_SHUTDOWN_CONTROL    (0x8f)
@@ -169,12 +171,12 @@ extern "C" {
 /* ------------------------------------------------------------------ */
 /* Charge status register (REG 0x01) bit masks                        */
 /* ------------------------------------------------------------------ */
-#define AXP192_CHG_STATUS_BAT_PRESENT   (1u << 7)
+#define AXP192_CHG_STATUS_OVER_TEMP     (1u << 7)
 #define AXP192_CHG_STATUS_CHARGING      (1u << 6)
-#define AXP192_CHG_STATUS_FINISHED      (1u << 5)
-#define AXP192_CHG_STATUS_TIMEOUT       (1u << 4)
+#define AXP192_CHG_STATUS_BAT_PRESENT   (1u << 5)
 #define AXP192_CHG_STATUS_BAT_ACTIVATE  (1u << 3)
 #define AXP192_CHG_STATUS_CUR_LOW       (1u << 2)
+#define AXP192_CHG_STATUS_BOOT_MODE     (1u << 1)
 
 /* ------------------------------------------------------------------ */
 /* VBUS / IPSOUT control (REG 0x30) bit masks                         */
@@ -262,8 +264,8 @@ typedef enum {
 /* VBUS current limit selection (REG 0x30 bit [0])                    */
 /* ------------------------------------------------------------------ */
 typedef enum {
-    AXP192_VBUS_CUR_100MA = 0,
-    AXP192_VBUS_CUR_500MA = 1
+    AXP192_VBUS_CUR_500MA = 0,
+    AXP192_VBUS_CUR_100MA = 1
 } axp192_vbus_cur_limit_t;
 
 /* ------------------------------------------------------------------ */
@@ -300,8 +302,9 @@ typedef int32_t axp192_err_t;
 /**
  * @brief Read a register or ADC value from the AXP192.
  *
- * For ADC registers (voltages, currents, temperature, coulomb counter)
- * the raw value is converted to engineering units (volts, amps, °C, …)
+ * For ADC registers (voltages, currents, temperature, battery power, coulomb
+ * counter) the raw value is converted to engineering units (volts, amps, °C,
+ * mW for `AXP192_BATTERY_POWER`, mAh for `AXP192_COULOMB_COUNTER`)
  * and stored in @p buffer as a @c float.
  *
  * For all other registers a single raw byte is stored in @p buffer.

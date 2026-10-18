@@ -23,6 +23,7 @@
 #include <freertos/task.h>
 #include <freertos/semphr.h>
 
+#include "core2foraws_common.h"
 #include "core2foraws_wifi.h"
 #include "core2foraws_wifi_priv.h"
 
@@ -68,22 +69,10 @@ static wifi_config_t _previous;
 
 esp_err_t core2foraws_wifi_priv_lock( void )
 {
-    if( atomic_load( &_lock_state ) != 2 )
-    {
-        unsigned char expected = 0;
-        if( atomic_compare_exchange_strong( &_lock_state, &expected, 1 ) )
-        {
-            _lock = xSemaphoreCreateMutexStatic( &_lock_storage );
-            atomic_store( &_lock_state, _lock != NULL ? 2 : 0 );
-        }
-        else
-        {
-            while( atomic_load( &_lock_state ) == 1 ) vTaskDelay( 1 );
-        }
-    }
-
-    if( _lock == NULL ) return ESP_ERR_NO_MEM;
-    return xSemaphoreTake( _lock, pdMS_TO_TICKS( WIFI_LOCK_TIMEOUT_MS ) ) == pdTRUE
+    SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
+        &_lock_state, &_lock, &_lock_storage, xSemaphoreCreateMutexStatic );
+    if( mutex == NULL ) return ESP_ERR_NO_MEM;
+    return xSemaphoreTake( mutex, pdMS_TO_TICKS( WIFI_LOCK_TIMEOUT_MS ) ) == pdTRUE
                ? ESP_OK
                : ESP_ERR_TIMEOUT;
 }

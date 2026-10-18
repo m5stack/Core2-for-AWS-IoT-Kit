@@ -8,13 +8,15 @@
 #define COMMON_I2C_EXTERNAL CORE2FORAWS_I2C_EXTERNAL
 #include "../../lib/expports/core2foraws_expports.c"
 
-static bool i2c_active, uart_active;
+static bool i2c_active, uart_active, dac_active, adc_active;
 static int routing[40];
-static esp_err_t close_error, uart_pin_error, uart_config_error;
+static bool pulldown[40];
+static int last_dac_duty = -1;
+static esp_err_t close_error, uart_pin_error, uart_config_error, adc_del_error;
 static unsigned int bus_creations, uart_creations;
 
 SemaphoreHandle_t xSemaphoreCreateRecursiveMutexStatic(StaticSemaphore_t *storage) { return storage; }
-BaseType_t xSemaphoreTakeRecursive(SemaphoreHandle_t mutex, TickType_t timeout) { assert(timeout == 100); mutex->depth++; return pdTRUE; }
+BaseType_t xSemaphoreTakeRecursive(SemaphoreHandle_t mutex, TickType_t timeout) { assert(timeout == 101); mutex->depth++; return pdTRUE; }
 BaseType_t xSemaphoreGiveRecursive(SemaphoreHandle_t mutex) { assert(mutex->depth > 0); mutex->depth--; return pdTRUE; }
 void vTaskDelay(TickType_t ticks) { assert(ticks == 1); }
 esp_err_t gpio_reset_pin(int pin)
@@ -22,12 +24,17 @@ esp_err_t gpio_reset_pin(int pin)
     assert(!((pin == 32 || pin == 33) && i2c_active));
     assert(!((pin == 13 || pin == 14) && uart_active));
     routing[pin] = NONE;
+    pulldown[pin] = false;
     return ESP_OK;
 }
 esp_err_t gpio_config(const gpio_config_t *config)
 {
     for (unsigned int pin = 0; pin < 40; ++pin)
-        if (config->pin_bit_mask & (UINT64_C(1) << pin)) routing[pin] = config->mode == GPIO_MODE_OUTPUT ? OUTPUT : INPUT;
+        if (config->pin_bit_mask & (UINT64_C(1) << pin))
+        {
+            routing[pin] = config->mode == GPIO_MODE_OUTPUT ? OUTPUT : INPUT;
+            pulldown[pin] = (config->pull_down_en == GPIO_PULLDOWN_ENABLE);
+        }
     return ESP_OK;
 }
 int gpio_get_level(gpio_num_t pin) { assert(routing[pin] == INPUT); return 0; }
@@ -87,13 +94,52 @@ int uart_read_bytes(int port, void *buffer, size_t size, TickType_t timeout) { (
 int uart_write_bytes(int port, const void *buffer, size_t size) { (void)port; (void)buffer; return (int)size; }
 esp_err_t uart_wait_tx_done(int port, TickType_t timeout) { (void)port; (void)timeout; return ESP_OK; }
 esp_err_t uart_flush_input(int port) { (void)port; return ESP_OK; }
-esp_err_t dac_oneshot_new_channel(const dac_oneshot_config_t *config, dac_oneshot_handle_t *handle) { (void)config; (void)handle; return ESP_ERR_NOT_SUPPORTED; }
-esp_err_t dac_oneshot_del_channel(dac_oneshot_handle_t handle) { (void)handle; return ESP_ERR_NOT_SUPPORTED; }
-esp_err_t dac_oneshot_output_voltage(dac_oneshot_handle_t handle, int value) { (void)handle; (void)value; return ESP_ERR_NOT_SUPPORTED; }
-esp_err_t adc_oneshot_new_unit(const adc_oneshot_unit_init_cfg_t *config, adc_oneshot_unit_handle_t *handle) { (void)config; (void)handle; return ESP_ERR_NOT_SUPPORTED; }
-esp_err_t adc_oneshot_config_channel(adc_oneshot_unit_handle_t handle, int channel, const adc_oneshot_chan_cfg_t *config) { (void)handle; (void)channel; (void)config; return ESP_ERR_NOT_SUPPORTED; }
-esp_err_t adc_oneshot_del_unit(adc_oneshot_unit_handle_t handle) { (void)handle; return ESP_ERR_NOT_SUPPORTED; }
-esp_err_t adc_oneshot_read(adc_oneshot_unit_handle_t handle, int channel, int *value) { (void)handle; (void)channel; (void)value; return ESP_ERR_NOT_SUPPORTED; }
+esp_err_t dac_oneshot_new_channel(const dac_oneshot_config_t *config, dac_oneshot_handle_t *handle)
+{
+    (void)config;
+    dac_active = true;
+    *handle = (dac_oneshot_handle_t)1;
+    return ESP_OK;
+}
+esp_err_t dac_oneshot_del_channel(dac_oneshot_handle_t handle)
+{
+    assert(handle == (dac_oneshot_handle_t)1 && dac_active);
+    dac_active = false;
+    return ESP_OK;
+}
+esp_err_t dac_oneshot_output_voltage(dac_oneshot_handle_t handle, int value)
+{
+    assert(handle == (dac_oneshot_handle_t)1 && dac_active);
+    last_dac_duty = value;
+    return ESP_OK;
+}
+esp_err_t adc_oneshot_new_unit(const adc_oneshot_unit_init_cfg_t *config, adc_oneshot_unit_handle_t *handle)
+{
+    (void)config;
+    adc_active = true;
+    *handle = (adc_oneshot_unit_handle_t)1;
+    return ESP_OK;
+}
+esp_err_t adc_oneshot_config_channel(adc_oneshot_unit_handle_t handle, int channel, const adc_oneshot_chan_cfg_t *config)
+{
+    (void)channel; (void)config;
+    assert(handle == (adc_oneshot_unit_handle_t)1 && adc_active);
+    return ESP_OK;
+}
+esp_err_t adc_oneshot_del_unit(adc_oneshot_unit_handle_t handle)
+{
+    assert(handle == (adc_oneshot_unit_handle_t)1 && adc_active);
+    if (adc_del_error != ESP_OK) return adc_del_error;
+    adc_active = false;
+    return ESP_OK;
+}
+esp_err_t adc_oneshot_read(adc_oneshot_unit_handle_t handle, int channel, int *value)
+{
+    (void)channel;
+    assert(handle == (adc_oneshot_unit_handle_t)1 && adc_active);
+    *value = 2048;
+    return ESP_OK;
+}
 esp_err_t adc_cali_raw_to_voltage(adc_cali_handle_t handle, int raw, int *voltage) { (void)handle; (void)raw; (void)voltage; return ESP_ERR_NOT_SUPPORTED; }
 
 int main(void)
@@ -137,6 +183,35 @@ int main(void)
     uart_config_error = ESP_FAIL;
     assert(core2foraws_expports_uart_begin(115200) == ESP_FAIL && !uart_active);
     assert(routing[13] == NONE && routing[14] == NONE);
+
+    /* Port A (32/33) and input-only GPIO 36 must not enable internal pull-down;
+     * Port B DAC pin (26) and Port C pins (13/14) enable pull-down in INPUT mode. */
+    bool level = true;
+    assert(core2foraws_expports_digital_read(32, &level) == ESP_OK && !pulldown[32]);
+    assert(core2foraws_expports_digital_read(33, &level) == ESP_OK && !pulldown[33]);
+    assert(core2foraws_expports_digital_read(36, &level) == ESP_OK && !pulldown[36]);
+    assert(core2foraws_expports_digital_read(26, &level) == ESP_OK && pulldown[26]);
+    assert(core2foraws_expports_pin_reset(32) == ESP_OK);
+    assert(core2foraws_expports_pin_reset(33) == ESP_OK);
+    assert(core2foraws_expports_pin_reset(36) == ESP_OK);
+    assert(core2foraws_expports_pin_reset(26) == ESP_OK);
+
+    /* DAC linear 0..3300 mV -> 0..255 mapping */
+    assert(core2foraws_expports_dac_mv_write(0) == ESP_OK && last_dac_duty == 0);
+    assert(core2foraws_expports_dac_mv_write(100) == ESP_OK && last_dac_duty == 8);
+    assert(core2foraws_expports_dac_mv_write(1650) == ESP_OK && last_dac_duty == 128);
+    assert(core2foraws_expports_dac_mv_write(3300) == ESP_OK && last_dac_duty == 255);
+    assert(core2foraws_expports_dac_mv_write(4000) == ESP_OK && last_dac_duty == 255);
+    assert(core2foraws_expports_pin_reset(26) == ESP_OK && !dac_active);
+
+    /* ADC teardown failure retains handle for retry */
+    int raw = 0;
+    assert(core2foraws_expports_adc_read(&raw) == ESP_OK && raw == 2048);
+    adc_del_error = ESP_ERR_INVALID_STATE;
+    assert(core2foraws_expports_pin_reset(36) == ESP_ERR_INVALID_STATE && adc_active);
+    adc_del_error = ESP_OK;
+    assert(core2foraws_expports_pin_reset(36) == ESP_OK && !adc_active);
+
     assert(_expports_mutex->depth == 0);
     puts("Expansion paired routing, reopen, delete failure and startup rollback tests passed");
     return 0;

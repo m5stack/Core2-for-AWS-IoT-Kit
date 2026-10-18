@@ -114,7 +114,7 @@ endif()
 
 
 if( CONFIG_SOFTWARE_RGB_LED_SUPPORT )
-    file( GLOB CORE2FORAWS_RGB_LED_SRCS     "${CORE2FORAWS_LIB}/rgb_led/*.c" )
+    set( CORE2FORAWS_RGB_LED_SRCS           "${CORE2FORAWS_LIB}/rgb_led/core2foraws_rgb_led.c" )
     set( CORE2FORAWS_RGB_LED_INCLUDE_DIRS   "${CORE2FORAWS_LIB}/rgb_led/include" )
 
     list( APPEND CORE2FORAWS_SRCS           ${CORE2FORAWS_RGB_LED_SRCS} )

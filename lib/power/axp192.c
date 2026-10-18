@@ -25,6 +25,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "axp192.h"
@@ -45,6 +46,7 @@
 static axp192_err_t read_coulomb_counter(const axp192_t *axp, float *buffer)
 {
     uint8_t tmp[4];
+    uint8_t rate_reg = 0;
     int32_t charge_counts, discharge_counts;
     axp192_err_t status;
 
@@ -66,7 +68,14 @@ static axp192_err_t read_coulomb_counter(const axp192_t *axp, float *buffer)
                                  ((uint32_t)tmp[1] << 16) |
                                  ((uint32_t)tmp[2] << 8)  | tmp[3]);
 
-    *buffer = 32768.0f * (charge_counts - discharge_counts) / 3600.0f / 25.0f;
+    status = axp->read(axp->handle, AXP192_ADDRESS,
+                       AXP192_ADC_RATE_TS_PIN, &rate_reg, 1);
+    if (AXP192_OK != status) {
+        return status;
+    }
+    float sample_rate_hz = (float)(25u << ((rate_reg >> 6) & 0x03u));
+
+    *buffer = 32768.0f * (charge_counts - discharge_counts) / 3600.0f / sample_rate_hz;
     return AXP192_OK;
 }
 
@@ -173,6 +182,10 @@ static axp192_err_t axp192_read_adc(const axp192_t *axp, uint8_t reg,
 
 axp192_err_t axp192_read(const axp192_t *axp, uint8_t reg, void *buffer)
 {
+    if (axp == NULL || buffer == NULL) {
+        return AXP192_ERROR_NOTTY;
+    }
+
     switch (reg) {
     /* ADC registers — convert to float with engineering units. */
     case AXP192_ACIN_VOLTAGE:
@@ -202,6 +215,10 @@ axp192_err_t axp192_read(const axp192_t *axp, uint8_t reg, void *buffer)
 axp192_err_t axp192_write(const axp192_t *axp, uint8_t reg,
                            const uint8_t *buffer)
 {
+    if (axp == NULL || buffer == NULL) {
+        return AXP192_ERROR_NOTTY;
+    }
+
     switch (reg) {
     /* ADC registers are read-only. */
     case AXP192_ACIN_VOLTAGE:

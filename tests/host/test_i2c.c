@@ -14,7 +14,7 @@ static int remove_calls;
 static int transfer_calls;
 static bool fail_remove;
 static void (*before_lock)(void);
-static uint8_t last_tx[128];
+static uint8_t last_tx[512];
 static size_t last_tx_size;
 static TickType_t expected_lock_ticks = pdMS_TO_TICKS(1000);
 
@@ -194,6 +194,10 @@ int main(void)
     assert(last_tx_size == 4 && last_tx[0] == 0xab && last_tx[1] == 0xcd && last_tx[2] == 0x12);
     assert(core2foraws_i2c_write(port, device, 0x20, data, sizeof(data)) == ESP_OK);
     assert(last_tx_size == 65 && last_tx[0] == 0x20);
+    uint8_t large_data[300];
+    memset(large_data, 0x7e, sizeof(large_data));
+    assert(core2foraws_i2c_write(port, device, 0x30, large_data, sizeof(large_data)) == ESP_OK);
+    assert(last_tx_size == sizeof(large_data) + 1 && last_tx[0] == 0x30 && last_tx[299] == 0x7e);
     assert(core2foraws_i2c_read(port, device, CORE2FORAWS_I2C_NO_REG, data, 1) == ESP_OK);
     assert(data[0] == 0x5a);
     assert(core2foraws_i2c_write(port, device, 0x11, NULL, 0) == ESP_OK);

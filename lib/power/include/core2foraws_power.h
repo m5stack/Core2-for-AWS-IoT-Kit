@@ -328,12 +328,11 @@ esp_err_t core2foraws_power_charging_get( bool *status );
 /* @[declare_core2foraws_power_charging_get] */
 
 /**
- * @brief Get status of the device being plugged in to external
- * power source from the power management unit (PMU).
+ * @brief Get status of the device being plugged in to USB-C external
+ * power from the power management unit (PMU).
  * 
- * The power source can be either the USB-C port or through the
- * V-In pin.
- * 
+ * Reads AXP192 REG00H bit 7 (ACIN_PRESENT), which is wired to `USB_5V`
+ * from the USB Type-C connector on the Core2 main board.
  *
  * @param[out] status Pointer to the boolean value of the plugged 
  * in to an external power source status. 1 (true) if it is 

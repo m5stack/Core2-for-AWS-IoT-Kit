@@ -346,6 +346,7 @@ esp_err_t bmi270_accel_gyro_data_get( float *ax, float *ay, float *az,
 esp_err_t bmi270_temp_data_get( float *t )
 {
     if( t == NULL ) return ESP_ERR_INVALID_ARG;
+    _wait_until( _gyro_ready_us );
     uint8_t buf[ 2 ];
     esp_err_t err = read_reg( BMI270_TEMPERATURE_0, sizeof( buf ), buf );
     if( err != ESP_OK ) return err;

@@ -182,7 +182,7 @@ extern "C" {
  *
  *  void app_main( void )
  *  {
- *      core2foraws_init();
+ *      esp_err_t err = core2foraws_init();
  * 
  *      if ( err == ESP_OK )
  *      {
@@ -329,10 +329,9 @@ esp_err_t core2foraws_expports_pin_reset( gpio_num_t pin );
  *
  * **Example:**
  * 
- * The example creates a tasks which initializes the port for I2C, 
+ * The example creates a task which initializes the port for I2C, 
  * and loops every 10 seconds to read from a heart-rate sensor with 
- * the 8-bit device address 0xA0 (does not need to be right-shifted 
- * by 1-bit to be a 7-bit address). Since the device doesn't take a 
+ * the 7-bit device address 0x50. Since the device doesn't take a 
  * register address, use the placeholder macro @ref I2C_NO_REGISTER_ADDR. 
  * At the end of the loop, the sensor reading is printed to the 
  * serial output.
@@ -345,7 +344,7 @@ esp_err_t core2foraws_expports_pin_reset( gpio_num_t pin );
  * 
  *  #include "core2foraws.h"
  *  
- *  #define DEVICE_ADDRESS 0xA0
+ *  #define DEVICE_ADDRESS 0x50
  *  
  *  static const char *TAG = "MAIN_I2C_EXAMPLE";
  *  
@@ -442,10 +441,9 @@ esp_err_t core2foraws_expports_i2c_device_remove(
  *
  * **Example:**
  * 
- * The example creates a tasks which initializes the port for I2C, 
+ * The example creates a task which initializes the port for I2C, 
  * and loops every 10 seconds to read from a heart-rate sensor with 
- * the 8-bit device address 0xA0 (does not need to be right-shifted 
- * by 1-bit to be a 7-bit address). Since the device doesn't take a 
+ * the 7-bit device address 0x50. Since the device doesn't take a 
  * register address, use the placeholder macro @ref I2C_NO_REGISTER_ADDR. 
  * At the end of the loop, the sensor reading is printed to the 
  * serial output.
@@ -458,7 +456,7 @@ esp_err_t core2foraws_expports_i2c_device_remove(
  * 
  *  #include "core2foraws.h"
  *  
- *  #define DEVICE_ADDRESS 0xA0
+ *  #define DEVICE_ADDRESS 0x50
  *  
  *  static const char *TAG = "MAIN_I2C_EXAMPLE";
  *  
@@ -588,10 +586,9 @@ esp_err_t core2foraws_expports_i2c_write( i2c_master_dev_handle_t dev_handle, ui
  *
  * **Example:**
  * 
- * The example creates a tasks which initializes the port for I2C, 
+ * The example creates a task which initializes the port for I2C, 
  * and loops every 10 seconds to read from a heart-rate sensor with 
- * the 8-bit device address 0xA0 (does not need to be right-shifted 
- * by 1-bit to be a 7-bit address). Since the device doesn't take a 
+ * the 7-bit device address 0x50. Since the device doesn't take a 
  * register address, use the placeholder macro @ref I2C_NO_REGISTER_ADDR. 
  * At the end of the loop, the sensor reading is printed to the 
  * serial output. If @ref core2foraws_expports_i2c_begin returns an
@@ -605,7 +602,7 @@ esp_err_t core2foraws_expports_i2c_write( i2c_master_dev_handle_t dev_handle, ui
  * 
  *  #include "core2foraws.h"
  *  
- *  #define DEVICE_ADDRESS 0xA0
+ *  #define DEVICE_ADDRESS 0x50
  *  
  *  static const char *TAG = "MAIN_I2C_EXAMPLE";
  *  
@@ -739,11 +736,11 @@ esp_err_t core2foraws_expports_adc_read( int *raw_adc_value );
  *
  *  void read_moisture_task( void *pvParameters )
  *  {
- *      uint32 adc_volts = 0;
+ *      uint32_t adc_volts = 0;
  *      for( ;; )
  *      {
  *          core2foraws_expports_adc_mv_read( &adc_volts );
- *          ESP_LOGI( TAG, "\tMoisture ADC millivolts: %d", adc_volts );
+ *          ESP_LOGI( TAG, "\tMoisture ADC millivolts: %lu", ( unsigned long )adc_volts );
  * 
  *          vTaskDelay( pdMS_TO_TICKS( 1000 ) );
  *      }
@@ -857,7 +854,7 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts );
  *          size_t written_len = 0;
  * 
  *          core2foraws_expports_uart_write( message, message_len, &written_len );
- *          ESP_LOGI( TAG, "\tWrote %d out of % bytes", written_len, message_len );
+ *          ESP_LOGI( TAG, "\tWrote %zu out of %zu bytes", written_len, message_len );
  * 
  *          vTaskDelay( pdMS_TO_TICKS( 2000 ) );
  *      }
@@ -955,7 +952,7 @@ esp_err_t core2foraws_expports_uart_begin( uint32_t baud );
  *          size_t written_len = 0;
  * 
  *          core2foraws_expports_uart_write( message, message_len, &written_len );
- *          ESP_LOGI( TAG, "\tWrote %d out of % bytes", written_len, message_len );
+ *          ESP_LOGI( TAG, "\tWrote %zu out of %zu bytes", written_len, message_len );
  * 
  *          vTaskDelay( pdMS_TO_TICKS( 2000 ) );
  *      }
@@ -1058,7 +1055,7 @@ esp_err_t core2foraws_expports_uart_write( const char *message, size_t length, s
  *          size_t written_len = 0;
  * 
  *          core2foraws_expports_uart_write( message, message_len, &written_len );
- *          ESP_LOGI( TAG, "\tWrote %d out of % bytes", written_len, message_len );
+ *          ESP_LOGI( TAG, "\tWrote %zu out of %zu bytes", written_len, message_len );
  * 
  *          vTaskDelay( pdMS_TO_TICKS( 2000 ) );
  *      }
@@ -1128,7 +1125,7 @@ esp_err_t core2foraws_expports_uart_read( uint8_t *message_buffer,
  *
  * @note To receive the messages transmitted on the same device, run a
  * female-female jumper wire from Port C's TX pin to PORT C's RX pin.
- * @code{c} *
+ * @code{c}
  * #include <freertos/FreeRTOS.h>
  * #include <freertos/task.h>
  * #include <esp_log.h>
@@ -1146,7 +1143,7 @@ esp_err_t core2foraws_expports_uart_read( uint8_t *message_buffer,
  *      size_t written_len = 0;
  * 
  *      core2foraws_expports_uart_write( message, message_len, &written_len );
- *      ESP_LOGI( TAG, "\tWrote %d out of % bytes", written_len, message_len );
+ *      ESP_LOGI( TAG, "\tWrote %zu out of %zu bytes", written_len, message_len );
  *      
  *      esp_err_t err = core2foraws_expports_uart_send_finished( );
  *      if ( err == ESP_OK )
@@ -1221,7 +1218,7 @@ esp_err_t core2foraws_expports_uart_send_finished( void );
  *          size_t written_len = 0;
  * 
  *          core2foraws_expports_uart_write( message, message_len, &written_len );
- *          ESP_LOGI( TAG, "\tWrote %d out of % bytes", written_len, message_len );
+ *          ESP_LOGI( TAG, "\tWrote %zu out of %zu bytes", written_len, message_len );
  * 
  *          vTaskDelay( pdMS_TO_TICKS( 2000 ) );
  *      }

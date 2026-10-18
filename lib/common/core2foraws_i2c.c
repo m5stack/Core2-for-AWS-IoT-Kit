@@ -42,9 +42,9 @@ static const char *_TAG = "CORE2FORAWS_I2C";
 
 /* Stack buffer size for register writes (register address + payload). Writes
  * that fit are served without a heap allocation; larger writes fall back to
- * malloc. Sized to cover the common 1-2 byte register writes plus a small
- * multi-byte payload. */
-#define I2C_WRITE_STACK_BUF_SIZE 32
+ * malloc. Sized to cover 1-2 byte register addresses plus up to a 256-byte
+ * chunk payload (such as the BMI270 configuration upload). */
+#define I2C_WRITE_STACK_BUF_SIZE 258
 
 /* Bus clear (I2C-bus spec UM10204 3.1.16): up to nine SCL pulses at 100 kHz. */
 #define I2C_BUS_CLEAR_PULSES       9
@@ -76,9 +76,9 @@ typedef struct
 
 enum
 {
-    I2C_MUTEX_UNINITIALIZED = 0,
-    I2C_MUTEX_INITIALIZING,
-    I2C_MUTEX_READY,
+    I2C_MUTEX_UNINITIALIZED = CORE2FORAWS_MUTEX_UNINITIALIZED,
+    I2C_MUTEX_INITIALIZING  = CORE2FORAWS_MUTEX_INITIALIZING,
+    I2C_MUTEX_READY         = CORE2FORAWS_MUTEX_READY,
 };
 
 /* The internal bus lives for the BSP lifetime. The external bus can be
@@ -92,35 +92,9 @@ static const i2c_port_num_t _i2c_port[ CORE2FORAWS_I2C_PORT_MAX ] = { I2C_NUM_0,
 static esp_err_t _i2c_mutex_ensure( core2foraws_i2c_port_t port )
 {
     core2foraws_i2c_bus_state_t *state = &_bus_state[ port ];
-    unsigned char current = atomic_load( &state->mutex_state );
-
-    if( current == I2C_MUTEX_READY )
-    {
-        return ESP_OK;
-    }
-
-    unsigned char expected = I2C_MUTEX_UNINITIALIZED;
-    if( atomic_compare_exchange_strong( &state->mutex_state, &expected,
-                                        I2C_MUTEX_INITIALIZING ) )
-    {
-        state->mutex =
-            xSemaphoreCreateRecursiveMutexStatic( &state->mutex_storage );
-        if( state->mutex == NULL )
-        {
-            atomic_store( &state->mutex_state, I2C_MUTEX_UNINITIALIZED );
-            return ESP_ERR_NO_MEM;
-        }
-
-        atomic_store( &state->mutex_state, I2C_MUTEX_READY );
-        return ESP_OK;
-    }
-
-    while( atomic_load( &state->mutex_state ) == I2C_MUTEX_INITIALIZING )
-    {
-        vTaskDelay( 1 );
-    }
-
-    return atomic_load( &state->mutex_state ) == I2C_MUTEX_READY
+    return core2foraws_common_mutex_ensure(
+               &state->mutex_state, &state->mutex, &state->mutex_storage,
+               xSemaphoreCreateRecursiveMutexStatic ) != NULL
                ? ESP_OK
                : ESP_ERR_NO_MEM;
 }

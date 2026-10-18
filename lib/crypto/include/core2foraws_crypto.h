@@ -22,7 +22,6 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include <esp_err.h>
-#include <cryptoauthlib.h>
 
 /**
  * @brief The size of the public key string
@@ -37,7 +36,7 @@ extern "C" {
  * @note ATECC608 P-256 signatures are returned as a raw 64-byte R || S value.
  */
 /* @[declare_core2foraws_crypto_max_signature_size] */
-#define CRYPTO_MAX_SIGNATURE_SIZE ATCA_SIG_SIZE
+#define CRYPTO_MAX_SIGNATURE_SIZE 64U
 /* @[declare_core2foraws_crypto_max_signature_size] */
 
 /**
@@ -46,7 +45,7 @@ extern "C" {
  * @note Length includes 1 byte for null terminator.
  */
 /* @[declare_core2foraws_crypto_strial_str_size] */
-#define CRYPTO_SERIAL_STR_SIZE ( ATCA_SERIAL_NUM_SIZE * 2 + 1 )
+#define CRYPTO_SERIAL_STR_SIZE ( 9U * 2U + 1U )
 /* @[declare_core2foraws_crypto_strial_str_size] */
 
 /**

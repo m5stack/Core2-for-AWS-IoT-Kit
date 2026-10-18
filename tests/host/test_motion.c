@@ -77,8 +77,11 @@ int main(void)
     registers[MPU6886_WHOAMI] = 0x19;
     assert(mpu6886_init(CORE2FORAWS_I2C_INTERNAL) == ESP_OK);
     assert(registers[MPU6886_PWR_MGMT_1] == 0x01 && reset_polls_until_clear == 0);
-    /* Init leaves the gyro start-up wait to the first read. */
+    /* Init leaves the sensor start-up waits to the first read. */
     assert(fake_time_us < 100000);
+    float temp_c = 0;
+    assert(mpu6886_temp_data_get(&temp_c) == ESP_OK);
+    assert(fake_time_us >= _temp_ready_us && fake_time_us < _gyro_ready_us);
     float first_x, first_y, first_z;
     assert(mpu6886_gyro_data_get(&first_x, &first_y, &first_z) == ESP_OK);
     assert(fake_time_us >= _gyro_ready_us);
@@ -121,6 +124,12 @@ int main(void)
     assert(mpu6886_fsr_gyro_set((gyro_scale_t)4) == ESP_ERR_INVALID_ARG);
     assert(mpu6886_accel_data_get(NULL, &axis_y, &axis_z) == ESP_ERR_INVALID_ARG);
     assert(mpu6886_accel_gyro_data_get(&axis_x, &axis_y, &axis_z, NULL, &axis_y, &axis_z) == ESP_ERR_INVALID_ARG);
+    assert(mpu6886_temp_data_get(NULL) == ESP_ERR_INVALID_ARG);
+    assert(mpu6886_adc_accel_get(NULL, NULL, NULL) == ESP_ERR_INVALID_ARG);
+    assert(mpu6886_adc_gyro_get(NULL, NULL, NULL) == ESP_ERR_INVALID_ARG);
+    assert(mpu6886_adc_temp_get(NULL) == ESP_ERR_INVALID_ARG);
+    assert(mpu6886_gyro_res_get(MPU6886_GFS_250DPS, NULL) == ESP_ERR_INVALID_ARG);
+    assert(mpu6886_accel_res_get(MPU6886_AFS_2G, NULL) == ESP_ERR_INVALID_ARG);
     assert(lock_depth == 0);
 
     /* A reset bit that never clears fails init instead of proceeding. */

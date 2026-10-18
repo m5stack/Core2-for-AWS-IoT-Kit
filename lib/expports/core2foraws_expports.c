@@ -83,32 +83,15 @@ static esp_err_t _core2foraws_expports_pin_handler( gpio_num_t pin, pin_mode_t m
 
 static esp_err_t _expports_lock( void )
 {
-    if( atomic_load( &_expports_mutex_state ) != 2 )
-    {
-        unsigned char expected = 0;
-        if( atomic_compare_exchange_strong( &_expports_mutex_state, &expected,
-                                            1 ) )
-        {
-            _expports_mutex = xSemaphoreCreateRecursiveMutexStatic(
-                &_expports_mutex_storage );
-            atomic_store( &_expports_mutex_state,
-                          _expports_mutex != NULL ? 2 : 0 );
-        }
-        else
-        {
-            while( atomic_load( &_expports_mutex_state ) == 1 )
-            {
-                vTaskDelay( 1 );
-            }
-        }
-    }
-
-    if( _expports_mutex == NULL )
+    SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
+        &_expports_mutex_state, &_expports_mutex, &_expports_mutex_storage,
+        xSemaphoreCreateRecursiveMutexStatic );
+    if( mutex == NULL )
     {
         return ESP_ERR_NO_MEM;
     }
-    return xSemaphoreTakeRecursive( _expports_mutex, pdMS_TO_TICKS( 1000 ) ) ==
-                   pdTRUE
+    return xSemaphoreTakeRecursive(
+               mutex, CORE2FORAWS_DELAY_MS_TO_TICKS( 1000 ) ) == pdTRUE
                ? ESP_OK
                : ESP_ERR_TIMEOUT;
 }
@@ -174,8 +157,11 @@ static esp_err_t _core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode
         else
         {
             io_conf.mode = GPIO_MODE_INPUT;
-            /* GPIOs 34-39 are input-only and have no internal pull resistors */
-            if ( pin >= GPIO_NUM_34 )
+            /* GPIOs 34-39 are input-only and have no internal pull resistors;
+             * Port A (GPIO 32 and 33) have fixed external 5.1k pull-ups on the
+             * board, so enabling internal pull-down creates a voltage divider
+             * and wastes quiescent current. */
+            if ( pin >= GPIO_NUM_34 || pin == PORT_A_SDA_PIN || pin == PORT_A_SCL_PIN )
             {
                 io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
             }
@@ -293,18 +279,21 @@ static esp_err_t _core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode
             /* The calibration handle is only created when a calibration
              * scheme is available, so it may be NULL even though the ADC
              * unit was allocated. Tear both down independently. */
+            esp_err_t cali_err = ESP_OK;
             if ( _adc_cali_handle != NULL )
             {
 #if ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED
-                adc_cali_delete_scheme_curve_fitting( _adc_cali_handle );
+                cali_err = adc_cali_delete_scheme_curve_fitting( _adc_cali_handle );
 #elif ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
-                adc_cali_delete_scheme_line_fitting( _adc_cali_handle );
+                cali_err = adc_cali_delete_scheme_line_fitting( _adc_cali_handle );
 #endif
+                if( cali_err != ESP_OK ) return cali_err;
                 _adc_cali_handle = NULL;
             }
             if ( _adc_handle != NULL )
             {
-                adc_oneshot_del_unit( _adc_handle );
+                err = adc_oneshot_del_unit( _adc_handle );
+                if( err != ESP_OK ) return err;
                 _adc_handle = NULL;
             }
             err = ESP_OK;
@@ -314,7 +303,11 @@ static esp_err_t _core2foraws_expports_pin_init( gpio_num_t pin, pin_mode_t mode
             err = ESP_OK;
         }
 
-        err |= gpio_reset_pin( pin );
+        esp_err_t reset_err = gpio_reset_pin( pin );
+        if( err == ESP_OK )
+        {
+            err = reset_err;
+        }
     }
 
     return err;
@@ -452,42 +445,26 @@ esp_err_t core2foraws_expports_i2c_begin( void )
 
 esp_err_t core2foraws_expports_i2c_device_add( uint16_t device_address, uint32_t scl_speed_hz, i2c_master_dev_handle_t *dev_handle )
 {
-    esp_err_t err = _expports_lock();
-    if( err != ESP_OK ) return err;
-    err = core2foraws_i2c_device_add( COMMON_I2C_EXTERNAL, device_address,
-                                      scl_speed_hz, dev_handle );
-    _expports_unlock();
-    return err;
+    return core2foraws_i2c_device_add( COMMON_I2C_EXTERNAL, device_address,
+                                       scl_speed_hz, dev_handle );
 }
 
 esp_err_t core2foraws_expports_i2c_device_remove(
     i2c_master_dev_handle_t dev_handle )
 {
-    esp_err_t err = _expports_lock();
-    if( err != ESP_OK ) return err;
-    err = core2foraws_i2c_device_remove( dev_handle );
-    _expports_unlock();
-    return err;
+    return core2foraws_i2c_device_remove( dev_handle );
 }
 
 esp_err_t core2foraws_expports_i2c_read( i2c_master_dev_handle_t dev_handle, uint32_t register_address, uint8_t *data, uint16_t length )
 {
-    esp_err_t err = _expports_lock();
-    if( err != ESP_OK ) return err;
-    err = core2foraws_i2c_read( COMMON_I2C_EXTERNAL, dev_handle,
-                                register_address, data, length );
-    _expports_unlock();
-    return err;
+    return core2foraws_i2c_read( COMMON_I2C_EXTERNAL, dev_handle,
+                                 register_address, data, length );
 }
 
 esp_err_t core2foraws_expports_i2c_write( i2c_master_dev_handle_t dev_handle, uint32_t register_address, const uint8_t *data, uint16_t length )
 {
-    esp_err_t err = _expports_lock();
-    if( err != ESP_OK ) return err;
-    err = core2foraws_i2c_write( COMMON_I2C_EXTERNAL, dev_handle,
-                                 register_address, data, length );
-    _expports_unlock();
-    return err;
+    return core2foraws_i2c_write( COMMON_I2C_EXTERNAL, dev_handle,
+                                  register_address, data, length );
 }
 
 esp_err_t core2foraws_expports_i2c_close( void )
@@ -552,14 +529,17 @@ esp_err_t core2foraws_expports_dac_mv_write( const uint16_t dac_mvolts )
     if ( err == ESP_OK )
     {
         uint8_t duty = 0;
-    
-        if ( dac_mvolts > 3200 )
+
+        /* ESP32 8-bit DAC outputs Vout = VDD3P3_RTC * duty / 255 (~3300 mV
+         * full scale). Clamp inputs at or above 3300 mV to 255 and round to
+         * the nearest step below that. */
+        if ( dac_mvolts >= 3300 )
         {
             duty = 255;
         }
-        else if ( dac_mvolts >= 200 && dac_mvolts <= 3200 )
+        else
         {
-            duty = (dac_mvolts - 200) / 12.15; // An approximate linear formula to calulate mv output.
+            duty = ( uint8_t )( ( ( uint32_t )dac_mvolts * 255U + 1650U ) / 3300U );
         }
 
         err = dac_oneshot_output_voltage(_dac_handle, duty);
@@ -650,8 +630,9 @@ esp_err_t core2foraws_expports_uart_read( uint8_t *message_buffer,
         size_t to_read = cached_buffer_length < buffer_capacity
                      ? cached_buffer_length
                      : buffer_capacity;
-        rxBytes = uart_read_bytes( PORT_C_UART_NUM, message_buffer, to_read,
-                       pdMS_TO_TICKS( 1000 ) );
+        rxBytes = uart_read_bytes(
+            PORT_C_UART_NUM, message_buffer, to_read,
+            CORE2FORAWS_DELAY_MS_TO_TICKS( 1000 ) );
         if ( rxBytes == -1 )
         {
             err = ESP_FAIL;
@@ -701,8 +682,8 @@ esp_err_t core2foraws_expports_uart_send_finished( void )
 {
     esp_err_t err = _expports_lock();
     if( err != ESP_OK ) return err;
-    err = uart_wait_tx_done( PORT_C_UART_NUM,
-                             pdMS_TO_TICKS( UART_TX_SEND_WAIT ) );
+    err = uart_wait_tx_done(
+        PORT_C_UART_NUM, CORE2FORAWS_DELAY_MS_TO_TICKS( UART_TX_SEND_WAIT ) );
     _expports_unlock();
     return err;
 }

@@ -17,11 +17,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <freertos/FreeRTOS.h>
-#include <driver/gpio.h>
-#include <esp_freertos_hooks.h>
 #include <esp_vfs_fat.h>
 #include <sdmmc_cmd.h>
 #include <esp_err.h>
@@ -39,7 +37,7 @@ extern "C" {
  * multiple tasks attempting to access the device at once.
  *
  * The example code below mounts the SD card on the mount point 
- * `/sdcard` and then writes a file named `kit.txt` with the 
+ * `/sd_card` and then writes a file named `kit.txt` with the 
  * contents "Hello from AWS IoT Kit!":
  *
  * **Example:**
@@ -95,7 +93,7 @@ esp_err_t core2foraws_sd_mount( void );
  * once the EOF character is read.
  *
  * The example code below mounts the SD card on the mount point 
- * `/sdcard` and then writes a file named `kit.txt` with the 
+ * `/sd_card` and then writes a file named `kit.txt` with the 
  * contents "Hello from AWS IoT Kit!":
  *
  * **Example:**
@@ -162,7 +160,7 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
  * FAT/FAT32 file system.
  *
  * The example code below mounts the SD card on the mount point 
- * `/sdcard` and then writes a file named `kit.txt` with the 
+ * `/sd_card` and then writes a file named `kit.txt` with the 
  * contents "Hello from AWS IoT Kit!":
  *
  * **Example:**

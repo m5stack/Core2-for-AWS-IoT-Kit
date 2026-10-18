@@ -205,28 +205,14 @@ static esp_err_t _rgb_remove_locked( void );
 
 static esp_err_t _rgb_lock( void )
 {
-    if( atomic_load( &_rgb_mutex_state ) != 2 )
-    {
-        unsigned char expected = 0;
-        if( atomic_compare_exchange_strong( &_rgb_mutex_state, &expected, 1 ) )
-        {
-            _rgb_mutex = xSemaphoreCreateMutexStatic( &_rgb_mutex_storage );
-            atomic_store( &_rgb_mutex_state, _rgb_mutex != NULL ? 2 : 0 );
-        }
-        else
-        {
-            while( atomic_load( &_rgb_mutex_state ) == 1 )
-            {
-                vTaskDelay( 1 );
-            }
-        }
-    }
-
-    if( _rgb_mutex == NULL )
+    SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
+        &_rgb_mutex_state, &_rgb_mutex, &_rgb_mutex_storage,
+        xSemaphoreCreateMutexStatic );
+    if( mutex == NULL )
     {
         return ESP_ERR_NO_MEM;
     }
-    return xSemaphoreTake( _rgb_mutex,
+    return xSemaphoreTake( mutex,
                            pdMS_TO_TICKS( SK6812_FLUSH_TIMEOUT_MS ) ) == pdTRUE
                ? ESP_OK
                : ESP_ERR_TIMEOUT;
@@ -460,6 +446,7 @@ static esp_err_t _rgb_remove_locked( void )
         esp_err_t err = rmt_del_channel( _rmt_channel );
         if( err != ESP_OK ) return err;
         _rmt_channel = NULL;
+        ( void )gpio_reset_pin( SK6812_GPIO );
     }
     memset( _led_buf, 0, SK6812_BUF_SIZE );
     return ESP_OK;

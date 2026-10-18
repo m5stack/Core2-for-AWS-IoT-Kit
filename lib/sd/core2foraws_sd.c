@@ -23,9 +23,12 @@
 #include "core2foraws_sd.h"
 #include "core2foraws_common.h"
 
+#define SD_MOUNT_PATH     "/sd_card"
+#define SD_MOUNT_PATH_LEN ( sizeof( SD_MOUNT_PATH ) - 1U )
+#define SD_PATH_STACK_MAX 128U
+
 static sdmmc_card_t* _sd_card;
-static const char *_mount_path = "/sd_card";
-static size_t _mount_path_len;
+static const char *_mount_path = SD_MOUNT_PATH;
 static StaticSemaphore_t _sd_mutex_storage;
 static SemaphoreHandle_t _sd_mutex = NULL;
 static atomic_uchar _sd_mutex_state;
@@ -43,22 +46,11 @@ static const char *_TAG = "CORE2FORAWS_SD";
 
 static esp_err_t _sd_lock( void )
 {
-    if( atomic_load( &_sd_mutex_state ) != 2 )
-    {
-        unsigned char expected = 0;
-        if( atomic_compare_exchange_strong( &_sd_mutex_state, &expected, 1 ) )
-        {
-            _sd_mutex = xSemaphoreCreateMutexStatic( &_sd_mutex_storage );
-            atomic_store( &_sd_mutex_state, _sd_mutex != NULL ? 2 : 0 );
-        }
-        else
-        {
-            while( atomic_load( &_sd_mutex_state ) == 1 ) vTaskDelay( 1 );
-        }
-    }
-
-    if( _sd_mutex == NULL ) return ESP_ERR_NO_MEM;
-    if( xSemaphoreTake( _sd_mutex,
+    SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
+        &_sd_mutex_state, &_sd_mutex, &_sd_mutex_storage,
+        xSemaphoreCreateMutexStatic );
+    if( mutex == NULL ) return ESP_ERR_NO_MEM;
+    if( xSemaphoreTake( mutex,
                        pdMS_TO_TICKS( SD_LIFECYCLE_TIMEOUT_MS ) ) != pdTRUE )
     {
         return ESP_ERR_TIMEOUT;
@@ -155,8 +147,6 @@ esp_err_t core2foraws_sd_mount( void )
         return ESP_OK;
     }
 
-    _mount_path_len = strlen( _mount_path );
-
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
     esp_vfs_fat_mount_config_t mount_config = {
         .format_if_mount_failed = false,
@@ -197,7 +187,8 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
 {
     esp_err_t err = ESP_OK;
     FILE *f = NULL;
-    char *path = NULL;
+    char stack_path[ SD_PATH_STACK_MAX ];
+    char *path = stack_path;
 
     if( file_name == NULL || message == NULL || to_read_length == 0 )
     {
@@ -215,15 +206,19 @@ esp_err_t core2foraws_sd_read( const char *file_name, char *message, size_t to_r
     }
 
     const size_t file_name_len = strlen( file_name );
-    path = malloc( _mount_path_len + file_name_len + 1 );
-    if( path == NULL )
+    const size_t total_path_len = SD_MOUNT_PATH_LEN + file_name_len + 1U;
+    if( total_path_len > sizeof( stack_path ) )
     {
-        _sd_unlock();
-        return ESP_ERR_NO_MEM;
+        path = malloc( total_path_len );
+        if( path == NULL )
+        {
+            _sd_unlock();
+            return ESP_ERR_NO_MEM;
+        }
     }
 
-    memcpy( path, _mount_path, _mount_path_len );
-    memcpy( path + _mount_path_len, file_name, file_name_len + 1 );
+    memcpy( path, _mount_path, SD_MOUNT_PATH_LEN );
+    memcpy( path + SD_MOUNT_PATH_LEN, file_name, file_name_len + 1U );
     
     err = _sd_spi_lock();
     if( err != ESP_OK )
@@ -275,7 +270,7 @@ cleanup:
         if( err == ESP_OK ) err = close_err;
     }
 
-    free( path );
+    if( path != stack_path ) free( path );
     _sd_unlock();
 
     return err;
@@ -285,7 +280,8 @@ esp_err_t core2foraws_sd_write( const char *file_name, const char* message, size
 {
     esp_err_t err = ESP_OK;
     FILE *f = NULL;
-    char *path = NULL;
+    char stack_path[ SD_PATH_STACK_MAX ];
+    char *path = stack_path;
 
     if( file_name == NULL || message == NULL || wrote_length == NULL )
     {
@@ -304,15 +300,19 @@ esp_err_t core2foraws_sd_write( const char *file_name, const char* message, size
     }
 
     const size_t file_name_len = strlen( file_name );
-    path = malloc( _mount_path_len + file_name_len + 1 );
-    if( path == NULL )
+    const size_t total_path_len = SD_MOUNT_PATH_LEN + file_name_len + 1U;
+    if( total_path_len > sizeof( stack_path ) )
     {
-        _sd_unlock();
-        return ESP_ERR_NO_MEM;
+        path = malloc( total_path_len );
+        if( path == NULL )
+        {
+            _sd_unlock();
+            return ESP_ERR_NO_MEM;
+        }
     }
 
-    memcpy( path, _mount_path, _mount_path_len );
-    memcpy( path + _mount_path_len, file_name, file_name_len + 1 );
+    memcpy( path, _mount_path, SD_MOUNT_PATH_LEN );
+    memcpy( path + SD_MOUNT_PATH_LEN, file_name, file_name_len + 1U );
 
     err = _sd_spi_lock();
     if( err != ESP_OK )
@@ -361,7 +361,7 @@ cleanup:
         if( err == ESP_OK ) err = close_err;
     }
 
-    free( path );
+    if( path != stack_path ) free( path );
     _sd_unlock();
 
     return err;

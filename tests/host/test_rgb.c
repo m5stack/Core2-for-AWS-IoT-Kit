@@ -26,6 +26,7 @@ BaseType_t xSemaphoreTake(SemaphoreHandle_t mutex, TickType_t timeout)
 }
 BaseType_t xSemaphoreGive(SemaphoreHandle_t mutex) { assert(mutex->depth == 1); mutex->depth--; return pdTRUE; }
 void vTaskDelay(TickType_t ticks) { assert(ticks == 1); }
+esp_err_t gpio_reset_pin(int pin) { assert(pin == 25); return ESP_OK; }
 esp_err_t rmt_new_tx_channel(const rmt_tx_channel_config_t *config, rmt_channel_handle_t *channel)
 {
     assert(config->gpio_num == 25 && !channel_storage.allocated);

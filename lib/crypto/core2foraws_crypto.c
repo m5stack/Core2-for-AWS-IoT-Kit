@@ -23,18 +23,55 @@
 
 #define ATECC608_I2C_ADDRESS_8BIT 0x6A
 #define ATECC608_I2C_BAUD_HZ      100000
+#define CRYPTO_LOCK_TIMEOUT_MS    1000U
+
+_Static_assert( CRYPTO_MAX_SIGNATURE_SIZE == ATCA_SIG_SIZE,
+                "CRYPTO_MAX_SIGNATURE_SIZE must match ATCA_SIG_SIZE" );
+_Static_assert( CRYPTO_SERIAL_STR_SIZE == ( ATCA_SERIAL_NUM_SIZE * 2 + 1 ),
+                "CRYPTO_SERIAL_STR_SIZE must match ATCA_SERIAL_NUM_SIZE" );
 
 static ATCAIfaceCfg _crypto_iface_cfg;
 
 static const char *_TAG = "CORE2FORAWS_CRYPTO";
 static bool _crypto_initialized = false;
+static StaticSemaphore_t _crypto_mutex_storage;
+static SemaphoreHandle_t _crypto_mutex = NULL;
+static atomic_uchar _crypto_mutex_state;
+
+static esp_err_t _crypto_lock( void )
+{
+    SemaphoreHandle_t mutex = core2foraws_common_mutex_ensure(
+        &_crypto_mutex_state, &_crypto_mutex, &_crypto_mutex_storage,
+        xSemaphoreCreateMutexStatic );
+    if( mutex == NULL )
+    {
+        return ESP_ERR_NO_MEM;
+    }
+    return xSemaphoreTake(
+               mutex, CORE2FORAWS_DELAY_MS_TO_TICKS( CRYPTO_LOCK_TIMEOUT_MS ) ) ==
+                   pdTRUE
+               ? ESP_OK
+               : ESP_ERR_TIMEOUT;
+}
+
+static void _crypto_unlock( void )
+{
+    xSemaphoreGive( _crypto_mutex );
+}
 
 esp_err_t core2foraws_crypto_init( void )
 {
     ESP_LOGI( _TAG, "\tInitializing" );
 
+    esp_err_t lock_err = _crypto_lock();
+    if( lock_err != ESP_OK )
+    {
+        return lock_err;
+    }
+
     if ( _crypto_initialized )
     {
+        _crypto_unlock();
         return ESP_OK;
     }
 
@@ -46,11 +83,13 @@ esp_err_t core2foraws_crypto_init( void )
 
     if ( err != ATCA_SUCCESS )
     {
+        _crypto_unlock();
         ESP_LOGE( _TAG, "\tFailed to initialize ATECC608. atcab_init returned %x", err );
         return core2foraws_common_error( err );
     }
 
     _crypto_initialized = true;
+    _crypto_unlock();
     ESP_LOGD( _TAG, "\tSuccessfully initialized ATECC608" );
 
     return core2foraws_common_error( err );
@@ -63,9 +102,21 @@ esp_err_t core2foraws_crypto_serial_get( char *serial_number )
         return ESP_ERR_INVALID_ARG;
     }
 
+    esp_err_t lock_err = _crypto_lock();
+    if( lock_err != ESP_OK )
+    {
+        return lock_err;
+    }
+    if( !_crypto_initialized )
+    {
+        _crypto_unlock();
+        return ESP_ERR_INVALID_STATE;
+    }
+
     uint8_t serial[ ATCA_SERIAL_NUM_SIZE ];
 
     ATCA_STATUS err = atcab_read_serial_number( serial );
+    _crypto_unlock();
 
     if ( err != ATCA_SUCCESS )
     {
@@ -91,6 +142,17 @@ esp_err_t core2foraws_crypto_pubkey_base64_get( char *public_key )
         return ESP_ERR_INVALID_ARG;
     }
 
+    esp_err_t lock_err = _crypto_lock();
+    if( lock_err != ESP_OK )
+    {
+        return lock_err;
+    }
+    if( !_crypto_initialized )
+    {
+        _crypto_unlock();
+        return ESP_ERR_INVALID_STATE;
+    }
+
     size_t buf_len = CRYPTO_PUB_KEY_SIZE;
     uint8_t buf[ buf_len ];
     uint8_t *tmp;
@@ -105,6 +167,7 @@ esp_err_t core2foraws_crypto_pubkey_base64_get( char *public_key )
     uint8_t pubkey[ ATCA_PUB_KEY_SIZE ];
 
     ATCA_STATUS err = atcab_get_pubkey( 0, pubkey );
+    _crypto_unlock();
     if ( err != ATCA_SUCCESS )
     {
         ESP_LOGE( _TAG, "\tFailed to get public key from ATECC608. atcab_get_pubkey returned %x", err );
@@ -141,7 +204,19 @@ esp_err_t core2foraws_crypto_sha256_sign( const unsigned char *message, uint8_t 
     }
 
     *signature_length = 0;
+    esp_err_t lock_err = _crypto_lock();
+    if( lock_err != ESP_OK )
+    {
+        return lock_err;
+    }
+    if( !_crypto_initialized )
+    {
+        _crypto_unlock();
+        return ESP_ERR_INVALID_STATE;
+    }
+
     ATCA_STATUS err = atcab_sign( 0, message, signature );
+    _crypto_unlock();
     if ( err != ATCA_SUCCESS )
     {
         ESP_LOGE( _TAG, "\tFailed to sign digest with ATECC608. atcab_sign returned 0x%x", err );
@@ -165,12 +240,24 @@ esp_err_t core2foraws_crypto_sha256_verify( const unsigned char *message, const 
         return ESP_ERR_INVALID_SIZE;
     }
 
+    esp_err_t lock_err = _crypto_lock();
+    if( lock_err != ESP_OK )
+    {
+        return lock_err;
+    }
+    if( !_crypto_initialized )
+    {
+        _crypto_unlock();
+        return ESP_ERR_INVALID_STATE;
+    }
+
     uint8_t public_key[ ATCA_PUB_KEY_SIZE ];
     ATCA_STATUS err = atcab_get_pubkey( 0, public_key );
     if ( err == ATCA_SUCCESS )
     {
         err = atcab_verify_extern( message, signature, public_key, verified );
     }
+    _crypto_unlock();
 
     if ( err != ATCA_SUCCESS )
     {

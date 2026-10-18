@@ -18,34 +18,48 @@ production include paths.
   and early termination after mandatory I2C/PMU failures.
 - I2C: uninitialized access, shared references, removal retry, stale handles,
   register framing, stack/heap payload paths, and deterministic close interleavings.
-- Audio: 100 Hz RTOS versus millisecond I2S waits, partial transfers, invalid
-  arguments, mode exclusion, lock timeouts, and failed startup/PMU shutdown/
-  channel disable/delete retries without lost handles or premature pin resets.
-- RGB: GRB framing, in-flight buffer ownership, and failed wait/disable/encoder
-  delete/channel delete/startup rollback retries.
+- Audio: 100 Hz RTOS versus millisecond I2S waits, chunked silence drain under
+  the audio lock, partial transfers, invalid arguments, mode exclusion, lock
+  timeouts, and failed startup/PMU shutdown/channel disable/delete retries
+  without lost handles or premature pin resets.
+- RGB: GRB framing, in-flight buffer ownership, GPIO25 reset on deinit, and
+  failed wait/disable/encoder delete/channel delete/startup rollback retries.
 - Expansion: mock pin routing rejects reset while I2C/UART is active; GPIO-to-
-  paired-bus begin, single-pin release, reopen, delete failures and UART setup
-  retry. ADC/DAC stubs do not validate analog behavior or calibration.
+  paired-bus begin, single-pin release, reopen, delete failures, UART setup
+  retry, Port A digital input pull-down suppression, linear 0–3300 mV DAC
+  mapping, and ADC teardown failure retry.
 - Motion: sample conversion holds ownership through output assignment, and
   range writes update the cache before unlock. Failed transfers preserve the
-  cache; all four ranges are checked against fixed sample values. This checks
-  software serialization, not sensor settling or independent calibration.
+  cache; all four ranges, temperature sensor startup wait, and NULL argument
+  checks are verified against fixed sample values. This checks software
+  serialization, not sensor settling or independent calibration.
 - BMI270: cold-start configuration upload through INIT_ADDR-addressed chunks,
   reuse of a configuration that survived an ESP32-only reset, rejected-file
   timeout, wrong CHIP_ID, little-endian scaling for every range, failed range
-  writes, and the invalid-temperature marker. The mock checks the file bytes,
-  not the IMU's internal processing.
+  writes, temperature startup wait, and the invalid-temperature marker. The mock
+  checks the file bytes, not the IMU's internal processing.
 - Board: MPU6886/BMI270 identification (including a BMI270-like value in the
   MPU6886 trim register), absent IMU, probe caching, and LCD reporting.
 - SD: native temporary files, close/flush errors, close-time SPI timeouts, retry
   before unmount, and output initialization. No SD card is touched.
 - RTC: independently specified epochs for 1900, 1970, leap day 2000, the 2038
-  boundary, and 2099; extreme input years must not reach I2C.
+  boundary, and 2099; calendar day-of-month validation, STOP bit framing around
+  time writes, CLKOUT disable on init, AF/TF write-1-to-preserve semantics, and
+  rejection of extreme input years before I2C.
 - Power: forbidden direct MCU voltage/disable requests, including raw-register
   and masked-update entry points, produce no mocked I2C writes. Normal startup
-  and peripheral controls still work. Normal shutdown sets only REG32H bit 7,
-  leaving every other mocked register unchanged. Dangerous rail requests are
-  tested only here; the host model does not simulate actual power loss/restart.
+  preserves REG30H VHOLD bits and presets LDO3 (vibrator) to 3000 mV; peripheral
+  controls and dynamic REG84H coulomb sample-rate scaling work. Normal shutdown
+  sets only REG32H bit 7, leaving every other mocked register unchanged.
+  Dangerous rail requests are tested only here; the host model does not simulate
+  actual power loss/restart.
+- Button: uninitialized state checks, task-creation failure retry, idle touch
+  poll skipping when no callbacks are registered and no button is held, debounce
+  timing, simultaneous two-point multi-touch press/release, and long-press
+  single-fire behavior.
+- Crypto: uninitialized call rejection, failed-init retry, idempotent init
+  pinning 8-bit address 0x6A at 100 kHz, mutex serialization, and hex serial /
+  base64 public-key / raw 64-byte P-256 sign and verify paths.
 - First-use waits: audio, I2C, and SD mocks allow the initializer to finish only
   when the waiter blocks; spinning with `taskYIELD()` fails the regression.
 

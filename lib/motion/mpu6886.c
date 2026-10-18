@@ -26,7 +26,8 @@
 #define MPU6886_I2C_SPEED_HZ         400000
 #define MPU6886_DEVICE_RESET_BIT     0x80
 #define MPU6886_RESET_TIMEOUT_MS     100
-/* Datasheet section 11.1 maximums, measured from leaving sleep */
+/* Datasheet sections 3.3 (Table 4) and 11.1 maximums, measured from leaving sleep */
+#define MPU6886_TEMP_STARTUP_US      ( 14 * 1000 )
 #define MPU6886_ACCEL_STARTUP_US     ( 20 * 1000 )
 #define MPU6886_GYRO_STARTUP_US      ( 100 * 1000 )
 
@@ -38,6 +39,7 @@ static i2c_master_dev_handle_t _mpu6886_dev;
 static gyro_scale_t gyro_scale = MPU6886_GFS_2000DPS;
 static acc_scale_t  acc_scale  = MPU6886_AFS_8G;
 static float acc_res, gyro_res;
+static int64_t _temp_ready_us;
 static int64_t _accel_ready_us;
 static int64_t _gyro_ready_us;
 
@@ -152,6 +154,7 @@ esp_err_t mpu6886_init( core2foraws_i2c_port_t port )
         return err;
     }
     const int64_t wake_us = esp_timer_get_time();
+    _temp_ready_us = wake_us + MPU6886_TEMP_STARTUP_US;
     _accel_ready_us = wake_us + MPU6886_ACCEL_STARTUP_US;
     _gyro_ready_us = wake_us + MPU6886_GYRO_STARTUP_US;
 
@@ -181,10 +184,12 @@ esp_err_t mpu6886_init( core2foraws_i2c_port_t port )
         return err;
     }
 
-    /* CONFIG (0x1A) DLPF_CFG=1: enables the digital low-pass filter.
-     * Effect: gyroscope 3-dB bandwidth = 184 Hz, delay = 2.9 ms;
+    /* CONFIG (0x1A) DLPF_CFG=1: clears reserved bit 7 (reset value 1) and
+     * enables the digital low-pass filter.
+     * Effect: gyroscope 3-dB bandwidth = 176 Hz (noise BW = 177.0 Hz),
+     *         temperature 3-dB bandwidth = 188 Hz,
      *         internal gyro/accel sample rate (Fs) becomes 1 kHz.
-     * (See MPU-6886 datasheet Table 1, DLPF_CFG register description.) */
+     * (See MPU-6886 datasheet section 8.15, DLPF_CFG table.) */
     err = write_reg( MPU6886_CONFIG, 0x01 );
     if ( err != ESP_OK )
     {
@@ -256,6 +261,7 @@ esp_err_t mpu6886_init( core2foraws_i2c_port_t port )
 
 esp_err_t mpu6886_adc_accel_get( int16_t *ax, int16_t *ay, int16_t *az )
 {
+    if( ax == NULL || ay == NULL || az == NULL ) return ESP_ERR_INVALID_ARG;
     uint8_t buf[ MPU6886_ADC_ACCEL_NUM_BYTES ];
 
     esp_err_t err = read_reg( MPU6886_ACCEL_XOUT_H,
@@ -274,6 +280,7 @@ esp_err_t mpu6886_adc_accel_get( int16_t *ax, int16_t *ay, int16_t *az )
 
 esp_err_t mpu6886_adc_gyro_get( int16_t *gx, int16_t *gy, int16_t *gz )
 {
+    if( gx == NULL || gy == NULL || gz == NULL ) return ESP_ERR_INVALID_ARG;
     uint8_t buf[ MPU6886_ADC_GYRO_NUM_BYTES ];
 
     esp_err_t err = read_reg( MPU6886_GYRO_XOUT_H,
@@ -292,6 +299,7 @@ esp_err_t mpu6886_adc_gyro_get( int16_t *gx, int16_t *gy, int16_t *gz )
 
 esp_err_t mpu6886_adc_temp_get( int16_t *t )
 {
+    if( t == NULL ) return ESP_ERR_INVALID_ARG;
     uint8_t buf[ MPU6886_ADC_TEMP_NUM_BYTES ];
 
     esp_err_t err = read_reg( MPU6886_TEMP_OUT_H,
@@ -312,6 +320,7 @@ esp_err_t mpu6886_adc_temp_get( int16_t *t )
 
 esp_err_t mpu6886_gyro_res_get( gyro_scale_t scale, float *resolution )
 {
+    if( resolution == NULL ) return ESP_ERR_INVALID_ARG;
     switch ( scale )
     {
         case MPU6886_GFS_250DPS:
@@ -334,6 +343,7 @@ esp_err_t mpu6886_gyro_res_get( gyro_scale_t scale, float *resolution )
 
 esp_err_t mpu6886_accel_res_get( acc_scale_t scale, float *resolution )
 {
+    if( resolution == NULL ) return ESP_ERR_INVALID_ARG;
     switch ( scale )
     {
         case MPU6886_AFS_2G:
@@ -470,6 +480,8 @@ esp_err_t mpu6886_accel_gyro_data_get( float *ax, float *ay, float *az,
 
 esp_err_t mpu6886_temp_data_get( float *t )
 {
+    if( t == NULL ) return ESP_ERR_INVALID_ARG;
+    _wait_until( _temp_ready_us );
     int16_t raw_temp = 0;
     esp_err_t err = mpu6886_adc_temp_get( &raw_temp );
 

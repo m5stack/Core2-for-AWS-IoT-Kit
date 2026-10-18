@@ -80,6 +80,18 @@ done
     test_power.c ../../lib/power/axp192.c -o "$build_dir/test_power"
 "$build_dir/test_power"
 
+"${CC:-cc}" -std=c11 -Wall -Wextra -Werror -g \
+    -fsanitize=address,undefined -fno-omit-frame-pointer \
+    -Imocks/include -I../../lib/common/include -I../../lib/button/include \
+    test_button.c -o "$build_dir/test_button"
+"$build_dir/test_button"
+
+"${CC:-cc}" -std=c11 -Wall -Wextra -Werror -g \
+    -fsanitize=address,undefined -fno-omit-frame-pointer \
+    -Imocks/include -I../../lib/common/include -I../../lib/crypto/include \
+    test_crypto.c -o "$build_dir/test_crypto"
+"$build_dir/test_crypto"
+
 "${CC:-cc}" -std=c11 -Wall -Wextra -Werror -Wno-unused-variable -Wno-unused-parameter -g \
     -fsanitize=address,undefined -fno-omit-frame-pointer \
     -Imocks/wifi -Imocks/include -I../../lib/wifi/include \
