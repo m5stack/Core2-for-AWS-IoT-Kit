@@ -1,4 +1,4 @@
-# M5Stack Core2 for AWS - Hardware Reference (LLM Driver / BSP Specification)
+# M5Stack Core2 for AWS - Hardware Reference (BSP Specification)
 
 ## Source and Variant Scope
 

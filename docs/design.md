@@ -7,8 +7,7 @@
 > **Living document:** this design doc is expected to evolve alongside the BSP.
 > When the code changes (init flow, public APIs, modules, shared-resource
 > handling, power, build config, or pin usage), this document must be updated in
-> the same change. The maintenance contract is defined in
-> [.claude/rules/design-doc.md](../.claude/rules/design-doc.md).
+> the same change.
 
 ---
 
@@ -54,7 +53,7 @@ purposes.
 | --- | --- |
 | **Stability first** | Shared hardware (buses, the audio clock) is protected by a lock. Successfully initialized modules are idempotent, and failures are returned rather than aborting the application. |
 | **One obvious entry point** | The application includes [core2foraws.h](../include/core2foraws.h) and calls `core2foraws_init()` for automatic modules. Audio, SD, expansion-port sessions, and Wi-Fi start remain explicit. |
-| **Hardware truth, encoded once** | Pin maps, power sequencing, and shared-bus rules live in the BSP, not in your app. See [.claude/rules/pinmap.md](../.claude/rules/pinmap.md) and [.claude/rules/board.md](../.claude/rules/board.md). |
+| **Hardware truth, encoded once** | Pin maps, power sequencing, and shared-bus rules live in the BSP, not in your app. See [schema.yml](../datasheet/schema.yml) and [schematic.md](../datasheet/schematic.md). |
 | **Predictable error handling** | Most operations return `esp_err_t` and place results in output parameters; state snapshots and diagnostic getters are documented individually. |
 | **Readable over clever** | Device drivers are thin and explicit, with board bus and power dependencies visible at their call sites. |
 | **Pay only for what you use** | The master `SOFTWARE_BSP_SUPPORT` switch gates the common and hardware layers; individual hardware modules are further gated by their `CONFIG_SOFTWARE_*` flags. |
@@ -385,8 +384,7 @@ internal DRAM and leaves PSRAM for large, CPU-only, latency-tolerant data.
   required and available sizes instead of failing opaquely.
 - **`core2foraws_common_heap_report()`** reports current and minimum-ever free
   size plus the largest contiguous block for internal DRAM, DMA-capable DRAM,
-  and PSRAM. Use it to validate a budget change; the verification procedure is in
-  [.claude/rules/memory-placement.md](../.claude/rules/memory-placement.md).
+  and PSRAM. Use it to validate a budget change (see the procedure below).
 - **Audio I2S, SD/shared-SPI, and SK6812 RMT buffers** are likewise internal —
   their DMA engines cannot reach PSRAM.
 - **Application scratch/payload buffers** (mic copies, UART payloads, crypto
@@ -403,8 +401,15 @@ releasing BLE controller memory when already provisioned, Wi-Fi buffer tuning)
 are documented in the "Internal DRAM budget" section of
 [README.md](../README.md).
 
-The full policy and decision checklist live in
-[.claude/rules/memory-placement.md](../.claude/rules/memory-placement.md).
+To change `CONFIG_CORE2FORAWS_LCD_DRAW_BUF_LINES`:
+
+1. Build the real application with Wi-Fi and BLE enabled.
+2. Call `core2foraws_common_heap_report()` after `core2foraws_init()` and again
+   once the network is up.
+3. Confirm the DMA-capable largest free block still exceeds one draw buffer
+   (`320 × lines × 2` bytes) with margin, including across display re-init.
+4. If it does not, reclaim internal DRAM with the README levers before lowering
+   the line count; never move the draw buffers to PSRAM.
 
 ---
 
@@ -846,8 +851,8 @@ DMA buffers, or lifecycle ownership require the corresponding hardware test.
 
 These are the "gotchas" that the BSP exists to manage. If you extend the BSP or
 write low-level code, keep them in mind. The full pin map is in
-[.claude/rules/pinmap.md](../.claude/rules/pinmap.md) and the rationale in
-[.claude/rules/board.md](../.claude/rules/board.md).
+[schema.yml](../datasheet/schema.yml) and the wiring evidence in
+[schematic.md](../datasheet/schematic.md).
 
 1. **LCD and SD share one SPI bus** — coordinate with the shared semaphore.
 2. **Two distinct I2C buses** — on-board chips are on the *internal* bus; only
@@ -863,7 +868,7 @@ write low-level code, keep them in mind. The full pin map is in
    bus/audio/CS pins above) must never be repurposed.
 9. **DMA/latency-critical buffers stay in internal DRAM** — the LVGL draw
    buffers, audio I2S, SD/SPI, and RGB-LED RMT buffers must not be moved to
-   PSRAM (see [.claude/rules/memory-placement.md](../.claude/rules/memory-placement.md)).
+   PSRAM (see section 5).
 
 ---
 

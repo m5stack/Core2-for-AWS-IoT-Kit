@@ -924,7 +924,7 @@ esp_err_t core2foraws_display_init( void )
             /* Draw buffers must live in internal, DMA-capable RAM. PSRAM is
              * not DMA-addressable; a PSRAM draw buffer stalls the SPI flush
              * and causes UI hangs/crashes. Keep buff_spiram = false. See
-             * .claude/rules/memory-placement.md. */
+             * docs/design.md, section 5. */
             .buff_dma    = true,
             .buff_spiram = false,
         },

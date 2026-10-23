@@ -1,97 +1,88 @@
-# M5Stack Core2 for AWS IoT Kit Board Support Package (BSP)
+# M5Stack Core2 for AWS IoT Kit BSP
 
-Version 3.0.0. Licensed under MIT with attribution to Rashed Talukder (2022) and M5Stack (2022); see [LICENSE](LICENSE) and [NOTICE](NOTICE). Upstream attribution is retained in [THIRD-PARTY-LICENSES.txt](THIRD-PARTY-LICENSES.txt). The Bosch BMI270 configuration file remains BSD-3-Clause, and datasheets and managed dependencies retain their own terms.
-Generate the API and engineering reference with `doxygen Doxyfile` from this directory; open `generated-docs/html/index.html` to browse it.
+An ESP-IDF board support package (BSP) for the [M5Stack Core2 for AWS IoT Kit](https://shop.m5stack.com/products/m5stack-core2-for-aws-kit-v1-3). It wraps the kit's display, touch, power management, audio, motion sensor, RGB LEDs, RTC, microSD, secure element, expansion ports, and Wi-Fi behind a single `core2foraws_init()` call, and it is the BSP used by the [AWS IoT Kit](https://aws-iot-kit-docs.m5stack.com) tutorials.
 
-Doxygen 1.13.2 is validated for this reference. On macOS, Homebrew Doxygen
-1.18.0 can crash intermittently in its Markdown scanner. An isolated tool
-environment avoids replacing the system installation:
+## Supported hardware
 
-```sh
-conda create --yes --prefix "$HOME/.local/share/core2-doxygen" -c conda-forge doxygen=1.13.2
-conda run --prefix "$HOME/.local/share/core2-doxygen" doxygen Doxyfile
-```
+One firmware image runs on all hardware revisions. The BSP detects the IMU and LCD controller at run time; call `core2foraws_board_info_get()` to get the model and part names.
 
-This repository contains the drivers specific to the [M5Stack Core2 for AWS IoT Kit](https://m5stack.com/products/m5stack-core2-esp32-iot-development-kit-for-aws-iot-kit) reference Hardware. This BSP is used in the microcontroller tutorials presented in the [AWS IoT Kit](https://aws-iot-kit-docs.m5stack.com) program.
+| Model | IMU | Microphone | LCD controller |
+| --- | --- | --- | --- |
+| Core2 for AWS | MPU6886 | SPM1423 | ILI9342C, or ILI9342E on units built from 2026-08-07 |
+| [Core2 for AWS v1.3](https://docs.m5stack.com/en/products/sku/K010-AWS-V13) | BMI270 | LMD4737T261 | ILI9342C, or ILI9342E on units built from 2026-08-07 |
 
-One build supports both kit models. The [Core2 for AWS v1.3](https://docs.m5stack.com/en/products/sku/K010-AWS-V13) replaces the MPU6886 IMU with a BMI270 and the SPM1423 microphone with an LMD4737T261; units of either model built from 2026-08-07 use an ILI9342E instead of an ILI9342C LCD controller. The BSP detects the IMU and LCD controller at run time; call `core2foraws_board_info_get()` for the model and part names.
+## Modules
 
-## Repository layout
+| Module | Hardware |
+| --- | --- |
+| `audio` | NS4168 speaker amplifier and PDM microphone |
+| `board` | Model and part detection |
+| `button` | Virtual touch buttons on the FT6336 touch panel |
+| `common` | Shared internal/external I2C and SPI2 buses, locks, heap reporting |
+| `crypto` | ATECC608 secure element |
+| `display` | ILI9342C/E LCD with LVGL 9 and touch input |
+| `expports` | Port A (I2C), Port B (GPIO/ADC/DAC), Port C (UART) |
+| `motion` | MPU6886 or BMI270 IMU |
+| `power` | AXP192 PMU: battery, backlight, vibration motor, speaker enable |
+| `rgb_led` | 10-pixel SK6812 LED bar |
+| `rtc` | BM8563 real-time clock |
+| `sd` | microSD card |
+| `wifi` | Wi-Fi station and BLE provisioning |
 
-```text
-core2foraws.c             BSP initialization entry point
-include/                 Public umbrella header
-lib/<module>/            Module implementation, public headers, chip datasheets
-datasheet/               Board schematics and wiring schema
-docs/                    Architecture and engineering documentation
-tests/host/              Native regression cases and runner
-tests/host/mocks/include/ Host-only SDK declarations
-tests/hardware/          Explicitly opted-in standalone ESP-IDF test application
-.claude/rules/           Agent maintenance policies
-```
+Each module can be turned on or off in `menuconfig` under **Core2 for AWS hardware features**.
 
-Start with [the design](docs/design.md), [hardware wiring](datasheet/schema.yml),
-or [test instructions](tests/README.md). Production source and public include
-paths remain stable. Tests and mock headers are never compiled into ordinary
-BSP consumers; generated build/dependency/configuration files stay untracked.
+## Requirements
 
-## Cloning
+- ESP-IDF 6.1.0 (validated). PlatformIO users can build with `espressif32` 7.1.3 from the consuming application.
+- The IDF Component Manager, which resolves the dependencies in [idf_component.yml](idf_component.yml) (LVGL, esp_lvgl_port, esp-cryptoauthlib, network_provisioning, and others).
 
-To clone using HTTPS:
+Follow [AWS IoT Kit — Getting Started](https://aws-iot-kit-docs.m5stack.com/en/getting-started/kit) to set up your environment.
+
+## Getting started
+
+The easiest way to start is the [project template](https://github.com/m5stack/Project_Template-Core2_for_AWS), which already includes this BSP and the application configuration it needs.
+
+To add the BSP to an existing ESP-IDF project, add it as a component:
 
 ```shell
-git clone -b BSP-dev https://github.com/m5stack/Core2-for-AWS-IoT-Kit.git
+git submodule add -b BSP-dev https://github.com/m5stack/Core2-for-AWS-IoT-Kit.git components/Core2-for-AWS-IoT-Kit
 ```
 
-Using SSH:
+Then initialize the board from your application:
 
-```shell
-git clone -b BSP-dev git@github.com:m5stack/Core2-for-AWS-IoT-Kit.git
+```c
+#include "core2foraws.h"
+
+void app_main( void )
+{
+    ESP_ERROR_CHECK( core2foraws_init() );
+}
 ```
 
-**Windows users:** If the repository or any project consuming it contains symbolic links, set `core.symlinks true` (`git config --global core.symlinks true`) and either enable [Developer Mode](https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development) or run git commands from an elevated console.
+`core2foraws_init()` brings up the internal I2C bus and the PMU first and returns immediately if either fails. It then starts the other enabled modules and returns `ESP_FAIL` if any of them fail. Audio, SD, expansion-port sessions, and Wi-Fi are started explicitly by the application.
 
-## Usage
+> **Windows:** if your project uses symbolic links, run `git config --global core.symlinks true` and either enable [Developer Mode](https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development) or run git from an elevated console.
 
-It is recommended to use the [project template](https://github.com/m5stack/Project_Template-Core2_for_AWS) instead of the BSP directly. The project template contains the application configuration and managed dependencies required by the Core2 for AWS IoT Kit.
+## Usage notes
 
-This repository is an ESP-IDF component, not a standalone application. Current validation uses [PlatformIO](https://github.com/platformio/platform-espressif32) `espressif32` 7.1.3 with ESP-IDF 6.1.0. Earlier ESP-IDF 5.3/6.0 validations predate the latest dependency update and have not been repeated. This component does not contain its own `platformio.ini`. Follow the [AWS IoT Kit — Getting Started](https://aws-iot-kit-docs.m5stack.com/en/getting-started/kit) tutorial for environment setup.
+- **LVGL:** guard LVGL calls with `lvgl_port_lock()`, not `core2foraws_common_spi_semaphore`. The SPI semaphore is held during display DMA, so taking it around an LVGL call that triggers a refresh will deadlock.
+- **Shared SPI:** the display and SD card share SPI2. Every wait is bounded by `CORE2FORAWS_SPI_LOCK_TIMEOUT_MS` (500 ms), so SD calls can return `ESP_ERR_TIMEOUT` while the display is busy.
+- **Touch:** read touch with `core2foraws_display_touch_data_get()` rather than the raw touch handle, so reads are serialized on the internal I2C bus.
+- **Wi-Fi:** the BSP owns the Wi-Fi state machine. Do not call `esp_wifi_connect()`, `esp_wifi_disconnect()`, `esp_wifi_set_config()`, or `esp_wifi_stop()` directly. `core2foraws_wifi_forget()` clears only the stored Wi-Fi configuration.
+- **Audio:** the speaker and microphone share GPIO0, so only one can be active at a time.
+- **Expansion ports:** resetting or reassigning either pin of an active I2C or UART pair releases the whole peripheral. Re-register Port A devices after reopening the bus.
+- **Power:** the ESP32 rail (DCDC1) cannot be disabled or changed through the BSP. Use `core2foraws_power_off()` for a normal shutdown, after stopping workers, closing the SD card, and committing NVS.
+- **Secure element:** ATECC608 signatures are raw 64-byte P-256 `R || S` values.
+- **Teardown:** if a deinit or disable call fails, the BSP keeps its resources. Retry the call before re-enabling the module.
+- **Startup time:** on the v1.3, the first `core2foraws_init()` after power-on takes about 0.26 s longer while the BMI270 configuration is uploaded.
 
-`core2foraws_init()` requires internal I2C and PMU initialization to succeed before attempting downstream peripherals. A failure in either returns its original error immediately. Later enabled automatic modules are attempted and failures are aggregated as `ESP_FAIL`. Applications that need module-specific recovery can initialize those modules independently. Wi-Fi initialization returns NVS and network errors without erasing the default NVS partition; `core2foraws_wifi_forget()` clears only persistent Wi-Fi configuration.
-
-The master `SOFTWARE_BSP_SUPPORT` Kconfig option controls the common layer and all hardware modules. When it is disabled, common APIs are not compiled or exposed and `core2foraws_init()` is a successful no-op.
-
-The internal I2C bus is a permanent, recursively locked board resource. The ATECC608 wake token, including its expected address-zero NACK, is handled through that shared bus rather than by taking direct GPIO ownership. External Port A I2C can host multiple managed devices and can be closed/reopened independently. Display and SD share one common-owned SPI2 bus; SD transfers are chunked so large file operations do not monopolize display refresh.
-
-API safety notes for this revision:
-
-- Failed audio/RGB teardown retains owned resources: retry disable/deinit before re-enabling or sending data. This also covers failed initialization rollback.
-- Resetting or reassigning one active I2C/UART expansion pin releases the full pair. Re-register Port A devices after reopening; old handles are invalid.
-- Motion range/cache changes are serialized with scaled reads. This prevents mixed software scale factors, not physical sensor settling after range changes.
-- On the v1.3, the first `core2foraws_init()` after power-on takes about 0.26 s longer while the BMI270 configuration file is uploaded. ESP32-only resets keep the loaded file.
-- Direct MCU-rail changes are protected: DCDC1 cannot be disabled or set to anything other than 3350 mV, including through BSP raw PMU helpers. Normal whole-device shutdown remains available through `core2foraws_power_off()` (AXP192 REG32H bit 7), preserving rail/startup configuration for power-key restart. Stop workers, close SD, and commit NVS first. Direct I2C outside the power module is not covered; see [docs/design.md](docs/design.md), section 6.1.
-- Wi-Fi is owned by one BSP state machine; applications must not call `esp_wifi_connect()`, `esp_wifi_disconnect()`, `esp_wifi_set_config()`, or `esp_wifi_stop()` directly. All lifecycle, scan, connect, and provisioning calls share one lock. First-use mutex waiters block briefly instead of starving lower-priority initialization tasks.
-- Tests may write the dedicated SD file and NVS namespace, but must not modify secure-element slots, keys, locks, counters, or MCU rail/startup configuration. A supervised normal off/on test is permitted; making the MCU unreachable on restart is not.
-- Use `core2foraws_display_touch_data_get()` instead of reading the raw touch handle; it participates in internal-I2C serialization.
-- Physical touch reads are interrupt-gated and use a BSP-owned 100 ms transport timeout, preventing an unresponsive controller from monopolizing the shared internal-I2C bus.
-- ATECC608 signatures are fixed 64-byte raw P-256 `R || S` values; verification rejects encoded or differently sized signatures with `ESP_ERR_INVALID_SIZE`.
-- `core2foraws_expports_uart_read()` requires the destination buffer capacity before the output byte count.
-- Audio lock waits and I2S transfers each use `AUDIO_IO_TIMEOUT_MS`, with the correct units for each API, and serialize against speaker/microphone disable.
-- `core2foraws_display_deinit()` retains resources on a SPI-barrier timeout; otherwise it releases display, touch, and LVGL resources while leaving shared SPI2 available to SD.
-- Display flushes skip panel transfers on SPI lock timeout, rather than running unsynchronized. Re-invalidate the affected screen after contention clears.
-- SD close errors are returned; a SPI-blocked close is retained and retried before another SD operation.
-- Guard LVGL object access with `lvgl_port_lock()`, **not** `core2foraws_common_spi_semaphore`. The SPI semaphore is held across the display's DMA transfer; taking it around an LVGL call that can trigger a refresh will deadlock.
-- Every wait on the shared SPI bus is bounded by `CORE2FORAWS_SPI_LOCK_TIMEOUT_MS` (500 ms), so SD APIs can return `ESP_ERR_TIMEOUT` if a display transfer stalls.
+See the [design document](docs/design.md) for the full ownership, locking, and power rules.
 
 ## Internal DRAM budget
 
-Test coverage and remaining limitations are in [tests/README.md](tests/README.md).
-Historical performance figures below were not re-established by the September
-2026 smoke test.
+The board has 8 MB of PSRAM, but PSRAM is not DMA-capable. The LVGL draw buffers, audio I2S, shared SPI2, and SK6812 RMT buffers must stay in internal DRAM, which is limited.
 
-The board has 8 MB of PSRAM but only a small internal DRAM pool, and PSRAM is **not** DMA-addressable. Every DMA-driven BSP buffer — the LVGL draw buffers, audio I2S, shared SPI2, and the SK6812 RMT buffer — must live in internal DRAM. PSRAM is never a fallback for these.
-
-The largest single consumer is the pair of LVGL draw buffers, sized by `CONFIG_CORE2FORAWS_LCD_DRAW_BUF_LINES`:
+The largest consumer is the pair of LVGL draw buffers, sized by `CONFIG_CORE2FORAWS_LCD_DRAW_BUF_LINES`:
 
 | Lines | Per buffer | Total (double-buffered) |
 | --- | --- | --- |
@@ -99,32 +90,52 @@ The largest single consumer is the pair of LVGL draw buffers, sized by `CONFIG_C
 | 20 (default) | 12,800 B | 25,600 B |
 | 40 | 25,600 B | 51,200 B |
 
-Each buffer needs a single **contiguous** DMA-capable block. Contiguity, not total free heap, is what fails once Wi-Fi and BLE are running, so a build that boots fine on the bench can still fail to bring up the display in the field. `core2foraws_display_init()` checks this before allocating and logs the required versus available sizes, returning `ESP_ERR_NO_MEM` rather than failing silently.
+Each buffer needs one contiguous DMA-capable block. That usually becomes the limit once Wi-Fi and BLE are running, even when total free heap looks fine. `core2foraws_display_init()` checks this up front and returns `ESP_ERR_NO_MEM` with the required and available sizes.
 
-Call `core2foraws_common_heap_report()` after `core2foraws_init()` and again once the network is up to measure current free memory, the minimum-ever free watermark, and the largest contiguous block. Validate any change to the draw buffer height against those numbers.
+Call `core2foraws_common_heap_report()` after `core2foraws_init()` and again once the network is up to see free memory, the low-water mark, and the largest contiguous block. Measure with the radios running before changing the draw buffer height.
 
-The 20-line default was validated on hardware with 72 tests spanning display, audio, storage durability, fault injection, connectivity, concurrency, memory pressure, and soak. Compared with 40 lines it reclaimed about 25 KB of internal DMA memory, while the 60-flush stress test moved from 949 ms to 983 ms.
-
-Measure with the radios up. With the Wi-Fi and BLE stacks brought up, the low-water marks were 85,887 bytes of internal DRAM and 80,479 bytes of DMA-capable DRAM, against a 110,592-byte largest contiguous block. The same suite without the radios reports roughly 128 KB and 100 KB — comfortable numbers that hide the real budget, which is why a bench measurement is not evidence that the display will come up in the field.
-
-If you need more internal DRAM, apply these in your application's `sdkconfig` (a component cannot set them for you), roughly in order of payoff:
+To free internal DRAM, set these in your application's `sdkconfig`, roughly in order of impact:
 
 | Setting | Effect |
 | --- | --- |
-| `CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y` | Moves Wi-Fi and LWIP buffers to PSRAM. Usually the largest win (~62 KB internal DRAM freed in testing). |
-| `CONFIG_LV_USE_CLIB_MALLOC=y` | LVGL's heap uses the C-library allocator so it can spill to PSRAM, instead of reserving a fixed 64 KB pool in internal DRAM up-front. The DMA draw buffers still stay internal, so display throughput is unaffected. |
-| `CONFIG_CORE2FORAWS_WIFI_RELEASE_BLE_WHEN_PROVISIONED=y` | Frees the Bluetooth controller's reserved DRAM once Wi-Fi connects or a provisioning session ends. BLE and re-provisioning are then unavailable until reboot. |
-| `CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096` | Routes general heap allocations ≥ 4 KB to PSRAM by default (lower than the 16 KB IDF default). |
-| `CONFIG_MBEDTLS_DYNAMIC_BUFFER=y` | Releases the large TLS handshake buffers after each handshake completes, lowering peak internal usage. |
-| `CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM` (lower it cautiously) | Each static TX buffer costs ~1.6 KB of internal DRAM. IDF 6 requires static TX while `CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y`; dynamic TX cannot be combined with that larger PSRAM saving. |
-| `CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM` (lower it) | Each static RX buffer costs ~1.6 KB of internal DRAM. |
-| `CONFIG_CORE2FORAWS_LCD_DRAW_BUF_LINES` (lower it) | Last resort — costs display throughput. |
+| `CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y` | Moves Wi-Fi and LWIP buffers to PSRAM (about 62 KB freed in testing). |
+| `CONFIG_LV_USE_CLIB_MALLOC=y` | Lets LVGL's heap use PSRAM instead of a fixed 64 KB internal pool. |
+| `CONFIG_CORE2FORAWS_WIFI_RELEASE_BLE_WHEN_PROVISIONED=y` | Releases Bluetooth controller memory after Wi-Fi connects. BLE and re-provisioning are unavailable until reboot. |
+| `CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096` | Sends allocations of 4 KB or more to PSRAM. |
+| `CONFIG_MBEDTLS_DYNAMIC_BUFFER=y` | Frees TLS handshake buffers after each handshake. |
+| `CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM` / `CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM` | Lower cautiously; each buffer costs about 1.6 KB. |
+| `CONFIG_CORE2FORAWS_LCD_DRAW_BUF_LINES` | Lower as a last resort; reduces display throughput. |
 
-On an ESP32-D0WDQ6-V3 with the display initialized, enabling `CONFIG_LV_USE_CLIB_MALLOC` together with `CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096` raised the largest **contiguous** DMA-capable block from ~28 KB to ~86 KB (roughly 3×) — enough headroom for the draw buffers to survive display re-init while Wi-Fi and BLE are running.
+## Testing
 
-When provisioning actually runs, the provisioning manager's `FREE_BTDM` scheme handler already releases Bluetooth memory once provisioning ends; no application action is needed for that path.
+Run the host regression tests from this directory:
 
-We also have code examples, drivers, or content available in other frameworks:
+```sh
+sh tests/host/run.sh
+```
+
+On-device tests are in a separate opt-in ESP-IDF app. See [tests/README.md](tests/README.md) for details.
+
+## Documentation
+
+- [Design document](docs/design.md): architecture, ownership, power, and memory rules
+- [Hardware schema](datasheet/schema.yml) and [schematic reference](datasheet/schematic.md): board wiring
+- Chip datasheets live in each module's `datasheet/` folder under `lib/`
+
+To build the API reference, run Doxygen from this directory and open `generated-docs/html/index.html`:
+
+```sh
+doxygen Doxyfile
+```
+
+Doxygen 1.13.2 is the validated version. Homebrew Doxygen 1.18.0 on macOS can crash intermittently; you can install 1.13.2 in an isolated environment instead:
+
+```sh
+conda create --yes --prefix "$HOME/.local/share/core2-doxygen" -c conda-forge doxygen=1.13.2
+conda run --prefix "$HOME/.local/share/core2-doxygen" doxygen Doxyfile
+```
+
+## Other frameworks
 
 - [Arduino](https://github.com/m5stack/aws-iot-kit-examples/tree/main/Basic_Arduino)
 - [UIFlow](https://docs.m5stack.com/en/quick_start/core2_for_aws/uiflow)
@@ -132,5 +143,8 @@ We also have code examples, drivers, or content available in other frameworks:
 
 ## Support
 
-To get support with AWS IoT Kit, post your question in the [content repo's discussions](https://github.com/m5stack/aws-iot-kit-tutorials/discussions).
-For issues with the AWS IoT Kit this repo, please [submit an issue](https://github.com/m5stack/Core2-for-AWS-IoT-Kit/issues) to this repository.
+Ask questions in the [AWS IoT Kit tutorial discussions](https://github.com/m5stack/aws-iot-kit-tutorials/discussions). Report BSP bugs in this repository's [issues](https://github.com/m5stack/Core2-for-AWS-IoT-Kit/issues).
+
+## License
+
+MIT. See [LICENSE](LICENSE) and [NOTICE](NOTICE). The Bosch BMI270 configuration file is BSD-3-Clause; datasheets and managed dependencies keep their own terms. Third-party attribution is in [THIRD-PARTY-LICENSES.txt](THIRD-PARTY-LICENSES.txt).

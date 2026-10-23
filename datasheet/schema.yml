@@ -584,7 +584,7 @@ bsp_capabilities:
     draw_buffer_lines:
       current: "CONFIG_CORE2FORAWS_LCD_DRAW_BUF_LINES (default 20, range 10-60)"
       standard_bsp: 50
-      note: "Application-level budget, not a fixed constant. Each of the two buffers needs a contiguous DMA-capable internal DRAM block; PSRAM is not usable. Do not copy the standard BSP's 50 without following the verification procedure in .claude/rules/memory-placement.md"
+      note: "Application-level budget, not a fixed constant. Each of the two buffers needs a contiguous DMA-capable internal DRAM block; PSRAM is not usable. Do not copy the standard BSP's 50 without following the verification procedure in docs/design.md, section 5"
     swap_bytes:
       current: "LV_COLOR_FORMAT_RGB565_SWAPPED with swap_bytes: false"
       standard_bsp: "conditional on BSP_LCD_BIGENDIAN"
