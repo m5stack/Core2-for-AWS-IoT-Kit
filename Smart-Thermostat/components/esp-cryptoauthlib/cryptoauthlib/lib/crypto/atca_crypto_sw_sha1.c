@@ -28,20 +28,23 @@
 
 #include "atca_crypto_sw_sha1.h"
 #include "hashes/sha1_routines.h"
+#include "cryptoauthlib.h"
+#include "cal_internal.h"
 
-#if ATCA_ENABLE_SHA1_IMPL
-
+#if ATCA_CRYPTO_SHA1_EN
 /** \brief Initialize context for performing SHA1 hash in software.
  * \param[in] ctx  Hash context
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
 
-int atcac_sw_sha1_init(atcac_sha1_ctx* ctx)
+ATCA_STATUS atcac_sw_sha1_init(struct atcac_sha1_ctx* ctx)
 {
-    if (sizeof(CL_HashContext) > sizeof(atcac_sha1_ctx))
+    /* coverity[misra_c_2012_rule_14_3_violation] This matches the definition used by most systems */
+    if (sizeof(CL_HashContext) > sizeof(atcac_sha1_ctx_t))
     {
         return ATCA_ASSERT_FAILURE;  // atcac_sha1_ctx isn't large enough for this implementation
     }
+    /* coverity[misra_c_2012_rule_11_3_violation:FALSE] This pattern is a deliberate abstraction for SHA-1 context portability between platforms and libraries */
     CL_hashInit((CL_HashContext*)ctx);
 
     return ATCA_SUCCESS;
@@ -54,8 +57,9 @@ int atcac_sw_sha1_init(atcac_sha1_ctx* ctx)
     \param[in] data_size  Data size in bytes
     \return ATCA_SUCCESS
  */
-int atcac_sw_sha1_update(atcac_sha1_ctx* ctx, const uint8_t* data, size_t data_size)
+ATCA_STATUS atcac_sw_sha1_update(struct atcac_sha1_ctx* ctx, const uint8_t* data, size_t data_size)
 {
+    /* coverity[misra_c_2012_rule_11_3_violation:FALSE] This pattern is a deliberate abstraction for SHA-1 context portability between platforms and libraries */
     CL_hashUpdate((CL_HashContext*)ctx, data, (int)data_size);
 
     return ATCA_SUCCESS;
@@ -66,24 +70,38 @@ int atcac_sw_sha1_update(atcac_sha1_ctx* ctx, const uint8_t* data, size_t data_s
  * \param[out] digest  Digest is returned here (20 bytes)
  * \return ATCA_SUCCESS
  */
-int atcac_sw_sha1_finish(atcac_sha1_ctx* ctx, uint8_t digest[ATCA_SHA1_DIGEST_SIZE])
+ATCA_STATUS atcac_sw_sha1_finish(struct atcac_sha1_ctx* ctx, uint8_t digest[ATCA_SHA1_DIGEST_SIZE])
 {
+    /* coverity[misra_c_2012_rule_11_3_violation:FALSE] This pattern is a deliberate abstraction for SHA-1 context portability between platforms and libraries */
     CL_hashFinal((CL_HashContext*)ctx, digest);
 
     return ATCA_SUCCESS;
 }
+
+#if defined(ATCA_BUILD_SHARED_LIBS) || defined(ATCA_HEAP)
+struct atcac_sha1_ctx * atcac_sha1_ctx_new(void)
+{
+    return (struct atcac_sha1_ctx*)hal_malloc(sizeof(atcac_sha1_ctx_t));
+}
+void atcac_sha1_ctx_free(struct atcac_sha1_ctx * ctx)
+{
+    hal_free(ctx);
+}
 #endif
 
+#endif /* ATCA_CRYPTO_SHA1_EN */
+
+#if ATCAC_SHA1_EN
 /** \brief Perform SHA1 hash of data in software.
  * \param[in]  data       Data to be hashed
  * \param[in]  data_size  Data size in bytes
  * \param[out] digest     Digest is returned here (20 bytes)
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
-int atcac_sw_sha1(const uint8_t* data, size_t data_size, uint8_t digest[ATCA_SHA1_DIGEST_SIZE])
+ATCA_STATUS atcac_sw_sha1(const uint8_t* data, size_t data_size, uint8_t digest[ATCA_SHA1_DIGEST_SIZE])
 {
-    int ret;
-    atcac_sha1_ctx ctx;
+    ATCA_STATUS ret;
+    atcac_sha1_ctx_t ctx;
 
     ret = atcac_sw_sha1_init(&ctx);
     if (ret != ATCA_SUCCESS)
@@ -98,10 +116,7 @@ int atcac_sw_sha1(const uint8_t* data, size_t data_size, uint8_t digest[ATCA_SHA
     }
 
     ret = atcac_sw_sha1_finish(&ctx, digest);
-    if (ret != ATCA_SUCCESS)
-    {
-        return ret;
-    }
 
-    return ATCA_SUCCESS;
+    return ret;
 }
+#endif /* ATCA_CRYPTO_SHA1_EN */

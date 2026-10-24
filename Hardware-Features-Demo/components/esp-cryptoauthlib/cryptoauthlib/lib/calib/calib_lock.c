@@ -35,6 +35,12 @@
 
 #include "cryptoauthlib.h"
 
+#if CALIB_LOCK_EN || CALIB_LOCK_CA2_EN
+
+#if (CA_MAX_PACKET_SIZE < ATCA_CMD_SIZE_MIN)
+#error "Lock command packet cannot be accommodated inside the maximum packet size provided"
+#endif
+
 /** \brief The Lock command prevents future modifications of the Configuration
  *         and/or Data and OTP zones. If the device is so configured, then
  *         this command can be used to lock individual data slots. This
@@ -49,36 +55,47 @@
  */
 ATCA_STATUS calib_lock(ATCADevice device, uint8_t mode, uint16_t summary_crc)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
-
-    if (device == NULL)
-    {
-        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
-    }
-
-    // build command for lock zone and send
-    memset(&packet, 0, sizeof(packet));
-    packet.param1 = mode;
-    packet.param2 = summary_crc;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
 
     do
     {
-        if ((status = atLock(atcab_get_device_type_ext(device), &packet)) != ATCA_SUCCESS)
+#if ATCA_CHECK_PARAMS_EN
+        if (device == NULL)
         {
-            ATCA_TRACE(status, "atLock - failed");
+            status = ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
+            break;
+        }
+#endif
+
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        // build command for lock zone and send
+        (void)memset(packet, 0, sizeof(ATCAPacket));
+        packet->param1 = mode;
+        packet->param2 = summary_crc;
+
+        if ((status = atLock(atcab_get_device_type_ext(device), packet)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_lock - execution failed");
+            (void)ATCA_TRACE(status, "atLock - failed");
             break;
         }
 
-    }
-    while (0);
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
+        {
+            (void)ATCA_TRACE(status, "calib_lock - execution failed");
+            break;
+        }
 
+    } while (false);
+
+    calib_packet_free(packet);
     return status;
 }
 
@@ -89,7 +106,23 @@ ATCA_STATUS calib_lock(ATCADevice device, uint8_t mode, uint16_t summary_crc)
  */
 ATCA_STATUS calib_lock_config_zone(ATCADevice device)
 {
-    return calib_lock(device, LOCK_ZONE_NO_CRC | LOCK_ZONE_CONFIG, 0);
+    ATCA_STATUS status = ATCA_BAD_PARAM;
+
+#if ATCA_CA2_SUPPORT
+    ATCADeviceType device_type = atcab_get_device_type_ext(device);
+    if (atcab_is_ca2_device(device_type))
+    {
+        status = calib_ca2_lock_config_zone(device);
+    }
+    else
+#endif
+    {
+#if CALIB_LOCK_EN
+        status = calib_lock(device, LOCK_ZONE_NO_CRC | LOCK_ZONE_CONFIG, 0);
+#endif
+    }
+
+    return status;
 }
 
 /** \brief Lock the config zone with summary CRC.
@@ -105,7 +138,18 @@ ATCA_STATUS calib_lock_config_zone(ATCADevice device)
  */
 ATCA_STATUS calib_lock_config_zone_crc(ATCADevice device, uint16_t summary_crc)
 {
-    return calib_lock(device, LOCK_ZONE_CONFIG, summary_crc);
+#if ATCA_CA2_SUPPORT
+    ATCADeviceType device_type = atcab_get_device_type_ext(device);
+
+    if (atcab_is_ca2_device(device_type))
+    {
+        return ATCA_UNIMPLEMENTED;
+    }
+    else
+#endif
+    {
+        return calib_lock(device, LOCK_ZONE_CONFIG, summary_crc);
+    }
 }
 
 /** \brief Unconditionally (no CRC required) lock the data zone (slots and OTP).
@@ -117,7 +161,23 @@ ATCA_STATUS calib_lock_config_zone_crc(ATCADevice device, uint16_t summary_crc)
  */
 ATCA_STATUS calib_lock_data_zone(ATCADevice device)
 {
-    return calib_lock(device, LOCK_ZONE_NO_CRC | LOCK_ZONE_DATA, 0);
+    ATCA_STATUS status = ATCA_BAD_PARAM;
+
+#if ATCA_CA2_SUPPORT
+    ATCADeviceType device_type = atcab_get_device_type_ext(device);
+    if (atcab_is_ca2_device(device_type))
+    {
+        status = calib_ca2_lock_data_zone(device);
+    }
+    else
+#endif
+    {
+#if CALIB_LOCK_EN
+        status = calib_lock(device, LOCK_ZONE_NO_CRC | LOCK_ZONE_DATA, 0);
+#endif
+    }
+
+    return status;
 }
 
 /** \brief Lock the data zone (slots and OTP) with summary CRC.
@@ -133,7 +193,18 @@ ATCA_STATUS calib_lock_data_zone(ATCADevice device)
  */
 ATCA_STATUS calib_lock_data_zone_crc(ATCADevice device, uint16_t summary_crc)
 {
-    return calib_lock(device, LOCK_ZONE_DATA, summary_crc);
+#if ATCA_CA2_SUPPORT
+    ATCADeviceType device_type = atcab_get_device_type_ext(device);
+
+    if (atcab_is_ca2_device(device_type))
+    {
+        return ATCA_UNIMPLEMENTED;
+    }
+    else
+#endif
+    {
+        return calib_lock(device, LOCK_ZONE_DATA, summary_crc);
+    }
 }
 
 /** \brief Lock an individual slot in the data zone on an ATECC device. Not
@@ -147,9 +218,29 @@ ATCA_STATUS calib_lock_data_zone_crc(ATCADevice device, uint16_t summary_crc)
  */
 ATCA_STATUS calib_lock_data_slot(ATCADevice device, uint16_t slot)
 {
-    return calib_lock(device, ((uint8_t)slot << 2) | LOCK_ZONE_DATA_SLOT, 0);
-}
+    ATCA_STATUS status = ATCA_BAD_PARAM;
 
+#if ATCA_CA2_SUPPORT
+    if (atcab_is_ca2_device(atcab_get_device_type_ext(device)))
+    {
+        status = calib_ca2_lock_data_slot(device, slot);
+    }
+    else
+#endif
+    {
+#if CALIB_LOCK_EN
+        /* coverity[misra_c_2012_rule_10_1_violation:FALSE] The cast is safe because only the lower 8 bits are used after bitwise masking*/
+        /* coverity[misra_c_2012_rule_10_4_violation:FALSE] No loss of information due to the applied UINT8_MAX mask*/
+        /* coverity[misra_c_2012_rule_10_8_violation:FALSE] The final result is constrained to 8 bits using & UINT8_MAX*/
+        status = calib_lock(device, (uint8_t)((LOCK_ZONE_DATA_SLOT | (slot << 2)) & UINT8_MAX), 0);
+#endif
+    }
+
+    return status;
+}
+#endif
+
+#if CALIB_LOCK_CA2_EN
 /** \brief Use Lock command to lock individual configuration zone slots
  *
  *  \param[in]   device       Device context pointer
@@ -159,11 +250,11 @@ ATCA_STATUS calib_lock_data_slot(ATCADevice device, uint16_t slot)
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code
  */
-ATCA_STATUS calib_ecc204_lock_config_slot(ATCADevice device, uint8_t slot, uint16_t summary_crc)
+ATCA_STATUS calib_ca2_lock_config_slot(ATCADevice device, uint16_t slot, uint16_t summary_crc)
 {
-    uint8_t mode = LOCK_ECC204_ZONE_CONFIG | (slot << 1);
+    uint8_t mode = (uint8_t)((LOCK_ZONE_CA2_CONFIG | (slot << 1)) & UINT8_MAX);
 
-    if (!summary_crc)
+    if (summary_crc == 0u)
     {
         mode |= LOCK_ZONE_NO_CRC;
     }
@@ -177,23 +268,32 @@ ATCA_STATUS calib_ecc204_lock_config_slot(ATCADevice device, uint8_t slot, uint1
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code
  */
-ATCA_STATUS calib_ecc204_lock_config_zone(ATCADevice device)
+ATCA_STATUS calib_ca2_lock_config_zone(ATCADevice device)
 {
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCA_STATUS status;
     uint8_t slot = 0;
     uint8_t mode;
 
-    while (slot <= 3)
+    while (slot <= 3u)
     {
-        mode = LOCK_ZONE_NO_CRC | LOCK_ECC204_ZONE_CONFIG | (slot << 1);
+        mode = (uint8_t)(LOCK_ZONE_NO_CRC | LOCK_ZONE_CA2_CONFIG | (slot << 1));
 
         if (ATCA_SUCCESS != (status = calib_lock(device, mode, 0)))
         {
-            ATCA_TRACE(status, "calib_ecc204_lock_config_zone - failed");
-            break;
+            // ECC204,TA010,SHA10x returns execution error if slot is already locked.
+            // Consider already locked status as valid while locking the config zone.
+            if (status == ATCA_EXECUTION_ERROR)
+            {
+                status = ATCA_SUCCESS;
+            }
+            else
+            {
+                (void)ATCA_TRACE(status, "calib_ca2_lock_config_zone - failed");
+                break;
+            }
         }
 
-        slot += 1;  //Increment slot
+        slot += 1u; //Increment slot
     }
 
     return status;
@@ -206,7 +306,45 @@ ATCA_STATUS calib_ecc204_lock_config_zone(ATCADevice device)
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code
  */
-ATCA_STATUS calib_ecc204_lock_data_slot(ATCADevice device, uint8_t slot)
+ATCA_STATUS calib_ca2_lock_data_slot(ATCADevice device, uint16_t slot)
 {
-    return calib_lock(device, LOCK_ECC204_ZONE_DATA | (slot << 1), 0);
+    return calib_lock(device, (uint8_t)((LOCK_ZONE_CA2_DATA | (slot << 1)) & UINT8_MAX), 0);
 }
+
+/** \brief Use lock command to lock complete Data zone
+ *
+ *  \param[in]  device      Device context pointer
+ *
+ *  \return ATCA_SUCCESS on success, otherwise an error code
+ */
+ATCA_STATUS calib_ca2_lock_data_zone(ATCADevice device)
+{
+    ATCA_STATUS status;
+    uint8_t slot = 0;
+    uint8_t mode;
+
+    while (slot <= 3u)
+    {
+        mode = LOCK_ZONE_NO_CRC | LOCK_ZONE_CA2_DATA | (slot << 1);
+
+        if (ATCA_SUCCESS != (status = calib_lock(device, mode, 0)))
+        {
+            // ECC204,TA010,SHA10x returns execution error if slot is already locked.
+            // Consider already locked status as valid while locking the config zone.
+            if (status == ATCA_EXECUTION_ERROR)
+            {
+                status = ATCA_SUCCESS;
+            }
+            else
+            {
+                (void)ATCA_TRACE(status, "calib_ca2_lock_data_zone - failed");
+                break;
+            }
+        }
+
+        slot += 1u; //Increment slot
+    }
+
+    return status;
+}
+#endif

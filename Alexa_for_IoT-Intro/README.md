@@ -168,14 +168,14 @@ This sections talks about setting up your development host, fetching the git rep
 
 ## 2.1 Host Setup
 
-You should install drivers and support packages for your development host. Windows, Linux and Mac OS-X, are supported development hosts. Please see [Get Started](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/get-started/index.html) for the host setup instructions.
+You should install drivers and support packages for your development host. Windows, Linux and Mac OS-X, are supported development hosts. Please see [Get Started](https://docs.espressif.com/projects/esp-idf/en/release-v4.4/get-started/index.html) for the host setup instructions.
 
 ## 2.2 Getting the Repositories
 
 ```
 $ git clone --recursive https://github.com/espressif/esp-idf.git
 
-$ cd esp-idf; git checkout release/v4.2; git submodule init; git submodule update --init --recursive;
+$ cd esp-idf; git checkout release/v4.4; git submodule init; git submodule update --init --recursive;
 
 $ ./install.sh
 

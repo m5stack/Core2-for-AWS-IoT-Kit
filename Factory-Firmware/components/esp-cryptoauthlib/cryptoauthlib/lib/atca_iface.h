@@ -40,10 +40,39 @@
 extern "C" {
 #endif
 
-#include "atca_devtypes.h"
 #include <stdint.h>
+#include <stddef.h>
+
+#include "atca_devtypes.h"
 #include "atca_status.h"
 
+#ifndef LIBRARY_BUILD_EN
+#include "atca_config.h"
+#endif
+
+#ifdef ATCA_STRICT_C99
+#define ATCA_IFACECFG_NAME(x)  (x)
+
+#ifdef ATCA_ENABLE_DEPRECATED
+#define ATCA_IFACECFG_I2C_ADDRESS(c)   (c)->cfg.atcai2c.slave_address
+#else
+#define ATCA_IFACECFG_I2C_ADDRESS(c)   (c)->cfg.atcai2c.address
+#endif
+
+#define ATCA_IFACECFG_I2C_BAUD(c)   (c)->cfg.atcai2c.baud
+#define ATCA_IFACECFG_VALUE(c, v)   (c)->cfg.v
+#else
+#define ATCA_IFACECFG_NAME(x)
+
+#ifdef ATCA_ENABLE_DEPRECATED
+#define ATCA_IFACECFG_I2C_ADDRESS(c)   (c)->atcai2c.slave_address
+#else
+#define ATCA_IFACECFG_I2C_ADDRESS(c)   (c)->atcai2c.address
+#endif
+
+#define ATCA_IFACECFG_I2C_BAUD(c)   (c)->atcai2c.baud
+#define ATCA_IFACECFG_VALUE(c, v)   (c)->v
+#endif
 
 typedef enum
 {
@@ -86,7 +115,7 @@ typedef struct
         struct
         {
 #ifdef ATCA_ENABLE_DEPRECATED
-            uint8_t slave_address;  // 8-bit slave address
+            uint8_t slave_address;  // 8-bit device address
 #else
             uint8_t address;        /**< Device address - the upper 7 bits are the I2c address bits */
 #endif
@@ -109,11 +138,13 @@ typedef struct
 
         struct
         {
-            int      port;      // logic port number
-            uint32_t baud;      // typically 115200
-            uint8_t  wordsize;  // usually 8
-            uint8_t  parity;    // 0 == even, 1 == odd, 2 == none
-            uint8_t  stopbits;  // 0,1,2
+            ATCAKitType dev_interface; // Kit interface type
+            uint8_t     dev_identity;  // I2C address for the I2C interface device or the bus number for the SWI interface device.
+            uint8_t     port;          // Port numbers where supported - otherwise accept the device through config data
+            uint32_t    baud;          // typically 115200
+            uint8_t     wordsize;      // usually 8
+            uint8_t     parity;        // 0 == even, 1 == odd, 2 == none
+            uint8_t     stopbits;      // 0,1,2
         } atcauart;
 
         struct
@@ -144,8 +175,7 @@ typedef struct
             ATCA_STATUS (*halsleep)(void *iface);
             ATCA_STATUS (*halrelease)(void* hal_data);
         } atcacustom;
-
-    };
+    } ATCA_IFACECFG_NAME(cfg);
 
     uint16_t wake_delay;    // microseconds of tWHI + tWLO which varies based on chip type
     int      rx_retries;    // the number of retries to attempt for receiving bytes
@@ -179,9 +209,14 @@ typedef struct atca_iface
 } atca_iface_t;
 
 ATCA_STATUS initATCAIface(ATCAIfaceCfg *cfg, ATCAIface ca_iface);
-ATCAIface newATCAIface(ATCAIfaceCfg *cfg);
 ATCA_STATUS releaseATCAIface(ATCAIface ca_iface);
+#ifdef ATCA_HEAP
 void deleteATCAIface(ATCAIface *ca_iface);
+#endif
+
+#if defined(ATCA_HEAP) && defined(ENABLE_NEWATCAIFACE)
+ATCAIface newATCAIface(ATCAIfaceCfg *cfg);
+#endif
 
 // IFace methods
 ATCA_STATUS atinit(ATCAIface ca_iface);
@@ -195,11 +230,18 @@ ATCA_STATUS atsleep(ATCAIface ca_iface);
 // accessors
 ATCAIfaceCfg * atgetifacecfg(ATCAIface ca_iface);
 void* atgetifacehaldat(ATCAIface ca_iface);
+ATCA_STATUS ifacecfg_set_address(ATCAIfaceCfg * cfg, uint8_t address, ATCAKitType kitiface);
+uint8_t ifacecfg_get_address(ATCAIfaceCfg * cfg);
 
 /* Utilities */
+bool ifacetype_is_kit(ATCAIfaceType iface_type);
+
 bool atca_iface_is_kit(ATCAIface ca_iface);
+bool atca_iface_is_swi(ATCAIface ca_iface);
 int atca_iface_get_retries(ATCAIface ca_iface);
 uint16_t atca_iface_get_wake_delay(ATCAIface ca_iface);
+ATCADeviceType iface_get_device_type_by_name(const char * name);
+
 
 #ifdef __cplusplus
 }
@@ -207,6 +249,3 @@ uint16_t atca_iface_get_wake_delay(ATCAIface ca_iface);
 /*lint -flb*/
 /** @} */
 #endif
-
-
-

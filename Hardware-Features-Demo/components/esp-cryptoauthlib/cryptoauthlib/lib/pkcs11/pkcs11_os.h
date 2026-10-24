@@ -31,13 +31,17 @@
 #include "cryptoki.h"
 #include "cryptoauthlib.h"
 
+#define ATCA_SHARED_MUTEX_NAME "atca_shared_mutex"
+
 CK_RV pkcs11_os_create_mutex(CK_VOID_PTR_PTR ppMutex);
 CK_RV pkcs11_os_destroy_mutex(CK_VOID_PTR pMutex);
 CK_RV pkcs11_os_lock_mutex(CK_VOID_PTR pMutex);
 CK_RV pkcs11_os_unlock_mutex(CK_VOID_PTR pMutex);
 
+CK_RV pkcs11_os_alloc_shared_ctx(void ** ppShared, size_t size);
+CK_RV pkcs11_os_free_shared_ctx(void * pShared, size_t size);
+
 #define pkcs11_os_malloc    hal_malloc
 #define pkcs11_os_free      hal_free
 
 #endif /* PKCS11_OS_H_ */
-

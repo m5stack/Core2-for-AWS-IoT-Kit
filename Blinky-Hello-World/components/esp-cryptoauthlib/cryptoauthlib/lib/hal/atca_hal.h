@@ -31,12 +31,12 @@
 
 #include <stdlib.h>
 
+#ifndef LIBRARY_BUILD_EN
 #include "atca_config.h"
+#endif
 
 #include "atca_status.h"
 #include "atca_iface.h"
-#include "atca_start_config.h"
-#include "atca_start_iface.h"
 
 
 /** \defgroup hal_ Hardware abstraction layer (hal_)
@@ -55,14 +55,26 @@ typedef struct
     void* hal_data;                                                         /**< Physical layer context */
 } atca_hal_kit_phy_t;
 
+typedef struct
+{
+    int     recordedPID;
+    uint8_t sessionID;
+    uint8_t index;
+} atca_hal_shm_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-ATCA_STATUS hal_iface_init(ATCAIfaceCfg *, ATCAHAL_t** hal, ATCAHAL_t** phy);
-ATCA_STATUS hal_iface_release(ATCAIfaceType, void* hal_data);
+ATCA_STATUS hal_iface_init(ATCAIfaceCfg *cfg, ATCAHAL_t** hal, ATCAHAL_t** phy);
+ATCA_STATUS hal_iface_release(ATCAIfaceType iface_type, void* hal_data);
 
 ATCA_STATUS hal_check_wake(const uint8_t* response, int response_size);
+
+#ifdef __COVERITY__
+#pragma coverity compliance block \
+    (fp "MISRA C-2012 Rule 8.6" "Not all HALs are in the analysis scope")
+#endif
 
 #ifdef ATCA_HAL_I2C
 ATCA_STATUS hal_i2c_init(ATCAIface iface, ATCAIfaceCfg *cfg);
@@ -92,20 +104,25 @@ ATCA_STATUS hal_swi_sleep(ATCAIface iface);
 ATCA_STATUS hal_swi_release(void *hal_data);
 #endif
 
-
-#if defined(ATCA_HAL_1WIRE) || defined(ATCA_HAL_SWI)
-ATCA_STATUS hal_gpio_init(void *hal, ATCAIfaceCfg* cfg);
-ATCA_STATUS hal_gpio_post_init(ATCAIface iface);
-ATCA_STATUS hal_gpio_send(ATCAIface iface, uint8_t word_address, uint8_t* txdata, int txlength);
-ATCA_STATUS hal_gpio_receive(ATCAIface iface, uint8_t word_address, uint8_t* rxdata, uint16_t* rxlength);
-ATCA_STATUS hal_gpio_idle(ATCAIface iface);
-ATCA_STATUS hal_gpio_sleep(ATCAIface iface);
-ATCA_STATUS hal_gpio_wake(ATCAIface iface);
-ATCA_STATUS hal_gpio_release(void *hal_data);
-ATCA_STATUS hal_gpio_device_discovery(ATCAIface iface);
+#if defined(ATCA_HAL_SWI_GPIO) || defined(ATCA_HAL_SWI_BB)
+ATCA_STATUS hal_swi_gpio_init(ATCAIface iface, ATCAIfaceCfg *cfg);
+ATCA_STATUS hal_swi_gpio_post_init(ATCAIface iface);
+ATCA_STATUS hal_swi_gpio_send(ATCAIface iface, uint8_t word_address, uint8_t *txdata, int txlength);
+ATCA_STATUS hal_swi_gpio_receive(ATCAIface iface, uint8_t word_address, uint8_t *rxdata, uint16_t *rxlength);
+ATCA_STATUS hal_swi_gpio_release(void *hal_data);
+ATCA_STATUS hal_swi_gpio_control(ATCAIface iface, uint8_t option, void* param, size_t paramlen);
 #endif
 
-#ifdef ATCA_HAL_UART
+#if defined(ATCA_HAL_SWI_GPIO) || defined(ATCA_HAL_SWI_BB)
+ATCA_STATUS hal_gpio_init(ATCAIface iface, ATCAIfaceCfg *cfg);
+ATCA_STATUS hal_gpio_post_init(ATCAIface iface);
+ATCA_STATUS hal_gpio_send(ATCAIface iface, uint8_t word_address, uint8_t* pin_state, int unused_param);
+ATCA_STATUS hal_gpio_receive(ATCAIface iface, uint8_t word_address, uint8_t* pin_state, uint16_t* unused_param);
+ATCA_STATUS hal_gpio_release(void *hal_data);
+ATCA_STATUS hal_gpio_control(ATCAIface iface, uint8_t option, void* param, size_t paramlen);
+#endif
+
+#if defined(ATCA_HAL_SWI_UART) || defined(ATCA_HAL_KIT_UART) || defined(ATCA_HAL_UART)
 ATCA_STATUS hal_uart_init(ATCAIface iface, ATCAIfaceCfg *cfg);
 ATCA_STATUS hal_uart_post_init(ATCAIface iface);
 ATCA_STATUS hal_uart_send(ATCAIface iface, uint8_t word_address, uint8_t *txdata, int txlength);
@@ -155,6 +172,10 @@ ATCA_STATUS hal_kit_release(void* hal_data);
 ATCA_STATUS hal_custom_control(ATCAIface iface, uint8_t option, void* param, size_t paramlen);
 #endif
 
+#ifdef __COVERITY__
+#pragma coverity compliance end_block "MISRA C-2012 Rule 8.6"
+#endif
+
 /* Polling defaults if not overwritten by the configuration */
 #ifndef ATCA_POLLING_INIT_TIME_MSEC
 #define ATCA_POLLING_INIT_TIME_MSEC       1
@@ -168,18 +189,25 @@ ATCA_STATUS hal_custom_control(ATCAIface iface, uint8_t option, void* param, siz
 #define ATCA_POLLING_MAX_TIME_MSEC        2500
 #endif
 
-/*  */
-typedef enum
-{
-    ATCA_HAL_CONTROL_WAKE = 0,
-    ATCA_HAL_CONTROL_IDLE = 1,
-    ATCA_HAL_CONTROL_SLEEP = 2,
-    ATCA_HAL_CONTROL_RESET = 3,
-    ATCA_HAL_CONTROL_SELECT = 4,
-    ATCA_HAL_CONTROL_DESELECT = 5,
-    ATCA_HAL_CHANGE_BAUD = 6,
-    ATCA_HAL_FLUSH_BUFFER = 7
-} ATCA_HAL_CONTROL;
+/* Control Function Options */
+/** \brief Execute the hardware specific wake - generally only for kits */
+#define ATCA_HAL_CONTROL_WAKE       (0U)
+/** \brief Execute the hardware specific idle - generally only for kits */
+#define ATCA_HAL_CONTROL_IDLE       (1U)
+/** \brief Execute the hardware specific sleep - generally only for kits */
+#define ATCA_HAL_CONTROL_SLEEP      (2U)
+/** \brief Execute the hardware specific reset - generally only for kits */
+#define ATCA_HAL_CONTROL_RESET      (3U)
+/** \brief Select the device - assert CS, open device, etc */
+#define ATCA_HAL_CONTROL_SELECT     (4U)
+/** \brief Select the device - de-assert CS, release device, etc */
+#define ATCA_HAL_CONTROL_DESELECT   (5U)
+/** \brief Change the datarate of the phy */
+#define ATCA_HAL_CHANGE_BAUD        (6U)
+/** \brief If the phy has a buffer make sure all bytes are transmitted */
+#define ATCA_HAL_FLUSH_BUFFER       (7U)
+/** \brief Set the PIN mode (in vs out) */
+#define ATCA_HAL_CONTROL_DIRECTION  (8U)
 
 /** \brief Timer API for legacy implementations */
 #ifndef atca_delay_ms
@@ -191,36 +219,60 @@ void atca_delay_us(uint32_t us);
 #endif
 
 /** \brief Timer API implemented at the HAL level */
+void hal_delay_ms(uint32_t delay);
+void hal_delay_us(uint32_t delay);
+
+#ifdef ATCA_USE_RTOS_TIMER
 void hal_rtos_delay_ms(uint32_t ms);
-void hal_delay_ms(uint32_t ms);
-void hal_delay_us(uint32_t us);
+#endif
+
+#if defined(__linux__) || defined(__APPLE__)
+    #ifdef ATCA_USE_SHARED_MUTEX
+        #include <pthread.h>
+/** \brief Structure for holding a mutex in shared memory on linux */
+typedef struct
+{
+    pthread_mutex_t mutex;
+    bool            shared;
+} hal_mutex_t;
+    #else
+        #include <semaphore.h>
+typedef sem_t hal_mutex_t;
+    #endif
+#else
+/** \brief Generic mutex type definition for most systems */
+typedef void * hal_mutex_t;
+#endif
 
 /** \brief Optional hal interfaces */
-ATCA_STATUS hal_create_mutex(void ** ppMutex, char* pName);
+ATCA_STATUS hal_create_mutex(void ** ppMutex, const char* pName);
+ATCA_STATUS hal_init_mutex(void * pMutex, bool shared);
 ATCA_STATUS hal_destroy_mutex(void * pMutex);
 ATCA_STATUS hal_lock_mutex(void * pMutex);
 ATCA_STATUS hal_unlock_mutex(void * pMutex);
+ATCA_STATUS hal_alloc_shared(void ** pShared, size_t size, const char* pName, bool* initialized);
+ATCA_STATUS hal_free_shared(void * pShared, size_t size);
 
-#ifndef ATCA_NO_HEAP
-#ifdef ATCA_TESTS_ENABLED
-void hal_test_set_memory_f(void* (*malloc_func)(size_t), void (*free_func)(void*));
+#if  defined(__linux__) || defined(__APPLE__)
+#include <unistd.h>
+#include <sys/syscall.h>
+typedef pid_t hal_pid_t;
+#define hal_get_pid             getpid
+#define hal_get_thread_id()     ((hal_pid_t)syscall(SYS_gettid))
+#elif defined(_WIN32)
+#include <windows.h>
+typedef DWORD hal_pid_t;
+#define hal_get_pid         GetCurrentProcessId
+#define hal_get_thread_id   GetCurrentThreadId
 #endif
 
-#if defined(ATCA_TESTS_ENABLED) || !defined(ATCA_PLATFORM_MALLOC)
-void*   hal_malloc(size_t size);
-void    hal_free(void* ptr);
-#else
-#define hal_malloc      ATCA_PLATFORM_MALLOC
-#define hal_free        ATCA_PLATFORM_FREE
-#endif
+#if defined(_WIN32) || defined(__linux__) || defined(__APPLE__)
+ATCA_STATUS hal_check_pid(hal_pid_t pid);
 #endif
 
-#ifdef memset_s
-#define hal_memset_s    memset_s
-#else
-#define hal_memset_s    atcab_memset_s
+#if defined(ATCA_HEAP) && defined(ATCA_TESTS_ENABLED)
+void hal_test_set_memory_f(void* (*malloc_func)(size_t size), void (*free_func)(void* ptr));
 #endif
-
 
 ATCA_STATUS hal_iface_register_hal(ATCAIfaceType iface_type, ATCAHAL_t *hal, ATCAHAL_t **old_hal, ATCAHAL_t* phy, ATCAHAL_t** old_phy);
 uint8_t hal_is_command_word(uint8_t word_address);

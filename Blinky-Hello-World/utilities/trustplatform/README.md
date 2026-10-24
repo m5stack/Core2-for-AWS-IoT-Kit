@@ -1,6 +1,3 @@
-# NOTE
-The file structure of the [Microchip Cryptoauth Trust Platform Design Suite](https://github.com/MicrochipTech/cryptoauth_trustplatform_designsuite/) has been modified to reduce the file path lengths which cause errors for Windows users. As such, the documentation will not match. Please visit the official repo: https://github.com/MicrochipTech/cryptoauth_trustplatform_designsuite/
-
 # Collection of Tools and Examples for TrustPlatform
 
 ## TrustPlatform Product Page
@@ -20,6 +17,18 @@ For ease of understanding follow the below sequence
 3. Run the usecase examples provided both in Notebook and Embedded projects
 
 ## Release Notes
+ - 20220329
+   - Merged 3rd party pull requests for AWS IoT and Asymmetric authentication updates.
+
+ - 20210405
+   - Corrected Expire years for device and signer
+
+ - 20210324
+   - Bug fixes in C def files and TNG default policy
+   - Added Thing Type while registering to AWS using MAR
+   - Updated TrustFLEX configurator to include XML changes
+   - Bugs fixes for Transaction diagrams, Winc firmware upgrade
+
  - 20201103
    - Secureboot persistent latch bug in TrustFLEX configurator is fixed
 

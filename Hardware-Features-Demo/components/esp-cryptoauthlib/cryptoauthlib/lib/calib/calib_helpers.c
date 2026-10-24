@@ -36,15 +36,16 @@
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code.
  */
+#if CALIB_READ_EN
 ATCA_STATUS calib_is_slot_locked(ATCADevice device, uint16_t slot, bool* is_locked)
 {
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCA_STATUS status;
     uint8_t data[ATCA_WORD_SIZE];
     uint16_t slot_locked;
 
     do
     {
-        if ((slot > 15) || (is_locked == NULL))
+        if ((slot > 15u) || (is_locked == NULL))
         {
             status = ATCA_TRACE(ATCA_BAD_PARAM, "Either Invalid slot or NULL pointer received");
             break;
@@ -53,14 +54,13 @@ ATCA_STATUS calib_is_slot_locked(ATCADevice device, uint16_t slot, bool* is_lock
         // Read the word with the lock bytes ( SlotLock[2], RFU[2] ) (config block = 2, word offset = 6)
         if ((status = calib_read_zone(device, ATCA_ZONE_CONFIG, 0, 2 /*block*/, 6 /*offset*/, data, ATCA_WORD_SIZE)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_read_zone - failed");
+            (void)ATCA_TRACE(status, "calib_read_zone - failed");
             break;
         }
 
         slot_locked = ((uint16_t)data[0]) | ((uint16_t)data[1] << 8);
-        *is_locked = ((slot_locked & (1 << slot)) == 0);
-    }
-    while (0);
+        *is_locked = ((slot_locked & ((uint16_t)1u << slot)) == 0u);
+    } while (false);
 
     return status;
 }
@@ -76,7 +76,7 @@ ATCA_STATUS calib_is_slot_locked(ATCADevice device, uint16_t slot, bool* is_lock
  */
 ATCA_STATUS calib_is_locked(ATCADevice device, uint8_t zone, bool* is_locked)
 {
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCA_STATUS status;
     uint8_t data[ATCA_WORD_SIZE];
 
     do
@@ -90,25 +90,24 @@ ATCA_STATUS calib_is_locked(ATCADevice device, uint8_t zone, bool* is_locked)
         // Read the word with the lock bytes (UserExtra, Selector, LockValue, LockConfig) (config block = 2, word offset = 5)
         if ((status = calib_read_zone(device, ATCA_ZONE_CONFIG, 0, 2 /*block*/, 5 /*offset*/, data, ATCA_WORD_SIZE)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_read_zone - failed");
+            (void)ATCA_TRACE(status, "calib_read_zone - failed");
             break;
         }
 
         // Determine the index into the word_data based on the zone we are querying for
         switch (zone)
         {
-        case LOCK_ZONE_CONFIG: *is_locked = (data[3] != 0x55); break;
-        case LOCK_ZONE_DATA:   *is_locked = (data[2] != 0x55); break;
+        case LOCK_ZONE_CONFIG: *is_locked = (data[3] != 0x55u); break;
+        case LOCK_ZONE_DATA:   *is_locked = (data[2] != 0x55u); break;
         default: status = ATCA_TRACE(ATCA_BAD_PARAM, "Invalid zone received"); break;
         }
-    }
-    while (0);
+    } while (false);
 
     return status;
 }
+#endif /* CALIB_READ_EN */
 
-
-#ifdef ATCA_ECC204_SUPPORT
+#if ATCA_CA2_SUPPORT
 /** \brief Use Info command to check ECC204 Config zone lock status
  *
  *  \param[in]   device       Device context pointer
@@ -116,9 +115,10 @@ ATCA_STATUS calib_is_locked(ATCADevice device, uint8_t zone, bool* is_locked)
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code
  */
-ATCA_STATUS calib_ecc204_is_config_locked(ATCADevice device, bool* is_locked)
+ATCA_STATUS calib_ca2_is_config_locked(ATCADevice device, bool* is_locked)
 {
     ATCA_STATUS status = ATCA_SUCCESS;
+    uint8_t buffer[4] = { 0 };
     uint16_t param2;
     uint8_t slot = 0;
 
@@ -127,18 +127,22 @@ ATCA_STATUS calib_ecc204_is_config_locked(ATCADevice device, bool* is_locked)
         return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer encountered");
     }
 
-    while (slot <= 3)
+    while (slot <= 3u)
     {
-        param2 = ATCA_ECC204_ZONE_CONFIG | (slot << 1);
-        if (ATCA_SUCCESS != (status = calib_info_lock_status(device, param2, (uint8_t*)is_locked)))
+        param2 = ATCA_ZONE_CA2_CONFIG | ((uint16_t)slot << 1);
+        if (ATCA_SUCCESS != (status = calib_info_lock_status(device, param2, buffer)))
         {
             *is_locked = false;
             break;
         }
+        else
+        {
+            *is_locked = (1U == buffer[0]);
+        }
 
         if (*is_locked)
         {
-            slot += 1; // increment slot
+            slot += 1u; // increment slot
         }
         else
         {
@@ -156,9 +160,10 @@ ATCA_STATUS calib_ecc204_is_config_locked(ATCADevice device, bool* is_locked)
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code
  */
-ATCA_STATUS calib_ecc204_is_data_locked(ATCADevice device, bool* is_locked)
+ATCA_STATUS calib_ca2_is_data_locked(ATCADevice device, bool* is_locked)
 {
     ATCA_STATUS status = ATCA_SUCCESS;
+    uint8_t buffer[4] = { 0 };
     uint16_t param2;
     uint8_t slot = 0;
 
@@ -167,18 +172,22 @@ ATCA_STATUS calib_ecc204_is_data_locked(ATCADevice device, bool* is_locked)
         return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer encountered");
     }
 
-    while (slot <= 3)
+    while (slot <= 3u)
     {
-        param2 = ATCA_ECC204_ZONE_DATA | (slot << 1);
-        if (ATCA_SUCCESS != (status = calib_info_lock_status(device, param2, (uint8_t*)is_locked)))
+        param2 = ATCA_ZONE_CA2_DATA | ((uint16_t)slot << 1);
+        if (ATCA_SUCCESS != (status = calib_info_lock_status(device, param2, buffer)))
         {
             *is_locked = false;
             break;
         }
+        else
+        {
+            *is_locked = (1U == buffer[0]);
+        }
 
         if (*is_locked)
         {
-            slot += 1; // increment slot
+            slot += 1u; // increment slot
         }
         else
         {
@@ -197,17 +206,17 @@ ATCA_STATUS calib_ecc204_is_data_locked(ATCADevice device, bool* is_locked)
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code
  */
-ATCA_STATUS calib_ecc204_is_locked(ATCADevice device, uint8_t zone, bool* is_locked)
+ATCA_STATUS calib_ca2_is_locked(ATCADevice device, uint8_t zone, bool* is_locked)
 {
     ATCA_STATUS status = ATCA_SUCCESS;
 
-    if (ATCA_ECC204_ZONE_CONFIG == zone)
+    if (ATCA_ZONE_CONFIG == zone)
     {
-        status = calib_ecc204_is_config_locked(device, is_locked);
+        status = calib_ca2_is_config_locked(device, is_locked);
     }
-    else if (ATCA_ECC204_ZONE_DATA == zone)
+    else if (ATCA_ZONE_DATA == zone)
     {
-        status = calib_ecc204_is_data_locked(device, is_locked);
+        status = calib_ca2_is_data_locked(device, is_locked);
     }
     else
     {
@@ -219,6 +228,33 @@ ATCA_STATUS calib_ecc204_is_locked(ATCADevice device, uint8_t zone, bool* is_loc
 
 #endif
 
+#if CALIB_READ_EN || CALIB_READ_CA2_EN
+
+ATCA_STATUS calib_is_locked_ext(ATCADevice device, uint8_t zone, bool* is_locked)
+{
+    ATCA_STATUS status = ATCA_BAD_PARAM;
+
+#if ATCA_CA2_SUPPORT
+    ATCADeviceType device_type = atcab_get_device_type_ext(device);
+
+    if (atcab_is_ca2_device(device_type))
+    {
+        if (LOCK_ZONE_DATA == zone)
+        {
+            zone = ATCA_ZONE_DATA;
+        }
+        status = calib_ca2_is_locked(device, zone, is_locked);
+    }
+    else
+#endif
+    {
+#if CALIB_READ_EN
+        status = calib_is_locked(device, zone, is_locked);
+#endif
+    }
+
+    return status;
+}
 
 /** \brief Check if a slot is a private key
  *
@@ -233,10 +269,11 @@ ATCA_STATUS calib_is_private(ATCADevice device, uint16_t slot, bool* is_private)
     ATCA_STATUS status = ATCA_BAD_PARAM;
     ATCADeviceType dev_type = atcab_get_device_type_ext(device);
 
-    if (device && is_private)
+    if ((NULL != device) && (NULL != is_private))
     {
         switch (dev_type)
         {
+#if CALIB_READ_EN
         case ATECC108A:
         /* fallthrough */
         case ATECC508A:
@@ -244,14 +281,19 @@ ATCA_STATUS calib_is_private(ATCADevice device, uint16_t slot, bool* is_private)
         case ATECC608:
         {
             uint8_t key_config[2] = { 0 };
-            if (ATCA_SUCCESS == (status = calib_read_bytes_zone(device, ATCA_ZONE_CONFIG, 0, ATCA_KEY_CONFIG_OFFSET((size_t)slot), key_config, sizeof(key_config))))
+            if (ATCA_SUCCESS == (status = calib_read_bytes_zone(device, ATCA_ZONE_CONFIG, 0, ATCA_KEY_CONFIG_OFFSET((size_t)slot),
+                                                                key_config, sizeof(key_config))))
             {
-                *is_private = (key_config[0] & ATCA_KEY_CONFIG_PRIVATE_MASK);
+                *is_private = (1u == (key_config[0] & ATCA_KEY_CONFIG_PRIVATE_MASK)) ? true : false;
             }
             break;
         }
-#ifdef ATCA_ECC204_SUPPORT
+#endif
+#if ATCA_CA2_SUPPORT
         case ECC204:
+        /* fallthrough */
+        case TA010:
+            *is_private = (0u == slot) ? true : false;
             break;
 #endif
         default:
@@ -262,3 +304,76 @@ ATCA_STATUS calib_is_private(ATCADevice device, uint16_t slot, bool* is_private)
 
     return status;
 }
+
+#endif
+
+/** \brief Parse the revision field to get the device type */
+ATCADeviceType calib_get_devicetype(uint8_t revision[4])
+{
+    ATCADeviceType ret = ATCA_DEV_UNKNOWN;
+
+    switch (revision[2])
+    {
+    case 0x00:
+    /* fallthrough */
+    case 0x02:
+        ret = ATSHA204A;
+        break;
+    case 0x10:
+        ret = ATECC108A;
+        break;
+    case 0x50:
+        ret = ATECC508A;
+        break;
+    case 0x60:
+        ret = ATECC608;
+        break;
+    case 0x20:
+    #if ATCA_CA2_SUPPORT
+        ret = calib_get_devicetype_with_device_id(revision[1], revision[3]);
+    #endif
+        break;
+    case 0x40:
+        ret = ATSHA206A;
+        break;
+    default:
+        ret = ATCA_DEV_UNKNOWN;
+        break;
+    }
+    return ret;
+}
+
+#if ATCA_CA2_SUPPORT
+ATCADeviceType calib_get_devicetype_with_device_id(uint8_t device_id, uint8_t device_revision)
+{
+    ATCADeviceType device_type;
+
+    if (device_revision == 0x00u)
+    {
+        device_type = ECC204;
+    }
+    else
+    {
+        switch (device_id)
+        {
+        case ATCA_ECC204_DEVICE_ID:
+            device_type = ECC204;
+            break;
+        case ATCA_TA010_DEVICE_ID:
+            device_type = TA010;
+            break;
+        case ATCA_SHA104_DEVICE_ID:
+            device_type = SHA104;
+            break;
+        case ATCA_SHA105_DEVICE_ID:
+            device_type = SHA105;
+            break;
+        default:
+            device_type = ATCA_DEV_UNKNOWN;
+            break;
+        }
+    }
+
+    return device_type;
+}
+#endif

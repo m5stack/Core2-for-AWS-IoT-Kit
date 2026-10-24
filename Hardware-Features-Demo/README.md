@@ -5,8 +5,8 @@ A demonstration application and BSP library for the M5Stack Core2 ESP32 IoT Deve
 
 ## Description
 
-Only supports ESP-IDF v4.1 or v4.2. Prefer to use 4.2 due to improved mbedTLS performance and functionality.
-`git clone -b release/v4.2 --recursive https://github.com/espressif/esp-idf.git`
+Supports ESP-IDF v4.4 (PlatformIO Espressif platform 5.4.0).
+`git clone -b release/v4.4 --recursive https://github.com/espressif/esp-idf.git`
 
 
 ## C Drivers Included

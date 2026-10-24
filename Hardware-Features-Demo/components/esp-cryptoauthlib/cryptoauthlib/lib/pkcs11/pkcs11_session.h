@@ -30,6 +30,7 @@
 
 #include "cryptoki.h"
 #include "pkcs11_config.h"
+#include "cal_internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,25 +38,44 @@ extern "C" {
 
 /* Some mechanism require the context to be initialized first and it is done
    in a previous command than the target operation */
-typedef union _pkcs11_session_mech_ctx
+typedef struct pkcs11_session_mech_ctx_s
 {
+#ifdef PKCS11_HARDWARE_SHA256
+    atca_hmac_sha256_ctx_t  hmac;
+    atca_sha256_ctx_t       sha256;
+#else
+    atcac_hmac_ctx_t        hmac;
+#if (ATCAC_SHA256_EN)    
+    atcac_sha2_256_ctx_t    sha256;
+#endif
+#if (ATCAC_SHA384_EN)    
+    atcac_sha2_384_ctx_t    sha384;
+#endif
+#if (ATCAC_SHA512_EN)
+    atcac_sha2_512_ctx_t    sha512;
+#endif
+#endif
+    atca_aes_cmac_ctx_t cmac;
+    atca_aes_cbc_ctx_t  cbc;
+#ifdef ATCA_ATECC608_SUPPORT
     struct
     {
-        atca_hmac_sha256_ctx_t context;
-    } hmac;
-    struct
-    {
-        atca_aes_cmac_ctx_t context;
-    } cmac;
-    struct
-    {
-        atca_aes_gcm_ctx_t context;
-        CK_BYTE            tag_len;
+        atca_aes_gcm_ctx_t  context;
+        CK_BYTE             tag_len;
     } gcm;
+#endif
+#if ATCA_TA_SUPPORT
+    struct
+    {
+        uint8_t iv[TA_AES_GCM_IV_LENGTH];
+        uint8_t aad[ATCA_AES128_BLOCK_SIZE];
+        CK_BYTE aad_len;
+    } gcm_single;
+#endif
 } pkcs11_session_mech_ctx, *pkcs11_session_mech_ctx_ptr;
 
 /** Session Context */
-typedef struct _pkcs11_session_ctx
+typedef struct pkcs11_session_ctx_s
 {
     CK_BBOOL                initialized;
     pkcs11_slot_ctx_ptr     slot;
@@ -74,7 +94,7 @@ typedef struct _pkcs11_session_ctx
 #ifdef __cplusplus
 }
 #endif
-//pkcs11_session_ctx_ptr pkcs11_get_session_context(CK_SESSION_HANDLE hSession);
+pkcs11_session_ctx_ptr pkcs11_get_session_context(CK_SESSION_HANDLE hSession);
 CK_RV pkcs11_session_check(pkcs11_session_ctx_ptr * pSession, CK_SESSION_HANDLE hSession);
 
 CK_RV pkcs11_session_get_info(CK_SESSION_HANDLE hSession, CK_SESSION_INFO_PTR pInfo);
@@ -84,6 +104,9 @@ CK_RV pkcs11_session_closeall(CK_SLOT_ID slotID);
 
 CK_RV pkcs11_session_login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType, CK_UTF8CHAR_PTR pPin, CK_ULONG ulPinLen);
 CK_RV pkcs11_session_logout(CK_SESSION_HANDLE hSession);
-CK_RV pkcs11_session_authorize(pkcs11_session_ctx_ptr pSession, CK_VOID_PTR pObject);
+
+CK_RV pkcs11_reserve_resource(pkcs11_lib_ctx_ptr pContext, pkcs11_session_ctx_ptr pSession, uint8_t resource);
+CK_RV pkcs11_release_resource(pkcs11_lib_ctx_ptr pContext, pkcs11_session_ctx_ptr pSession, uint8_t resource);
+
 
 #endif /* PKCS11_SESSION_H_ */

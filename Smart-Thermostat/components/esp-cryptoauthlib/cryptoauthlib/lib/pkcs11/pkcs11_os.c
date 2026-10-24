@@ -27,19 +27,12 @@
 
 #include "pkcs11_os.h"
 #include "pkcs11_util.h"
+#include "pkcs11_init.h"
 
 /**
  * \defgroup pkcs11 OS Abstraction (pkcs11_so_)
    @{ */
 
-/**
- * \brief Convert HAL return codes to PKCS11 return values
- * \param[IN] status Code returned by hal call
- */
-static CK_RV pkcs11_os_convert_rv(ATCA_STATUS status)
-{
-    return (ATCA_FUNC_FAIL == status) ? CKR_CANT_LOCK : pkcs11_util_convert_rv(status);
-}
 
 /**
  * \brief Application callback for creating a mutex object
@@ -47,7 +40,7 @@ static CK_RV pkcs11_os_convert_rv(ATCA_STATUS status)
  */
 CK_RV pkcs11_os_create_mutex(CK_VOID_PTR_PTR ppMutex)
 {
-    return pkcs11_os_convert_rv(hal_create_mutex(ppMutex, "atpkcs11"));
+    return pkcs11_util_convert_rv(hal_create_mutex(ppMutex, "atpkcs11_3_6"));
 }
 
 /*
@@ -56,7 +49,7 @@ CK_RV pkcs11_os_create_mutex(CK_VOID_PTR_PTR ppMutex)
  */
 CK_RV pkcs11_os_destroy_mutex(CK_VOID_PTR pMutex)
 {
-    return pkcs11_os_convert_rv(hal_destroy_mutex(pMutex));
+    return pkcs11_util_convert_rv(hal_destroy_mutex(pMutex));
 }
 
 /*
@@ -65,7 +58,7 @@ CK_RV pkcs11_os_destroy_mutex(CK_VOID_PTR pMutex)
  */
 CK_RV pkcs11_os_lock_mutex(CK_VOID_PTR pMutex)
 {
-    return pkcs11_os_convert_rv(hal_lock_mutex(pMutex));
+    return pkcs11_util_convert_rv(hal_lock_mutex(pMutex));
 }
 
 /*
@@ -74,7 +67,81 @@ CK_RV pkcs11_os_lock_mutex(CK_VOID_PTR pMutex)
  */
 CK_RV pkcs11_os_unlock_mutex(CK_VOID_PTR pMutex)
 {
-    return pkcs11_os_convert_rv(hal_unlock_mutex(pMutex));
+    return pkcs11_util_convert_rv(hal_unlock_mutex(pMutex));
+}
+
+CK_RV pkcs11_os_alloc_shared_ctx(void ** ppShared, size_t size)
+{
+    ATCA_STATUS status = ATCA_GEN_FAIL;
+
+#if ((defined(__linux__) || defined(__APPLE__)) && defined(ATCA_USE_SHARED_MUTEX))
+    bool initialized = false;
+    void *pMutex = NULL;
+
+    // Create the system-wide mutex
+    status = hal_create_mutex(&pMutex, ATCA_SHARED_MUTEX_NAME);
+    if (status != ATCA_SUCCESS)
+    {
+        return pkcs11_util_convert_rv(status);
+    }
+
+    // Lock the mutex before calling hal_alloc_shared
+    status = hal_lock_mutex(pMutex);
+    if (status != ATCA_SUCCESS)
+    {
+        return pkcs11_util_convert_rv(hal_free_shared(pMutex, sizeof(hal_mutex_t)));
+    }
+
+    // Allocate shared memory
+    if (ATCA_SUCCESS == (status = hal_alloc_shared(ppShared, size, "atpkcs11_3_6", &initialized)))
+    {
+        if (initialized)
+        {
+            status = hal_init_mutex(*ppShared, true);
+        }
+    }
+
+    // Unlock the mutex after the critical section
+    status = hal_unlock_mutex(pMutex);
+
+    return pkcs11_util_convert_rv(hal_free_shared(pMutex, sizeof(hal_mutex_t)));
+
+#else
+    if (ppShared)
+    {
+    #if defined(ATCA_NO_HEAP)
+        static pkcs11_dev_state tracker;
+        *ppShared = &tracker;
+        status = ATCA_SUCCESS;
+    #else
+        if (NULL != (*ppShared = hal_malloc(size)))
+        {
+            status = ATCA_SUCCESS;
+        }
+    #endif
+    }
+#endif
+
+    return pkcs11_util_convert_rv(status);
+}
+
+CK_RV pkcs11_os_free_shared_ctx(void * pShared, size_t size)
+{
+    ATCA_STATUS status = ATCA_GEN_FAIL;
+
+#if ((defined(__linux__) || defined(__APPLE__)) && defined(ATCA_USE_SHARED_MUTEX))
+    status = hal_free_shared(pShared, size);
+#elif defined(ATCA_NO_HEAP)
+    ((void)pShared);
+    ((void)size);
+    status = ATCA_SUCCESS;
+#else
+    ((void)size);
+    hal_free(pShared);
+    status = ATCA_SUCCESS;
+#endif
+
+    return pkcs11_util_convert_rv(status);
 }
 
 /** @} */

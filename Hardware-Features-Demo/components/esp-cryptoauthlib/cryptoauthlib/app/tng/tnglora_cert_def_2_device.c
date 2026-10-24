@@ -29,9 +29,9 @@
 #include "tngtls_cert_def_2_device.h"
 #include "tngtls_cert_def_1_signer.h"
 #include "tnglora_cert_def_1_signer.h"
+#include "tnglora_cert_def_2_device.h"
 
-extern const uint8_t g_tngtls_cert_template_2_device[];
-extern const atcacert_cert_element_t g_tngtls_cert_elements_2_device[];
+#if ATCACERT_COMPCERT_EN
 
 SHARED_LIB_EXPORT const atcacert_def_t g_tnglora_cert_def_2_device = {
     .type                = CERTTYPE_X509,
@@ -107,3 +107,5 @@ SHARED_LIB_EXPORT const atcacert_def_t g_tnglora_cert_def_2_device = {
     .cert_template_size  = TNGTLS_CERT_TEMPLATE_2_DEVICE_SIZE,
     .ca_cert_def         = &g_tnglora_cert_def_1_signer
 };
+
+#endif

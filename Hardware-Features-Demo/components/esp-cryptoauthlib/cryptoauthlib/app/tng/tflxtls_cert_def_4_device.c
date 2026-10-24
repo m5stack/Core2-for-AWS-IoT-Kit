@@ -27,6 +27,9 @@
 
 #include "atcacert/atcacert_def.h"
 #include "tngtls_cert_def_1_signer.h"
+#include "tflxtls_cert_def_4_device.h"
+
+#if ATCACERT_COMPCERT_EN
 
 const uint8_t g_tflxtls_cert_template_4_device[500] = {
     0x30, 0x82, 0x01, 0xF0, 0x30, 0x82, 0x01, 0x97, 0xA0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x10, 0x55,
@@ -171,8 +174,9 @@ const atcacert_def_t g_tflxtls_cert_def_4_device = {
         }
     },
     .cert_elements       = g_tflxtls_cert_elements_4_device,
-    .cert_elements_count = sizeof(g_tflxtls_cert_elements_4_device) / sizeof(g_tflxtls_cert_elements_4_device[0]),
+    .cert_elements_count = (uint8_t)(sizeof(g_tflxtls_cert_elements_4_device) / sizeof(g_tflxtls_cert_elements_4_device[0])),
     .cert_template       = g_tflxtls_cert_template_4_device,
-    .cert_template_size  = sizeof(g_tflxtls_cert_template_4_device),
+    .cert_template_size  = (uint16_t)(sizeof(g_tflxtls_cert_template_4_device)),
     .ca_cert_def         = &g_tngtls_cert_def_1_signer
 };
+#endif

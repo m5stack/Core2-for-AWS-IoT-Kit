@@ -21,23 +21,24 @@
 # currently esp-cryptoauthlib points to tag 20191122 of https://github.com/MicrochipTech/cryptoauthlib 
 # Prerequisute = In this script the github repo of esp-cryptoauthlib is cloned at the same level of tarball containing specific version of cryptoauthlib(Microchip)
 
-link="https://github.com/MicrochipTech/cryptoauthlib/archive/refs/tags/v3.3.1.tar.gz"
+link="https://github.com/MicrochipTech/cryptoauthlib/archive/refs/tags/v3.7.9.tar.gz"
 curl -LO $link
-tar -xzf v3.3.1.tar.gz
+tar -xzf v3.7.9.tar.gz
 git clone https://github.com/espressif/esp-cryptoauthlib
 # Delete earlier content of esp-cryptoauthlib/cryptoauthlib
 rm -rf esp-cryptoauthlib/cryptoauthlib
 mkdir -p esp-cryptoauthlib/cryptoauthlib
-cd cryptoauthlib-3.3.1
+cp generate_component.sh esp-cryptoauthlib/
+cd cryptoauthlib-3.7.9
 cp -r app ../esp-cryptoauthlib/cryptoauthlib/
 cp -r lib ../esp-cryptoauthlib/cryptoauthlib/
 cp -r third_party ../esp-cryptoauthlib/cryptoauthlib/
 cp README.md ../esp-cryptoauthlib/cryptoauthlib/
 cp license.txt ../esp-cryptoauthlib/cryptoauthlib/LICENSE
-echo "cryptoauthlib-v3.3.1" >> ../esp-cryptoauthlib/cryptoauthlib/version.txt
+echo "cryptoauthlib-v3.7.9" >> ../esp-cryptoauthlib/cryptoauthlib/version.txt
 cd .
-rm -rf cryptoauthlib-3.3.1
-rm -rf v3.3.1.tar.gz
+rm -rf cryptoauthlib-3.7.9
+rm -rf v3.7.9.tar.gz
 
 # create TAG with commit name
 # git add esp-cryptoauthlib/cryptoauthlib

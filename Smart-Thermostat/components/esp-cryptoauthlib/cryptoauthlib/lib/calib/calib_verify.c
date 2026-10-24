@@ -33,8 +33,10 @@
  */
 
 #include "cryptoauthlib.h"
+
 #include "host/atca_host.h"
 
+#if CALIB_VERIFY_EN
 /** \brief Executes the Verify command, which takes an ECDSA [R,S] signature
  *          and verifies that it is correctly generated from a given message and
  *          public key. In all cases, the signature is an input to the command.
@@ -66,12 +68,15 @@
  *
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
-ATCA_STATUS calib_verify(ATCADevice device, uint8_t mode, uint16_t key_id, const uint8_t* signature, const uint8_t* public_key, const uint8_t* other_data, uint8_t* mac)
+ATCA_STATUS calib_verify(ATCADevice device, uint8_t mode, uint16_t key_id, const uint8_t* signature, const uint8_t* public_key, const uint8_t* other_data,
+                         uint8_t* mac)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
+
     uint8_t verify_mode = (mode & VERIFY_MODE_MASK);
 
+    
     do
     {
         if ((device == NULL) || (verify_mode == VERIFY_MODE_EXTERNAL && public_key == NULL) ||
@@ -87,43 +92,76 @@ ATCA_STATUS calib_verify(ATCADevice device, uint8_t mode, uint16_t key_id, const
             break;
         }
 
-        // Build the verify command
-        packet.param1 = mode;
-        packet.param2 = key_id;
-        memcpy(&packet.data[0], signature, ATCA_SIG_SIZE);
+        #if (CA_MAX_PACKET_SIZE < (ATCA_CMD_SIZE_MIN + ATCA_SIG_SIZE + ATCA_PUB_KEY_SIZE))
+        #if ATCA_PREPROCESSOR_WARNING
+        #warning "CA_MAX_PACKET_SIZE will not support External mode in verify command"
+        #endif
         if (verify_mode == VERIFY_MODE_EXTERNAL)
         {
-            memcpy(&packet.data[ATCA_SIG_SIZE], public_key, ATCA_PUB_KEY_SIZE);
+            status = ATCA_TRACE(ATCA_INVALID_SIZE, "External mode is not supported in verify command");
         }
-        else if (other_data)
-        {
-            memcpy(&packet.data[ATCA_SIG_SIZE], other_data, VERIFY_OTHER_DATA_SIZE);
-        }
+        #endif
 
-        if ((status = atVerify(atcab_get_device_type_ext(device), &packet)) != ATCA_SUCCESS)
+        #if (CA_MAX_PACKET_SIZE < (ATCA_CMD_SIZE_MIN + ATCA_SIG_SIZE + VERIFY_OTHER_DATA_SIZE))
+        #if ATCA_PREPROCESSOR_WARNING
+        #warning "CA_MAX_PACKET_SIZE will not support validate/invalidate mode in verify command"
+        #endif
+        if ((verify_mode == VERIFY_MODE_VALIDATE) || (verify_mode == VERIFY_MODE_INVALIDATE))
         {
-            ATCA_TRACE(status, "atVerify - failed");
+            status = ATCA_TRACE(ATCA_INVALID_SIZE, "Validate/Invalidate mode is not supported in verify command");
+        }
+        #endif
+
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        (void)memset(packet, 0x00, sizeof(ATCAPacket));
+
+        // Build the verify command
+        packet->param1 = mode;
+        packet->param2 = key_id;
+        (void)memcpy(&packet->data[0], signature, ATCA_SIG_SIZE);
+        if (verify_mode == VERIFY_MODE_EXTERNAL)
         {
-            ATCA_TRACE(status, "calib_verify - execution failed");
+            (void)memcpy(&packet->data[ATCA_SIG_SIZE], public_key, ATCA_PUB_KEY_SIZE);
+        }
+
+        if ((verify_mode == VERIFY_MODE_VALIDATE) || (verify_mode == VERIFY_MODE_INVALIDATE))
+        {
+            (void)memcpy(&packet->data[ATCA_SIG_SIZE], other_data, VERIFY_OTHER_DATA_SIZE);
+        }
+
+        if ((status = atVerify(atcab_get_device_type_ext(device), packet)) != ATCA_SUCCESS)
+        {
+            (void)ATCA_TRACE(status, "atVerify - failed");
+            break;
+        }
+
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
+        {
+            (void)ATCA_TRACE(status, "calib_verify - execution failed");
             break;
         }
 
         // The Verify command may return MAC if requested
-        if ((mac != NULL) && (packet.data[ATCA_COUNT_IDX] >= (ATCA_PACKET_OVERHEAD + MAC_SIZE)))
+        if ((mac != NULL) && (packet->data[ATCA_COUNT_IDX] >= (ATCA_PACKET_OVERHEAD + MAC_SIZE)))
         {
-            memcpy(mac, &packet.data[ATCA_RSP_DATA_IDX], MAC_SIZE);
+            (void)memcpy(mac, &packet->data[ATCA_RSP_DATA_IDX], MAC_SIZE);
         }
 
-    }
-    while (false);
+    } while (false);
 
+    calib_packet_free(packet);
     return status;
 }
+#endif /* CALIB_VERIFY */
 
+#if CALIB_VERIFY_MAC_EN
 /** \brief Executes the Verify command with verification MAC for the External
  *          or Stored Verify modes.. This function is only available on the
  *          ATECC608.
@@ -153,9 +191,10 @@ ATCA_STATUS calib_verify(ATCADevice device, uint8_t mode, uint16_t key_id, const
  * \return ATCA_SUCCESS on verification success or failure, because the
  *         command still completed successfully.
  */
-static ATCA_STATUS calib_verify_extern_stored_mac(ATCADevice device, uint8_t mode, uint16_t key_id, const uint8_t* message, const uint8_t* signature, const uint8_t* public_key, const uint8_t* num_in, const uint8_t* io_key, bool* is_verified)
+static ATCA_STATUS calib_verify_extern_stored_mac(ATCADevice device, uint8_t mode, uint16_t key_id, const uint8_t* message, const uint8_t* signature,
+                                                  const uint8_t* public_key, const uint8_t* num_in, const uint8_t* io_key, bool* is_verified)
 {
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCA_STATUS status;
     uint8_t msg_dig_buf[64];
     atca_verify_mac_in_out_t verify_mac_params;
     uint8_t mac[SECUREBOOT_MAC_SIZE];
@@ -173,16 +212,16 @@ static ATCA_STATUS calib_verify_extern_stored_mac(ATCADevice device, uint8_t mod
 
         // When using the message digest buffer as the message source, the
         // second 32 bytes in the buffer will be the MAC system nonce.
-        memcpy(&msg_dig_buf[0], message, 32);
-        memcpy(&msg_dig_buf[32], num_in, 32);
+        (void)memcpy(&msg_dig_buf[0], message, 32);
+        (void)memcpy(&msg_dig_buf[32], num_in, 32);
         if ((status = calib_nonce_load(device, NONCE_MODE_TARGET_MSGDIGBUF, msg_dig_buf, 64)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_nonce_load - failed");
+            (void)ATCA_TRACE(status, "calib_nonce_load - failed");
             break;
         }
 
         // Calculate the expected MAC
-        memset(&verify_mac_params, 0, sizeof(verify_mac_params));
+        (void)memset(&verify_mac_params, 0, sizeof(verify_mac_params));
         verify_mac_params.mode = mode | VERIFY_MODE_SOURCE_MSGDIGBUF | VERIFY_MODE_MAC_FLAG;
         verify_mac_params.key_id = key_id;
         verify_mac_params.signature = signature;
@@ -193,7 +232,7 @@ static ATCA_STATUS calib_verify_extern_stored_mac(ATCADevice device, uint8_t mod
         verify_mac_params.mac = host_mac;
         if (ATCA_SUCCESS != (status = atcah_verify_mac(&verify_mac_params)))
         {
-            ATCA_TRACE(status, "atcah_verify_mac - failed");
+            (void)ATCA_TRACE(status, "atcah_verify_mac - failed");
             break;
         }
 
@@ -207,70 +246,7 @@ static ATCA_STATUS calib_verify_extern_stored_mac(ATCADevice device, uint8_t mod
         }
 
         *is_verified = (memcmp(host_mac, mac, MAC_SIZE) == 0);
-    }
-    while (0);
-
-    return status;
-}
-
-/** \brief Executes the Verify command, which verifies a signature (ECDSA
- *          verify operation) with all components (message, signature, and
- *          public key) supplied. The message to be signed will be loaded into
- *          the Message Digest Buffer to the ATECC608 device or TempKey for
- *          other devices.
- *
- * \param[in]  device       Device context pointer
- * \param[in]  message      32 byte message to be verified. Typically
- *                          the SHA256 hash of the full message.
- * \param[in]  signature    Signature to be verified. R and S integers in
- *                          big-endian format. 64 bytes for P256 curve.
- * \param[in]  public_key   The public key to be used for verification. X and
- *                          Y integers in big-endian format. 64 bytes for
- *                          P256 curve.
- * \param[out] is_verified  Boolean whether or not the message, signature,
- *                          public key verified.
- *
- * \return ATCA_SUCCESS on verification success or failure, because the
- *         command still completed successfully.
- */
-ATCA_STATUS calib_verify_extern(ATCADevice device, const uint8_t *message, const uint8_t *signature, const uint8_t *public_key, bool *is_verified)
-{
-    ATCA_STATUS status = ATCA_GEN_FAIL;
-    uint8_t nonce_target = NONCE_MODE_TARGET_TEMPKEY;
-    uint8_t verify_source = VERIFY_MODE_SOURCE_TEMPKEY;
-
-    if ((device == NULL) || (is_verified == NULL) || (signature == NULL) || (message == NULL) ||
-        (public_key == NULL))
-    {
-        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
-    }
-
-    *is_verified = false;
-
-    do
-    {
-        // Load message into device
-        if (ATECC608 == device->mIface.mIfaceCFG->devtype)
-        {
-            // Use the Message Digest Buffer for the ATECC608
-            nonce_target = NONCE_MODE_TARGET_MSGDIGBUF;
-            verify_source = VERIFY_MODE_SOURCE_MSGDIGBUF;
-        }
-        if ((status = calib_nonce_load(device, nonce_target, message, 32)) != ATCA_SUCCESS)
-        {
-            ATCA_TRACE(status, "calib_nonce_load - failed");
-            break;
-        }
-
-        status = calib_verify(device, VERIFY_MODE_EXTERNAL | verify_source, VERIFY_KEY_P256, signature, public_key, NULL, NULL);
-
-        *is_verified = (status == ATCA_SUCCESS);
-        if (status == ATCA_CHECKMAC_VERIFY_FAILED)
-        {
-            status = ATCA_SUCCESS;  // Verify failed, but command succeeded
-        }
-    }
-    while (0);
+    } while (false);
 
     return status;
 }
@@ -297,68 +273,10 @@ ATCA_STATUS calib_verify_extern(ATCADevice device, const uint8_t *message, const
  * \return ATCA_SUCCESS on verification success or failure, because the
  *         command still completed successfully.
  */
-ATCA_STATUS calib_verify_extern_mac(ATCADevice device, const uint8_t *message, const uint8_t* signature, const uint8_t* public_key, const uint8_t* num_in, const uint8_t* io_key, bool* is_verified)
+ATCA_STATUS calib_verify_extern_mac(ATCADevice device, const uint8_t *message, const uint8_t* signature, const uint8_t* public_key, const uint8_t* num_in,
+                                    const uint8_t* io_key, bool* is_verified)
 {
     return calib_verify_extern_stored_mac(device, VERIFY_MODE_EXTERNAL, VERIFY_KEY_P256, message, signature, public_key, num_in, io_key, is_verified);
-}
-
-/** \brief Executes the Verify command, which verifies a signature (ECDSA
- *          verify operation) with a public key stored in the device. The
- *          message to be signed will be loaded into the Message Digest Buffer
- *          to the ATECC608 device or TempKey for other devices.
- *
- * \param[in]  device       Device context pointer
- * \param[in]  message      32 byte message to be verified. Typically
- *                          the SHA256 hash of the full message.
- * \param[in]  signature    Signature to be verified. R and S integers in
- *                          big-endian format. 64 bytes for P256 curve.
- * \param[in]  key_id       Slot containing the public key to be used in the
- *                         verification.
- * \param[out] is_verified  Boolean whether or not the message, signature,
- *                          public key verified.
- *
- * \return ATCA_SUCCESS on verification success or failure, because the
- *         command still completed successfully.
- */
-ATCA_STATUS calib_verify_stored(ATCADevice device, const uint8_t *message, const uint8_t *signature, uint16_t key_id, bool *is_verified)
-{
-    ATCA_STATUS status = ATCA_GEN_FAIL;
-    uint8_t nonce_target = NONCE_MODE_TARGET_TEMPKEY;
-    uint8_t verify_source = VERIFY_MODE_SOURCE_TEMPKEY;
-
-    if ((device == NULL) || (is_verified == NULL) || (signature == NULL) || (message == NULL))
-    {
-        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
-    }
-
-    *is_verified = false;
-
-    do
-    {
-        // Load message into device
-        if (ATECC608 == device->mIface.mIfaceCFG->devtype)
-        {
-            // Use the Message Digest Buffer for the ATECC608
-            nonce_target = NONCE_MODE_TARGET_MSGDIGBUF;
-            verify_source = VERIFY_MODE_SOURCE_MSGDIGBUF;
-        }
-        if ((status = calib_nonce_load(device, nonce_target, message, 32)) != ATCA_SUCCESS)
-        {
-            ATCA_TRACE(status, "calib_nonce_load - failed");
-            break;
-        }
-
-        status = calib_verify(device, VERIFY_MODE_STORED | verify_source, key_id, signature, NULL, NULL, NULL);
-
-        *is_verified = (status == ATCA_SUCCESS);
-        if (status == ATCA_CHECKMAC_VERIFY_FAILED)
-        {
-            status = ATCA_SUCCESS;  // Verify failed, but command succeeded
-        }
-    }
-    while (0);
-
-    return status;
 }
 
 /** \brief Executes the Verify command with verification MAC, which verifies a
@@ -381,11 +299,183 @@ ATCA_STATUS calib_verify_stored(ATCADevice device, const uint8_t *message, const
  * \return ATCA_SUCCESS on verification success or failure, because the
  *         command still completed successfully.
  */
-ATCA_STATUS calib_verify_stored_mac(ATCADevice device, const uint8_t *message, const uint8_t *signature, uint16_t key_id, const uint8_t* num_in, const uint8_t* io_key, bool* is_verified)
+ATCA_STATUS calib_verify_stored_mac(ATCADevice device, const uint8_t *message, const uint8_t *signature, uint16_t key_id, const uint8_t* num_in,
+                                    const uint8_t* io_key, bool* is_verified)
 {
     return calib_verify_extern_stored_mac(device, VERIFY_MODE_STORED, key_id, message, signature, NULL, num_in, io_key, is_verified);
 }
+#endif  /* CALIB_VERIFY_MAC_EN */
 
+/** \brief Executes the Verify command, which verifies a signature (ECDSA
+ *          verify operation) with all components (message, signature, and
+ *          public key) supplied. The message to be signed will be loaded into
+ *          the Message Digest Buffer to the ATECC608 device or TempKey for
+ *          other devices.
+ *
+ * \param[in]  device       Device context pointer
+ * \param[in]  message      32 byte message to be verified. Typically
+ *                          the SHA256 hash of the full message.
+ * \param[in]  signature    Signature to be verified. R and S integers in
+ *                          big-endian format. 64 bytes for P256 curve.
+ * \param[in]  public_key   The public key to be used for verification. X and
+ *                          Y integers in big-endian format. 64 bytes for
+ *                          P256 curve.
+ * \param[out] is_verified  Boolean whether or not the message, signature,
+ *                          public key verified.
+ *
+ * \return ATCA_SUCCESS on verification success or failure, because the
+ *         command still completed successfully.
+ */
+
+#if CALIB_VERIFY_EXTERN_EN
+ATCA_STATUS calib_verify_extern(ATCADevice device, const uint8_t *message, const uint8_t *signature, const uint8_t *public_key, bool *is_verified)
+{
+    ATCA_STATUS status;
+    uint8_t nonce_target = NONCE_MODE_TARGET_TEMPKEY;
+    uint8_t verify_source = VERIFY_MODE_SOURCE_TEMPKEY;
+
+    if ((device == NULL) || (is_verified == NULL) || (signature == NULL) || (message == NULL) ||
+        (public_key == NULL))
+    {
+        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
+    }
+
+    *is_verified = false;
+
+    do
+    {
+        // Load message into device
+        if (ATECC608 == device->mIface.mIfaceCFG->devtype)
+        {
+            // Use the Message Digest Buffer for the ATECC608
+            nonce_target = NONCE_MODE_TARGET_MSGDIGBUF;
+            verify_source = VERIFY_MODE_SOURCE_MSGDIGBUF;
+        }
+        if ((status = calib_nonce_load(device, nonce_target, message, 32)) != ATCA_SUCCESS)
+        {
+            (void)ATCA_TRACE(status, "calib_nonce_load - failed");
+            break;
+        }
+
+        status = calib_verify(device, VERIFY_MODE_EXTERNAL | verify_source, VERIFY_KEY_P256, signature, public_key, NULL, NULL);
+
+        *is_verified = (status == ATCA_SUCCESS);
+        if (status == ATCA_CHECKMAC_VERIFY_FAILED)
+        {
+            status = ATCA_SUCCESS;  // Verify failed, but command succeeded
+        }
+    } while (false);
+
+    return status;
+}
+#endif  /* CALIB_VERIFY_EXTERN */
+
+#if CALIB_VERIFY_STORED_EN
+/** \brief Executes the Verify command, which verifies a signature (ECDSA
+ *          verify operation) with a public key stored in the device. The
+ *          message to be signed will be loaded into the Message Digest Buffer
+ *          to the ATECC608 device or TempKey for other devices.
+ *
+ * \param[in]  device       Device context pointer
+ * \param[in]  message      32 byte message to be verified. Typically
+ *                          the SHA256 hash of the full message.
+ * \param[in]  signature    Signature to be verified. R and S integers in
+ *                          big-endian format. 64 bytes for P256 curve.
+ * \param[in]  key_id       Slot containing the public key to be used in the
+ *                         verification.
+ * \param[out] is_verified  Boolean whether or not the message, signature,
+ *                          public key verified.
+ *
+ * \return ATCA_SUCCESS on verification success or failure, because the
+ *         command still completed successfully.
+ */
+ATCA_STATUS calib_verify_stored(ATCADevice device, const uint8_t *message, const uint8_t *signature, uint16_t key_id, bool *is_verified)
+{
+    ATCA_STATUS status;
+    uint8_t nonce_target = NONCE_MODE_TARGET_TEMPKEY;
+    uint8_t verify_source = VERIFY_MODE_SOURCE_TEMPKEY;
+
+    if ((device == NULL) || (is_verified == NULL) || (signature == NULL) || (message == NULL))
+    {
+        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
+    }
+
+    *is_verified = false;
+
+    do
+    {
+        // Load message into device
+        if (ATECC608 == device->mIface.mIfaceCFG->devtype)
+        {
+            // Use the Message Digest Buffer for the ATECC608
+            nonce_target = NONCE_MODE_TARGET_MSGDIGBUF;
+            verify_source = VERIFY_MODE_SOURCE_MSGDIGBUF;
+        }
+        if ((status = calib_nonce_load(device, nonce_target, message, 32)) != ATCA_SUCCESS)
+        {
+            (void)ATCA_TRACE(status, "calib_nonce_load - failed");
+            break;
+        }
+
+        status = calib_verify(device, VERIFY_MODE_STORED | verify_source, key_id, signature, NULL, NULL, NULL);
+
+        *is_verified = (status == ATCA_SUCCESS);
+        if (status == ATCA_CHECKMAC_VERIFY_FAILED)
+        {
+            status = ATCA_SUCCESS;  // Verify failed, but command succeeded
+        }
+    } while (false);
+
+    return status;
+}
+
+/** \brief Executes the Verify command, which verifies a signature (ECDSA
+ *         verify operation) with a public key stored in the device.
+ *         keyConfig.reqrandom bit should be set and the message to be signed
+ *         should be already loaded into TempKey for all devices.
+ *
+ * Please refer to TEST(atca_cmd_basic_test, verify_stored_on_reqrandom_set) in
+ * atca_tests_verify.c for proper use of this api
+ *
+ * \param[in]  device       Device context pointer
+ * \param[in]  signature    Signature to be verified. R and S integers in
+ *                          big-endian format. 64 bytes for P256 curve.
+ * \param[in]  key_id       Slot containing the public key to be used in the
+ *                          verification.
+ * \param[out] is_verified  Boolean whether or not the message, signature,
+ *                          public key verified.
+ *
+ * \return ATCA_SUCCESS on verification success or failure, because the
+ *         command still completed successfully.
+ */
+ATCA_STATUS calib_verify_stored_with_tempkey(ATCADevice device, const uint8_t* signature, uint16_t key_id, bool* is_verified)
+{
+    ATCA_STATUS status;
+    uint8_t verify_source = VERIFY_MODE_SOURCE_TEMPKEY;
+
+    if ((device == NULL) || (is_verified == NULL) || (signature == NULL))
+    {
+        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
+    }
+
+    *is_verified = false;
+
+    do
+    {
+        status = calib_verify(device, VERIFY_MODE_STORED | verify_source, key_id, signature, NULL, NULL, NULL);
+
+        *is_verified = (status == ATCA_SUCCESS);
+        if (status == ATCA_CHECKMAC_VERIFY_FAILED)
+        {
+            status = ATCA_SUCCESS;  // Verify failed, but command succeeded
+        }
+    } while (false);
+
+    return status;
+}
+#endif  /* CALIB_VERIFY_STORED */
+
+#if CALIB_VERIFY_VALIDATE_EN
 /** \brief Executes the Verify command in Validate mode to validate a public
  *          key stored in a slot.
  *
@@ -461,4 +551,4 @@ ATCA_STATUS calib_verify_invalidate(ATCADevice device, uint16_t key_id, const ui
 
     return status;
 }
-
+#endif  /* CALIB_VERIFY_VALIDATE_EN */

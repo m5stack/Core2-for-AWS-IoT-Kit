@@ -19,12 +19,18 @@
 
 extern void ets_delay_us(uint32_t);
 
-void atca_delay_us(uint32_t delay)
+void hal_delay_us(uint32_t delay)
 {
     ets_delay_us(delay);
 }
 
-void atca_delay_ms(uint32_t msec)
+void hal_delay_ms(uint32_t msec)
 {
     ets_delay_us(msec * 1000);
+}
+
+
+void atca_delay_us(uint32_t delay)
+{
+    ets_delay_us(delay);
 }

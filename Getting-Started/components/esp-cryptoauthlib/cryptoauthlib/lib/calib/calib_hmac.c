@@ -35,6 +35,7 @@
 
 #include "cryptoauthlib.h"
 
+#if CALIB_HMAC_EN
 /** \brief Issues a HMAC command, which computes an HMAC/SHA-256 digest of a
  *          key stored in the device, a challenge, and other information on the
  *          device.
@@ -51,8 +52,8 @@
  */
 ATCA_STATUS calib_hmac(ATCADevice device, uint8_t mode, uint16_t key_id, uint8_t* digest)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
 
     do
     {
@@ -62,32 +63,44 @@ ATCA_STATUS calib_hmac(ATCADevice device, uint8_t mode, uint16_t key_id, uint8_t
             break;
         }
 
+
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
+            break;
+        }
+
+        (void)memset(packet, 0, sizeof(ATCAPacket));
+
         // build HMAC command
-        packet.param1 = mode;
-        packet.param2 = key_id;
+        packet->param1 = mode;
+        packet->param2 = key_id;
 
-        if ((status = atHMAC(atcab_get_device_type_ext(device), &packet)) != ATCA_SUCCESS)
+        if ((status = atHMAC(atcab_get_device_type_ext(device), packet)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "atHMAC - failed");
+            (void)ATCA_TRACE(status, "atHMAC - failed");
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_hmac - failed");
+            (void)ATCA_TRACE(status, "calib_hmac - failed");
             break;
         }
 
-        if (packet.data[ATCA_COUNT_IDX] != HMAC_DIGEST_SIZE + 3)
+        if (packet->data[ATCA_COUNT_IDX] != HMAC_DIGEST_SIZE + 3u)
         {
-            status = ATCA_TRACE(ATCA_RX_FAIL, "Unexpected response size"); // Unexpected response size
+            status = ATCA_TRACE(ATCA_RX_FAIL, "Unexpected response size");  // Unexpected response size
             break;
         }
 
-        memcpy(digest, &packet.data[ATCA_RSP_DATA_IDX], HMAC_DIGEST_SIZE);
+        (void)memcpy(digest, &packet->data[ATCA_RSP_DATA_IDX], HMAC_DIGEST_SIZE);
 
-    }
-    while (0);
+    } while (false);
 
+    calib_packet_free(packet);
     return status;
 }
+#endif  /* CALIB_HMAC_EN */

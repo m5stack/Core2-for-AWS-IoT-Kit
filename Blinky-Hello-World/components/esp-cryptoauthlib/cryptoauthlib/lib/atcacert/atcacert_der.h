@@ -33,6 +33,10 @@
 #include <stdint.h>
 #include "atcacert.h"
 
+#ifdef __COVERITY__
+#pragma coverity compliance block fp "MISRA C-2012 Rule 3.1"
+#endif
+
 // Inform function naming when compiling in C++
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +62,7 @@ extern "C" {
  *
  * \return ATCACERT_E_SUCCESS on success, otherwise an error code.
  */
-int atcacert_der_enc_length(uint32_t length, uint8_t* der_length, size_t* der_length_size);
+ATCA_STATUS atcacert_der_enc_length(size_t length, uint8_t* der_length, size_t* der_length_size);
 
 /**
  * \brief Decode a DER format length.
@@ -72,9 +76,9 @@ int atcacert_der_enc_length(uint32_t length, uint8_t* der_length, size_t* der_le
  *
  * \return ATCACERT_E_SUCCESS on success, otherwise an error code.
  */
-int atcacert_der_dec_length(const uint8_t* der_length, size_t* der_length_size, uint32_t* length);
+ATCA_STATUS atcacert_der_dec_length(const uint8_t* der_length, size_t* der_length_size, size_t* length);
 
-int atcacert_der_adjust_length(uint8_t* der_length, size_t* der_length_size, int delta_length, uint32_t* new_length);
+ATCA_STATUS atcacert_der_adjust_length(uint8_t* der_length, size_t* der_length_size, int delta_length, size_t* new_length);
 
 /**
  * \brief Encode an ASN.1 integer in DER format, including tag and length fields.
@@ -91,11 +95,12 @@ int atcacert_der_adjust_length(uint8_t* der_length, size_t* der_length_size, int
  *
  * \return ATCACERT_E_SUCCESS on success, otherwise an error code.
  */
-int atcacert_der_enc_integer(const uint8_t* int_data,
-                             size_t         int_data_size,
-                             uint8_t        is_unsigned,
-                             uint8_t*       der_int,
-                             size_t*        der_int_size);
+ATCA_STATUS atcacert_der_enc_integer(const uint8_t* int_data,
+                                     size_t         int_data_size,
+                                     uint8_t        is_unsigned,
+                                     uint8_t*       der_int,
+                                     size_t*        der_int_size);
+
 
 /**
  * \brief Decode an ASN.1 DER encoded integer.
@@ -113,10 +118,10 @@ int atcacert_der_enc_integer(const uint8_t* int_data,
  *
  * \return ATCACERT_E_SUCCESS on success, otherwise an error code.
  */
-int atcacert_der_dec_integer(const uint8_t* der_int,
-                             size_t*        der_int_size,
-                             uint8_t*       int_data,
-                             size_t*        int_data_size);
+ATCA_STATUS atcacert_der_dec_integer(const uint8_t* der_int,
+                                     size_t*        der_int_size,
+                                     uint8_t*       int_data,
+                                     size_t*        int_data_size);
 
 /**
  * \brief Formats a raw ECDSA P256 signature in the DER encoding found in X.509 certificates.
@@ -125,41 +130,45 @@ int atcacert_der_dec_integer(const uint8_t* der_int,
  * (RFC 5280). This include the tag, length, and value.  The value of the signatureValue is the DER
  * encoding of the ECDSA-Sig-Value as specified by RFC 5480 and SECG SEC1.
  *
- * \param[in]  raw_sig          P256 ECDSA signature to be formatted. Input format is R and S
- *                              integers concatenated together. 64 bytes.
+ * \param[in]  raw_sig          Buffer pointing to the P256/P384/P521 ECDSA signature to be formatted. 
+ *                              Input format is R and S integers concatenated together.                            
  * \param[out] der_sig          X.509 format signature (TLV of signatureValue) will be returned in
  *                              this buffer.
- * \param[in,out] der_sig_size   As input, the size of the x509_sig buffer in bytes.
+ * \param[in,out] der_sig_size  As input, the size of the x509_sig buffer in bytes.
  *                              As output, the size of the returned X.509 signature in bytes.
  *
  * \return ATCACERT_E_SUCCESS on success, otherwise an error code.
  */
-int atcacert_der_enc_ecdsa_sig_value(const uint8_t raw_sig[64],
-                                     uint8_t*      der_sig,
-                                     size_t*       der_sig_size);
+ATCA_STATUS atcacert_der_enc_ecdsa_sig_value(const cal_buffer* raw_sig,
+                                             uint8_t*      der_sig,
+                                             size_t*       der_sig_size);
 
 /**
- * \brief Parses an ECDSA P256 signature in the DER encoding as found in X.509 certificates.
+ * \brief Parses an ECDSA P256/P384/P521 signature in the DER encoding as found in X.509 certificates.
  *
  * This will parse the DER encoding of the signatureValue field as found in an X.509 certificate
  * (RFC 5280). x509_sig should include the tag, length, and value.  The value of the signatureValue
  * is the DER encoding of the ECDSA-Sig-Value as specified by RFC 5480 and SECG SEC1.
  *
  * \param[in]    der_sig        X.509 format signature (TLV of signatureValue) to be parsed.
- * \param[in,out] der_sig_size   As input, size of the der_sig buffer in bytes.
+ * \param[in,out] der_sig_size  As input, size of the der_sig buffer in bytes.
  *                              As output, size of the DER x.509 signature parsed from the buffer.
- * \param[out]   raw_sig        Parsed P256 ECDSA signature will be returned in this buffer.
- *                              Formatted as R and S integers concatenated together. 64 bytes.
+ * \param[out]   raw_sig        Buffer pointing to the parsed P256/P384/P521 ECDSA signature will be 
+ *                              returned. Formatted as R and S integers concatenated together.                   
  *
  * \return ATCACERT_E_SUCCESS on success, otherwise an error code.
  */
-int atcacert_der_dec_ecdsa_sig_value(const uint8_t * der_sig,
-                                     size_t *        der_sig_size,
-                                     uint8_t         raw_sig[64]);
+ATCA_STATUS atcacert_der_dec_ecdsa_sig_value(const uint8_t * der_sig,
+                                             size_t *        der_sig_size,
+                                             cal_buffer*     raw_sig);
 
 /** @} */
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef __COVERITY__
+#pragma coverity compliance end_block "MISRA C-2012 Rule 3.1"
 #endif
 
 #endif

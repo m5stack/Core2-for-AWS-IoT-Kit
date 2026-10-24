@@ -211,7 +211,8 @@ def create_device_cert_and_manifest():
     device certificate using the esp-cryptoauth library and utility, creates 
     an AWS IoT thing using the AWS CLI and Microchip Trust Platform Design Suite.
     """
-    app_binary = 'sample_bins/secure_cert_mfg.bin'
+    app_binary = os.path.join( cwd, 'components', 'esp-cryptoauthlib', 'esp_cryptoauth_utility', 'sample_bins', 'esp32', 'secure_cert_mfg_esp32.bin' )
+    app_baudrate = 230400 # Baud rate used by esp_cryptoauth_utility for the ESP32
     args = manifest_args( env.get("UPLOAD_PORT") )
     
     args.signer_cert = os.path.join(  dest_folder, "signer_cert.crt" )
@@ -221,19 +222,18 @@ def create_device_cert_and_manifest():
     check_environment()
     generate_signer_certificate()
     
-    esp = esptool.ESP32ROM(args.port,baud=115200)
-    esp_hs.serial.load_app_stub(app_binary, esp)
-    init_mfg = esp_hs.serial.cmd_interpreter()
+    esp_hs.serial.load_app_stub(args.port, app_baudrate, app_binary)
+    init_mfg = esp_hs.serial.cmd_interpreter(port=args.port)
 
-    retval = init_mfg.wait_for_init(esp._port)
+    retval = init_mfg.wait_for_init()
     if retval is not True:
         print("CMD prompt timed out.")
         exit(0)
 
-    retval = init_mfg.exec_cmd(esp._port, "init {0} {1}".format(atecc608_i2c_sda_pin, atecc608_i2c_scl_pin))
+    retval = init_mfg.exec_cmd(args.port, "init {0} {1}".format(atecc608_i2c_sda_pin, atecc608_i2c_scl_pin))
     esp_hs.serial.esp_cmd_check_ok(retval, "init {0} {1}".format(atecc608_i2c_sda_pin, atecc608_i2c_scl_pin))
     os.makedirs( temp_folder, exist_ok=True )
-    esp_hs.generate_manifest_file(esp, args, init_mfg)
+    esp_hs.generate_manifest_file(args, init_mfg)
 
 env.AddCustomTarget(
 name="register_thing",

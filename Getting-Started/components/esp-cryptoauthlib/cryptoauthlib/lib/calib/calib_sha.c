@@ -34,6 +34,8 @@
 
 #include "cryptoauthlib.h"
 
+#if CALIB_SHA_EN
+
 typedef struct
 {
     uint32_t total_msg_size;                     //!< Total number of message bytes processed
@@ -68,61 +70,73 @@ typedef struct
  */
 ATCA_STATUS calib_sha_base(ATCADevice device, uint8_t mode, uint16_t length, const uint8_t* message, uint8_t* data_out, uint16_t* data_out_size)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
+
     uint8_t cmd_mode = (mode & SHA_MODE_MASK);
 
-    if (device == NULL)
-    {
-        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
-    }
-    if (cmd_mode != SHA_MODE_SHA256_PUBLIC && cmd_mode != SHA_MODE_HMAC_START &&
-        cmd_mode != SHA_MODE_ECC204_HMAC_START && length > 0 && message == NULL)
-    {
-        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received"); // message data indicated, but nothing provided
-    }
-    if (data_out != NULL && data_out_size == NULL)
-    {
-        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
-    }
+#if ATCA_CHECK_PARAMS_EN
+    ATCA_CHECK_INVALID_MSG(NULL == device, ATCA_BAD_PARAM, "NULL pointer received");
+#endif
+
+    ATCA_CHECK_INVALID_MSG((cmd_mode != SHA_MODE_SHA256_PUBLIC && cmd_mode != SHA_MODE_HMAC_START &&
+                            cmd_mode != SHA_MODE_ECC204_HMAC_START && length > 0u && message == NULL),
+                           ATCA_BAD_PARAM, "NULL pointer received");// message data indicated, but nothing provided
+
+    ATCA_CHECK_INVALID_MSG(((NULL != data_out) && (NULL == data_out_size)), ATCA_BAD_PARAM, "NULL pointer received");
+
+    ATCA_CHECK_INVALID_MSG((cmd_mode != SHA_MODE_HMAC_START && cmd_mode != SHA_MODE_SHA256_PUBLIC) && (CA_MAX_PACKET_SIZE < (ATCA_CMD_SIZE_MIN + length)),
+                           ATCA_INVALID_SIZE, "Invalid size received");
 
     do
     {
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
+            break;
+        }
+
+        (void)memset(packet, 0x00, sizeof(ATCAPacket));
+
         //Build Command
-        packet.param1 = mode;
-        packet.param2 = length;
+        packet->param1 = mode;
+        packet->param2 = cmd_mode != SHA_MODE_ECC204_HMAC_START ? length : 0u;
 
-        if (cmd_mode != SHA_MODE_SHA256_PUBLIC && cmd_mode != SHA_MODE_HMAC_START &&
-            cmd_mode != SHA_MODE_ECC204_HMAC_START)
+        if (cmd_mode != SHA_MODE_SHA256_PUBLIC && cmd_mode != SHA_MODE_HMAC_START && length != 0u)
         {
-            memcpy(packet.data, message, length);
+            (void)memcpy(packet->data, message, (size_t)length);
         }
 
-        if ((status = atSHA(atcab_get_device_type_ext(device), &packet, length)) != ATCA_SUCCESS)
+        if ((status = atSHA(atcab_get_device_type_ext(device), packet, length)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "atSHA - failed");
+            (void)ATCA_TRACE(status, "atSHA - failed");
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_sha_base - exection failed");
+            (void)ATCA_TRACE(status, "calib_sha_base - exection failed");
             break;
         }
 
-        if ((data_out != NULL) && (packet.data[ATCA_COUNT_IDX] > 4))
+        if ((data_out != NULL) && (packet->data[ATCA_COUNT_IDX] > 4u))
         {
-            if (packet.data[ATCA_COUNT_IDX] - ATCA_PACKET_OVERHEAD > *data_out_size)
+            if ((uint16_t)packet->data[ATCA_COUNT_IDX] - ATCA_PACKET_OVERHEAD > *data_out_size)
             {
                 status = ATCA_SMALL_BUFFER;
                 break;
             }
-            *data_out_size = packet.data[ATCA_COUNT_IDX] - ATCA_PACKET_OVERHEAD;
-            memcpy(data_out, &packet.data[ATCA_RSP_DATA_IDX], *data_out_size);
+            /* coverity[misra_c_2012_rule_10_1_violation:FALSE] The cast ensures size arithmetic is correctly promoted for subtraction */
+            /* coverity[misra_c_2012_rule_10_3_violation:FALSE] This ensures arithmetic operations are performed in a larger domain, which avoids overflow */
+            /* coverity[misra_c_2012_rule_10_4_violation:FALSE] The final result is explicitly masked with UINT16_MAX to ensure predictable behavior across compilers */
+            *data_out_size = ((uint16_t)packet->data[ATCA_COUNT_IDX] - ATCA_PACKET_OVERHEAD) & UINT16_MAX;
+            (void)memcpy(data_out, &packet->data[ATCA_RSP_DATA_IDX], *data_out_size);
         }
-    }
-    while (0);
+    } while (false);
 
+    calib_packet_free(packet);
     return status;
 }
 
@@ -165,6 +179,7 @@ ATCA_STATUS calib_sha_end(ATCADevice device, uint8_t *digest, uint16_t length, c
 
     return calib_sha_base(device, SHA_MODE_SHA256_END, length, message, digest, &digest_size);
 }
+#endif /* CALIB_SHA_EN */
 
 /** \brief Executes SHA command to read the SHA-256 context back. Only for
  *          ATECC608 with SHA-256 contexts. HMAC not supported.
@@ -177,6 +192,7 @@ ATCA_STATUS calib_sha_end(ATCADevice device, uint8_t *digest, uint16_t length, c
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code.
  */
+#if CALIB_SHA_CONTEXT_EN
 ATCA_STATUS calib_sha_read_context(ATCADevice device, uint8_t* context, uint16_t* context_size)
 {
     return calib_sha_base(device, SHA_MODE_READ_CONTEXT, 0, NULL, context, context_size);
@@ -195,7 +211,9 @@ ATCA_STATUS calib_sha_write_context(ATCADevice device, const uint8_t* context, u
 {
     return calib_sha_base(device, SHA_MODE_WRITE_CONTEXT, context_size, context, NULL, NULL);
 }
+#endif /* CALIB_SHA_CONTEXT_EN */
 
+#if CALIB_SHA_EN
 /** \brief Use the SHA command to compute a SHA-256 digest.
  *
  * \param[in]  device   Device context pointer
@@ -220,7 +238,7 @@ ATCA_STATUS calib_sha(ATCADevice device, uint16_t length, const uint8_t *message
  */
 ATCA_STATUS calib_hw_sha2_256_init(ATCADevice device, atca_sha256_ctx_t* ctx)
 {
-    memset(ctx, 0, sizeof(*ctx));
+    (void)memset(ctx, 0, sizeof(*ctx));
     return calib_sha_start(device);
 }
 
@@ -237,15 +255,15 @@ ATCA_STATUS calib_hw_sha2_256_init(ATCADevice device, atca_sha256_ctx_t* ctx)
 ATCA_STATUS calib_hw_sha2_256_update(ATCADevice device, atca_sha256_ctx_t* ctx, const uint8_t* data, size_t data_size)
 {
     ATCA_STATUS status = ATCA_SUCCESS;
-    uint32_t block_count;
+    size_t block_count;
     uint32_t rem_size = ATCA_SHA256_BLOCK_SIZE - ctx->block_size;
-    uint32_t copy_size = data_size > rem_size ? rem_size : (uint32_t)data_size;
-    uint32_t i = 0;
+    size_t copy_size = data_size > rem_size ? (size_t)rem_size : data_size;
+    size_t i = 0;
 
     // Copy data into current block
-    memcpy(&ctx->block[ctx->block_size], data, copy_size);
+    (void)memcpy(&ctx->block[ctx->block_size], data, copy_size);
 
-    if (ctx->block_size + data_size < ATCA_SHA256_BLOCK_SIZE)
+    if ((data_size < ATCA_SHA256_BLOCK_SIZE) && (ctx->block_size + data_size < ATCA_SHA256_BLOCK_SIZE))
     {
         // Not enough data to finish off the current block
         ctx->block_size += (uint32_t)data_size;
@@ -260,7 +278,7 @@ ATCA_STATUS calib_hw_sha2_256_update(ATCADevice device, atca_sha256_ctx_t* ctx, 
 
     // Process any additional blocks
     data_size -= copy_size; // Adjust to the remaining message bytes
-    block_count = (uint32_t)(data_size / ATCA_SHA256_BLOCK_SIZE);
+    block_count = (size_t)(data_size / ATCA_SHA256_BLOCK_SIZE);
     for (i = 0; i < block_count; i++)
     {
         if (ATCA_SUCCESS != (status = calib_sha_update(device, &data[copy_size + i * ATCA_SHA256_BLOCK_SIZE])))
@@ -270,9 +288,9 @@ ATCA_STATUS calib_hw_sha2_256_update(ATCADevice device, atca_sha256_ctx_t* ctx, 
     }
 
     // Save any remaining data
-    ctx->total_msg_size += (block_count + 1) * ATCA_SHA256_BLOCK_SIZE;
-    ctx->block_size = data_size % ATCA_SHA256_BLOCK_SIZE;
-    memcpy(ctx->block, &data[copy_size + block_count * ATCA_SHA256_BLOCK_SIZE], ctx->block_size);
+    ctx->total_msg_size += (uint32_t)((block_count + 1u) * ATCA_SHA256_BLOCK_SIZE);
+    ctx->block_size = (uint32_t)(data_size % ATCA_SHA256_BLOCK_SIZE);
+    (void)memcpy(ctx->block, &data[copy_size + block_count * ATCA_SHA256_BLOCK_SIZE], (size_t)ctx->block_size);
 
     return ATCA_SUCCESS;
 }
@@ -289,41 +307,45 @@ ATCA_STATUS calib_hw_sha2_256_update(ATCADevice device, atca_sha256_ctx_t* ctx, 
 ATCA_STATUS calib_hw_sha2_256_finish(ATCADevice device, atca_sha256_ctx_t* ctx, uint8_t* digest)
 {
     ATCA_STATUS status = ATCA_SUCCESS;
-    uint32_t msg_size_bits;
-    uint32_t pad_zero_count;
-    uint16_t digest_size;
 
+#if ATCA_CHECK_PARAMS_EN
     if (device == NULL)
     {
         return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
     }
+#endif
 
+#ifdef ATCA_ATSHA204A_SUPPORT
     if (device->mIface.mIfaceCFG->devtype == ATSHA204A)
     {
+        uint32_t msg_size_bits;
+        uint32_t pad_zero_count;
+        uint16_t digest_size;
         // ATSHA204A only implements the raw 64-byte block operation, but
         // doesn't add in the final footer information. So we do that manually
         // here.
 
         // Calculate the total message size in bits
-        ctx->total_msg_size += ctx->block_size;
-        msg_size_bits = (ctx->total_msg_size * 8);
+        ctx->total_msg_size = ctx->total_msg_size < UINT32_MAX ? ctx->total_msg_size + ctx->block_size : 0u;
+        msg_size_bits = (ctx->total_msg_size * 8u);
 
         // Calculate the number of padding zero bytes required between the 1 bit byte and the  ATCA_SHA256_BLOCK_SIZEbit message size in bits.
-        pad_zero_count = (ATCA_SHA256_BLOCK_SIZE - ((ctx->block_size + 9) % ATCA_SHA256_BLOCK_SIZE)) % ATCA_SHA256_BLOCK_SIZE;
+        pad_zero_count = (ATCA_SHA256_BLOCK_SIZE - ((ctx->block_size + 9u) % ATCA_SHA256_BLOCK_SIZE)) % ATCA_SHA256_BLOCK_SIZE;
 
         // Append a single 1 bit
         ctx->block[ctx->block_size++] = 0x80;
 
         // Add padding zeros plus upper 4 bytes of total message size in bits (only supporting 32bit message bit counts)
-        memset(&ctx->block[ctx->block_size], 0, pad_zero_count + 4);
-        ctx->block_size += pad_zero_count + 4;
+        (void)memset(&ctx->block[ctx->block_size], 0, (size_t)pad_zero_count + 4u);
+        //coverity[cert_int30_c_violation:FALSE] Can't wrap based on inputs validation
+        ctx->block_size += pad_zero_count + 4u;
 
         // Add the total message size in bits to the end of the current block. Technically this is
         // supposed to be 8 bytes. This shortcut will reduce the max message size to 536,870,911 bytes.
-        ctx->block[ctx->block_size++] = (uint8_t)(msg_size_bits >> 24);
-        ctx->block[ctx->block_size++] = (uint8_t)(msg_size_bits >> 16);
-        ctx->block[ctx->block_size++] = (uint8_t)(msg_size_bits >> 8);
-        ctx->block[ctx->block_size++] = (uint8_t)(msg_size_bits >> 0);
+        ctx->block[ctx->block_size++] = (uint8_t)((msg_size_bits & 0xFF000000u) >> 24u);
+        ctx->block[ctx->block_size++] = (uint8_t)((msg_size_bits & 0x00FF0000u) >> 16u);
+        ctx->block[ctx->block_size++] = (uint8_t)((msg_size_bits & 0x0000FF00u) >> 8u);
+        ctx->block[ctx->block_size++] = (uint8_t)((msg_size_bits & 0x000000FFu) >> 0u);
 
         digest_size = 32;
         if (ATCA_SUCCESS != (status = calib_sha_base(device, SHA_MODE_SHA256_UPDATE, ATCA_SHA256_BLOCK_SIZE, ctx->block, digest, &digest_size)))
@@ -334,15 +356,18 @@ ATCA_STATUS calib_hw_sha2_256_finish(ATCADevice device, atca_sha256_ctx_t* ctx, 
         if (ctx->block_size > ATCA_SHA256_BLOCK_SIZE)
         {
             digest_size = 32;
-            if (ATCA_SUCCESS != (status = calib_sha_base(device, SHA_MODE_SHA256_UPDATE, ATCA_SHA256_BLOCK_SIZE, &ctx->block[ATCA_SHA256_BLOCK_SIZE], digest, &digest_size)))
+            if (ATCA_SUCCESS != (status = calib_sha_base(device, SHA_MODE_SHA256_UPDATE, ATCA_SHA256_BLOCK_SIZE, 
+                                                         &ctx->block[ATCA_SHA256_BLOCK_SIZE], digest, &digest_size)))
             {
                 return ATCA_TRACE(status, "calib_sha_base - failed");
             }
         }
     }
     else
+#endif
     {
-        if (ATCA_SUCCESS != (status = calib_sha_end(device, digest, ctx->block_size, ctx->block)))
+        /* coverity[misra_c_2012_rule_10_4_violation:FALSE] The final result is explicitly masked with UINT16_MAX to ensure predictable behavior across compilers */
+        if (ATCA_SUCCESS != (status = calib_sha_end(device, digest, (uint16_t)(ctx->block_size & UINT16_MAX), ctx->block)))
         {
             return ATCA_TRACE(status, "calib_sha_end - failed");
         }
@@ -382,7 +407,9 @@ ATCA_STATUS calib_hw_sha2_256(ATCADevice device, const uint8_t * data, size_t da
 
     return ATCA_SUCCESS;
 }
+#endif  /* CALIB_SHA_EN */
 
+#if CALIB_SHA_HMAC_EN
 /** \brief Executes SHA command to start an HMAC/SHA-256 operation
  *
  * \param[in]  device   Device context pointer
@@ -400,9 +427,9 @@ ATCA_STATUS calib_sha_hmac_init(ATCADevice device, atca_hmac_sha256_ctx_t* ctx, 
         return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer encountered");
     }
 
-    memset(ctx, 0, sizeof(*ctx));
+    (void)memset(ctx, 0, sizeof(*ctx));
 
-    if (ECC204 == device->mIface.mIfaceCFG->devtype)
+    if (atcab_is_ca2_device(device->mIface.mIfaceCFG->devtype))
     {
         mode = SHA_MODE_ECC204_HMAC_START;
     }
@@ -423,15 +450,15 @@ ATCA_STATUS calib_sha_hmac_init(ATCADevice device, atca_hmac_sha256_ctx_t* ctx, 
 ATCA_STATUS calib_sha_hmac_update(ATCADevice device, atca_hmac_sha256_ctx_t* ctx, const uint8_t* data, size_t data_size)
 {
     ATCA_STATUS status = ATCA_SUCCESS;
-    uint32_t block_count;
+    size_t block_count;
     uint32_t rem_size = ATCA_SHA256_BLOCK_SIZE - ctx->block_size;
-    uint32_t copy_size = data_size > rem_size ? rem_size : (uint32_t)data_size;
-    uint32_t i = 0;
+    size_t copy_size = data_size > rem_size ? (size_t)rem_size : data_size;
+    size_t i = 0;
 
     // Copy data into current block
-    memcpy(&ctx->block[ctx->block_size], data, copy_size);
+    (void)memcpy(&ctx->block[ctx->block_size], data, copy_size);
 
-    if (ctx->block_size + data_size < ATCA_SHA256_BLOCK_SIZE)
+    if (ctx->block_size < UINT32_MAX && ctx->block_size + data_size < ATCA_SHA256_BLOCK_SIZE)
     {
         // Not enough data to finish off the current block
         ctx->block_size += (uint32_t)data_size;
@@ -446,19 +473,20 @@ ATCA_STATUS calib_sha_hmac_update(ATCADevice device, atca_hmac_sha256_ctx_t* ctx
 
     // Process any additional blocks
     data_size -= copy_size; // Adjust to the remaining message bytes
-    block_count = (uint32_t)(data_size / ATCA_SHA256_BLOCK_SIZE);
+    block_count = (size_t)(data_size / ATCA_SHA256_BLOCK_SIZE);
     for (i = 0; i < block_count; i++)
     {
-        if (ATCA_SUCCESS != (status = calib_sha_base(device, SHA_MODE_HMAC_UPDATE, ATCA_SHA256_BLOCK_SIZE, &data[copy_size + i * ATCA_SHA256_BLOCK_SIZE], NULL, NULL)))
+        if (ATCA_SUCCESS != (status = calib_sha_base(device, SHA_MODE_HMAC_UPDATE, ATCA_SHA256_BLOCK_SIZE, 
+                                                     &data[copy_size + i * ATCA_SHA256_BLOCK_SIZE], NULL, NULL)))
         {
             return ATCA_TRACE(status, "calib_sha_base - failed");
         }
     }
 
     // Save any remaining data
-    ctx->total_msg_size += (block_count + 1) * ATCA_SHA256_BLOCK_SIZE;
-    ctx->block_size = data_size % ATCA_SHA256_BLOCK_SIZE;
-    memcpy(ctx->block, &data[copy_size + block_count * ATCA_SHA256_BLOCK_SIZE], ctx->block_size);
+    ctx->total_msg_size += (uint32_t)((block_count + 1u) * ATCA_SHA256_BLOCK_SIZE);
+    ctx->block_size = (uint32_t)(data_size % ATCA_SHA256_BLOCK_SIZE);
+    (void)memcpy(ctx->block, &data[copy_size + block_count * ATCA_SHA256_BLOCK_SIZE], (size_t)ctx->block_size);
 
     return ATCA_SUCCESS;
 }
@@ -473,36 +501,45 @@ ATCA_STATUS calib_sha_hmac_update(ATCADevice device, atca_hmac_sha256_ctx_t* ctx
  *                     SHA_MODE_TARGET_MSGDIGBUF, or SHA_MODE_TARGET_OUT_ONLY.
  *                     For all other devices, SHA_MODE_TARGET_TEMPKEY is the
  *                     only option.
- *                     For ECC204, target is ignored (0x00)
+ *                     For ECC204,TA010 target is ignored (0x00)
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code.
  */
 ATCA_STATUS calib_sha_hmac_finish(ATCADevice device, atca_hmac_sha256_ctx_t *ctx, uint8_t* digest, uint8_t target)
 {
-    uint8_t mode = SHA_MODE_HMAC_END;
+    uint8_t mode;
     uint16_t digest_size = 32;
+    ATCADeviceType dev_type = device->mIface.mIfaceCFG->devtype;
 
+#if ATCA_CHECK_PARAMS_EN
     if (device == NULL)
     {
         return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
     }
+#endif
 
-    if (ATECC608A == device->mIface.mIfaceCFG->devtype)
+    switch (dev_type)
     {
-        mode = SHA_MODE_608_HMAC_END;
-    }
-    else if (ECC204 == device->mIface.mIfaceCFG->devtype)
-    {
-        mode = SHA_MODE_ECC204_HMAC_END;
-    }
-    else if (target != SHA_MODE_TARGET_TEMPKEY)
-    {
-        return ATCA_TRACE(ATCA_BAD_PARAM, "Invalid target received");
+        case ATECC608:
+            mode = SHA_MODE_608_HMAC_END;
+            break;
+#if ATCA_CA2_SUPPORT
+        case ECC204:
+        /* fallthrough */
+        case TA010:
+            mode = SHA_MODE_ECC204_HMAC_END;
+            break;
+#endif
+        default:
+            mode = SHA_MODE_HMAC_END;
+            break;
     }
 
     mode |= target;
 
-    return calib_sha_base(device, mode, ctx->block_size, ctx->block, digest, &digest_size);
+    /* coverity[misra_c_2012_rule_10_1_violation:FALSE] The cast ensures size arithmetic is correctly promoted for subtraction */
+    /* coverity[misra_c_2012_rule_10_4_violation:FALSE] The final result is explicitly masked with UINT16_MAX to ensure predictable behavior across compilers */
+    return calib_sha_base(device, mode, (uint16_t)(ctx->block_size & UINT16_MAX), ctx->block, digest, &digest_size);
 }
 
 /** \brief Use the SHA command to compute an HMAC/SHA-256 operation.
@@ -542,3 +579,4 @@ ATCA_STATUS calib_sha_hmac(ATCADevice device, const uint8_t * data, size_t data_
 
     return ATCA_SUCCESS;
 }
+#endif  /* CALIB_SHA_HMAC_EN */

@@ -105,13 +105,13 @@ def make_valid_filename(s):
     return s
 
 
-def generate_manifest_file(esp, args, init_mfg):
+def generate_manifest_file(args, init_mfg):
 
-    retval = init_mfg.exec_cmd(esp._port, "print-chip-info")
-    serial.esp_cmd_check_ok(retval, "print-chip-info")
+    retval = init_mfg.exec_cmd(args.port, 'print-chip-info')
+    serial.esp_cmd_check_ok(retval, 'print-chip-info')
     # find index fo SN in string
-    index = retval[1]['Return'].find("Serial Number:")
-    index += len("Serial Number:")
+    index = retval[1]['Return'].find('Serial Number:')
+    index += len('Serial Number:')
     serial_number_hex = retval[1]['Return'][index:]
     serial_number_hex = serial_number_hex.strip()
     serial_number_hex = serial_number_hex.replace(' ','')
@@ -121,23 +121,23 @@ def generate_manifest_file(esp, args, init_mfg):
        # only print chip info and exit.
         exit(0)
 
-    print("Generating Manifest")
+    print('Generating Manifest')
     certs = []
 
-    retval = init_mfg.exec_cmd(esp._port, "get-tngtls-root-cert")
-    serial.esp_cmd_check_ok(retval, "get-tngtls-root-cert")
+    retval = init_mfg.exec_cmd(args.port, 'get-tngtls-root-cert')
+    serial.esp_cmd_check_ok(retval, 'get-tngtls-root-cert')
 
-    index = retval[1]['Return'].find("Root Cert Len:")
-    index += len("Root Cert Len:")
+    index = retval[1]['Return'].find('Root Cert Len:')
+    index += len('Root Cert Len:')
     root_cert_size = retval[1]['Return'][index:index + 3]
     root_cert_size = int(root_cert_size)
     root_cert_der = bytearray(root_cert_size)
-    index = retval[1]['Return'].find("Certificate:")
-    index += len("Certificate:")
+    index = retval[1]['Return'].find('Certificate:')
+    index += len('Certificate:')
     root_cert_hex = retval[1]['Return'][index + 1:]
     root_cert_hex = root_cert_hex.strip()
     root_cert_der = bytearray.fromhex(root_cert_hex)
-
+    root_cert_der = bytes(root_cert_der)
     root_cert = x509.load_der_x509_certificate(root_cert_der, default_backend())
     certs.insert(0, root_cert)
 
@@ -151,21 +151,22 @@ def generate_manifest_file(esp, args, init_mfg):
         encoding=Encoding.PEM
     ).decode('utf-8'))
 
-    retval = init_mfg.exec_cmd(esp._port, "get-tngtls-signer-cert")
-    serial.esp_cmd_check_ok(retval, "get-tngtls-signer-cert")
+    retval = init_mfg.exec_cmd(args.port, 'get-tngtls-signer-cert')
+    serial.esp_cmd_check_ok(retval, 'get-tngtls-signer-cert')
 
-    index = retval[1]['Return'].find("Signer Cert Len:")
-    index += len("Signer Cert Len:")
+    index = retval[1]['Return'].find('Signer Cert Len:')
+    index += len('Signer Cert Len:')
     signer_cert_size = retval[1]['Return'][index:index + 3]
     signer_cert_size = int(signer_cert_size)
     signer_cert_der = bytearray(signer_cert_size)
-    index = retval[1]['Return'].find("Certificate:")
-    index += len("Certificate:")
+    index = retval[1]['Return'].find('Certificate:')
+    index += len('Certificate:')
     signer_cert_hex = retval[1]['Return'][index:]
     signer_cert_hex = signer_cert_hex.strip()
     signer_cert_der = bytearray.fromhex(signer_cert_hex)
 
     print('TNG Signer Certificate:')
+    signer_cert_der = bytes(signer_cert_der)
     signer_cert = x509.load_der_x509_certificate(signer_cert_der, default_backend())
     certs.insert(0, signer_cert)
 
@@ -192,28 +193,29 @@ def generate_manifest_file(esp, args, init_mfg):
 
     print('TNG Device Certificate:')
 
-    retval = init_mfg.exec_cmd(esp._port, "get-tngtls-device-cert")
-    serial.esp_cmd_check_ok(retval, "get-tngtls-device-cert")
+    retval = init_mfg.exec_cmd(args.port, 'get-tngtls-device-cert')
+    serial.esp_cmd_check_ok(retval, 'get-tngtls-device-cert')
 
-    index = retval[1]['Return'].find("Device Cert Len:")
-    index += len("Device Cert Len:")
+    index = retval[1]['Return'].find('Device Cert Len:')
+    index += len('Device Cert Len:')
     device_cert_size = retval[1]['Return'][index:index + 3]
     device_cert_size = int(device_cert_size)
     device_cert_der = bytearray(device_cert_size)
-    index = retval[1]['Return'].find("Certificate:")
-    index += len("Certificate:")
+    index = retval[1]['Return'].find('Certificate:')
+    index += len('Certificate:')
 
     device_cert_hex = retval[1]['Return'][index:]
     device_cert_hex = device_cert_hex.strip()
     device_cert_der = bytearray.fromhex(device_cert_hex)
+    device_cert_der = bytes(device_cert_der)
     device_cert = x509.load_der_x509_certificate(device_cert_der, default_backend())
     certs.insert(0, device_cert)
 
     print(get_common_name(device_cert.subject))
     device_cert_pem = device_cert.public_bytes(encoding=Encoding.PEM).decode('utf-8')
     print(device_cert_pem)
-    print("Saving device cert to output_files")
-    with open("./output_files/device_cert.pem", "w+") as dev_cert_file:
+    print('Saving device cert to output_files')
+    with open('./output_files/device_cert.pem', 'w+') as dev_cert_file:
         dev_cert_file.write(device_cert_pem)
     print('TNG Device Public Key:')
     # Note that we could, of course, pull this from the device certificate above.
@@ -278,10 +280,10 @@ def generate_manifest_file(esp, args, init_mfg):
     for key in device_entry['publicKeySet']['keys']:
         public_key = bytearray(64)
         print('reading slot {} public key'.format(key['kid']))
-        retval = init_mfg.exec_cmd(esp._port, "generate-pubkey {}".format(key['kid']))
-        serial.esp_cmd_check_ok(retval, "pub-key-gen")
-        index = retval[1]['Return'].find("Public Key:")
-        index += len("Public Key:")
+        retval = init_mfg.exec_cmd(args.port, 'generate-pubkey {}'.format(key['kid']))
+        serial.esp_cmd_check_ok(retval, 'pub-key-gen')
+        index = retval[1]['Return'].find('Public Key:')
+        index += len('Public Key:')
         public_key_hex = retval[1]['Return'][index:]
         public_key_hex = public_key_hex.strip()
         public_key = bytearray.fromhex(public_key_hex)

@@ -1,0 +1,9 @@
+menu "ECU Configurations"
+
+config ECU_DEBUGGING
+    bool "esp_cryptoauth_utility Debug"
+	default y
+	help
+		Turn on debug logs for the esp_cryptoauth_utility.
+
+endmenu

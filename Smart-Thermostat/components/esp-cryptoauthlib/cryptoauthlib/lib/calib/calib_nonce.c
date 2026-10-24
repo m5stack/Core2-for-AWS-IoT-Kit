@@ -35,6 +35,7 @@
 
 #include "cryptoauthlib.h"
 
+#if CALIB_NONCE_EN
 /** \brief Executes Nonce command, which loads a random or fixed nonce/data
  *          into the device for use by subsequent commands.
  *
@@ -43,7 +44,7 @@
  *                          write.
  * \param[in]  param2       Param2, normally 0, but can be used to indicate a
  *                          nonce calculation mode (bit 15).
- *                          For ECC204, represent tarnsport key id greater than
+ *                          For ECC204,TA010,SHA10x represent tarnsport key id greater than
  *                          or equal to 0x8000
  * \param[in]  num_in       Input value to either be included in the nonce
  *                          calculation in random modes (20 bytes) or to be
@@ -58,67 +59,67 @@
  */
 ATCA_STATUS calib_nonce_base(ATCADevice device, uint8_t mode, uint16_t param2, const uint8_t *num_in, uint8_t* rand_out)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
-    uint8_t nonce_mode = mode & NONCE_MODE_MASK;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
+    uint8_t length;
 
     do
     {
+#if ATCA_CHECK_PARAMS_EN
         if (device == NULL)
         {
             status = ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
             break;
         }
+#endif
+
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
+            break;
+        }
+
+        (void)memset(packet, 0x00, sizeof(ATCAPacket));
 
         // build a nonce command
-        packet.param1 = mode;
-        packet.param2 = param2;
+        packet->param1 = mode;
+        packet->param2 = param2;
+
+        (void)calib_get_numin_size(mode, &length);
+
+        if (CA_MAX_PACKET_SIZE < (ATCA_CMD_SIZE_MIN + length))
+        {
+            status = ATCA_TRACE(ATCA_INVALID_SIZE, "Invalid packet size received");
+            break;
+        }
 
         // Copy the right amount of NumIn data
-        if ((nonce_mode == NONCE_MODE_SEED_UPDATE) || (nonce_mode == NONCE_MODE_NO_SEED_UPDATE)
-            || (NONCE_MODE_GEN_SESSION_KEY == nonce_mode))
-        {
-            memcpy(packet.data, num_in, NONCE_NUMIN_SIZE);
-        }
-        else if (nonce_mode == NONCE_MODE_PASSTHROUGH)
-        {
-            if ((mode & NONCE_MODE_INPUT_LEN_MASK) == NONCE_MODE_INPUT_LEN_64)
-            {
-                memcpy(packet.data, num_in, 64);
-            }
-            else
-            {
-                memcpy(packet.data, num_in, 32);
-            }
-        }
-        else
-        {
-            return ATCA_TRACE(ATCA_BAD_PARAM, "Invalid nonce mode received");
-        }
+        (void)memcpy(packet->data, num_in, length);
 
-        if ((status = atNonce(atcab_get_device_type_ext(device), &packet)) != ATCA_SUCCESS)
+        if ((status = atNonce(atcab_get_device_type_ext(device), packet)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "atNonce - failed");
+            (void)ATCA_TRACE(status, "atNonce - failed");
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_nonce_base - execution failed");
+            (void)ATCA_TRACE(status, "calib_nonce_base - execution failed");
             break;
         }
 
-        if ((rand_out != NULL) && (packet.data[ATCA_COUNT_IDX] >= 35))
+        if ((rand_out != NULL) && (packet->data[ATCA_COUNT_IDX] >= 35u))
         {
-            memcpy(&rand_out[0], &packet.data[ATCA_RSP_DATA_IDX], 32);
+            (void)memcpy(&rand_out[0], &packet->data[ATCA_RSP_DATA_IDX], 32);
         }
 
-    }
-    while (0);
+    } while (false);
 
+    calib_packet_free(packet);
     return status;
 }
-
 
 /** \brief Execute a Nonce command in pass-through mode to initialize TempKey
  *         to a specified value.
@@ -132,7 +133,6 @@ ATCA_STATUS calib_nonce(ATCADevice device, const uint8_t *num_in)
 {
     return calib_nonce_base(device, NONCE_MODE_PASSTHROUGH, 0, num_in, NULL);
 }
-
 
 /** \brief Execute a Nonce command in pass-through mode to load one of the
  *          device's internal buffers with a fixed value.
@@ -156,11 +156,11 @@ ATCA_STATUS calib_nonce_load(ATCADevice device, uint8_t target, const uint8_t *n
 {
     uint8_t mode = NONCE_MODE_PASSTHROUGH | (NONCE_MODE_TARGET_MASK & target);
 
-    if (num_in_size == 32)
+    if (num_in_size == 32u)
     {
         mode |= NONCE_MODE_INPUT_LEN_32;
     }
-    else if (num_in_size == 64)
+    else if (num_in_size == 64u)
     {
         mode |= NONCE_MODE_INPUT_LEN_64;
     }
@@ -220,7 +220,7 @@ ATCA_STATUS calib_challenge_seed_update(ATCADevice device, const uint8_t *num_in
 }
 
 /** \brief Use Nonce command to generate session key for use by a subsequent write command
- *         This Mode only supports in ECC204 device.
+ *         This Mode only supports in ECC204,TA010,SHA10x devices.
  *  \param[in]  device    Device context pointer
  *  \param[in]  param2    Key id points to transport key
  *  \param[in]  num_in    Input value from host system
@@ -234,3 +234,35 @@ ATCA_STATUS calib_nonce_gen_session_key(ATCADevice device, uint16_t param2, uint
 {
     return calib_nonce_base(device, NONCE_MODE_GEN_SESSION_KEY, param2, num_in, rand_out);
 }
+
+/** \brief Get num_in size based on the nonce mode
+ *
+ *  \param[in] mode      Nonce mode
+ *  \param[out] length   Size of the input value
+ *
+ *  \return ATCA_SUCCESS on success.
+ */
+ATCA_STATUS calib_get_numin_size(uint8_t mode, uint8_t* length)
+{
+    uint8_t nonce_mode = mode & NONCE_MODE_MASK;
+
+    if ((nonce_mode == NONCE_MODE_SEED_UPDATE) || (nonce_mode == NONCE_MODE_NO_SEED_UPDATE)
+        || (NONCE_MODE_GEN_SESSION_KEY == nonce_mode))
+    {
+        *length = NONCE_NUMIN_SIZE;
+    }
+    else
+    {
+        if ((mode & NONCE_MODE_INPUT_LEN_MASK) == NONCE_MODE_INPUT_LEN_64)
+        {
+            *length = 64;
+        }
+        else
+        {
+            *length = 32;
+        }
+    }
+
+    return ATCA_SUCCESS;
+}
+#endif /* CALIB_NONCE_EN */

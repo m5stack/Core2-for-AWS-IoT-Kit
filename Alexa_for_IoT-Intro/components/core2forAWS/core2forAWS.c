@@ -31,7 +31,8 @@ static const char *TAG = "Core2forAWS";
 
 void Core2ForAWS_Init(void) {    
 #if CONFIG_SOFTWARE_ILI9342C_SUPPORT || CONFIG_SOFTWARE_SDCARD_SUPPORT
-    spi_mutex = xSemaphoreCreateMutex();
+    spi_mutex = xSemaphoreCreateBinary();
+    xSemaphoreGive(spi_mutex);
     spi_bus_config_t bus_cfg = {
         .mosi_io_num = 23,
         .miso_io_num = 38,

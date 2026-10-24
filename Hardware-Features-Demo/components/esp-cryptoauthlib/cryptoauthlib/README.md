@@ -4,13 +4,17 @@ CryptoAuthLib - Microchip CryptoAuthentication Library {#mainpage}
 Introduction
 ------------------------
 This library implements the APIs required to communicate with Microchip Security
-device. The family of devices supported currently are:
+devices. The family of devices supported currently are:
 
-- [ATSHA204A](http://www.microchip.com/ATSHA204A)
-- [ATECC108A](http://www.microchip.com/ATECC108A)
-- [ATECC508A](http://www.microchip.com/ATECC508A)
-- [ATECC608A](http://www.microchip.com/ATECC608A)
-- [ATECC608B](http://www.microchip.com/ATECC608B)
+|CryptoAuth                                      |CryptoAuth2                               |
+|-----------------------------------------------:|:-----------------------------------------|
+|[ATECC608C](https://www.microchip.com/ATECC608C)|[ECC204](https://www.microchip.com/ECC204)|
+|[ATECC608B](https://www.microchip.com/ATECC608B)|[ECC206](https://www.microchip.com/ECC206)|
+|[ATECC608A](http://www.microchip.com/ATECC608A) |[SHA104](https://www.microchip.com/SHA104)|
+|[ATECC508A](http://www.microchip.com/ATECC508A) |[SHA105](https://www.microchip.com/SHA105)|
+|[ATECC108A](http://www.microchip.com/ATECC108A) |[SHA106](https://www.microchip.com/SHA106)|
+|[ATSHA204A](http://www.microchip.com/ATSHA204A) |[RNG90](https://www.microchip.com/RNG90)  |
+|[ATSHA206A](https://www.microchip.com/ATSHA206A)|                                          |
 
 The best place to start is with the [Microchip Trust Platform](https://www.microchip.com/design-centers/security-ics/trust-platform)
 
@@ -27,44 +31,34 @@ Prerequisite hardware to run CryptoAuthLib examples:
 Alternatively a Microchip MCU and Adapter Board:
   - [ATSAMR21 Xplained Pro]( http://www.microchip.com/atsamr21-xpro )
     or [ATSAMD21 Xplained Pro]( http://www.microchip.com/ATSAMD21-XPRO )
-  - [CryptoAuth Xplained Pro Extension](http://www.microchip.com/developmenttools/productdetails.aspx?partno=atcryptoauth-xpro-b )
-    or [CryptoAuthentication SOIC Socket Board](http://www.microchip.com/developmenttools/productdetails.aspx?partno=at88ckscktsoic-xpro )
+  - [CryptoAuthentication SOIC Socket Board](http://www.microchip.com/developmenttools/productdetails.aspx?partno=at88ckscktsoic-xpro )
     to accept SOIC parts
+  - [ATECC608B mikroBUS evaluation board](https://www.microchip.com/en-us/development-tool/DT100104)
+  - [ECC204 mikroBUS evaluation board](https://www.microchip.com/en-us/development-tool/ev92r58a)
+  - [SHA104/SHA105 mikroBUS evaluation board](https://www.microchip.com/en-us/development-tool/ev97m19a)
+  - [TA010 mikroBUS evaluation board](https://www.microchip.com/en-us/development-tool/EV74C12A)
 
 For most development, using socketed top-boards is preferable until your
 configuration is well tested, then you can commit it to a CryptoAuth Xplained
 Pro Extension, for example. Keep in mind that once you lock a device, it will
 not be changeable.
 
-Licensing
----------------------------
-
-The CryptoAuthLib license can be found in the accompaning [license.txt](https://github.com/MicrochipTech/cryptoauthlib/blob/main/license.txt)
-file.
-
-Cryptoauthlib also includes optional third party software subject to their own licensing terms. If you are using one of these optional components please
-verify the terms of those licenses as well in the third_party/<module> directories.
-
 
 Examples
 -----------
 
-  - Watch [CryptoAuthLib Documents](http://www.microchip.com/design-centers/security-ics/cryptoauthentication/overview )
-    for new examples coming online.
-  - Node Authentication Example Using Asymmetric PKI is a complete, all-in-one
-    example demonstrating all the stages of crypto authentication starting from
-    provisioning the Crypto Authentication device ATECC608/ATECC508A with keys
-    and certificates to demonstrating an authentication sequence using
-    asymmetric techniques.
-    http://www.microchip.com/SWLibraryWeb/product.aspx?product=CryptoAuthLib
+  - Install the [Trust Platform Design Suite](https://www.microchip.com/en-us/products/security/trust-platform ) to access Use Case examples 
+    for the different Security Solutions (ATECC608, SHA104/105, ECC204, TA010, TA100…)
 
 Configuration
 -----------
-In order to properly configured the library there must be a header file in your
+In order to properly configure the library there must be a header file in your
 project named `atca_config.h` at minimum this needs to contain defines for the
-hal and device types being used. Most integrations have an configuration mechanism
+hal and device types being used. Most integrations have a configuration mechanism
 for generating this file. See the [atca_config.h.in](lib/atca_config.h.in) template
-which is configured by CMake for Linux, MacOS, & Windows projects.
+which is configured by CMake for Linux, MacOS, & Windows projects. This file also 
+contains some specific options that are fully documented where the desired features 
+can be selected.
 
 An example of the configuration:
 
@@ -104,6 +98,7 @@ There are two major compiler defines that affect the operation of the library.
     functions and the init/release functions should be used directly.
 
 
+
 Release notes
 -----------
 See [Release Notes](release_notes.md)
@@ -113,20 +108,10 @@ Host Device Support
 ---------------
 
 CryptoAuthLib will run on a variety of platforms from small micro-controllers
-to desktop host systems.  The current list of hardware abstraction layer
-support includes:
+to desktop host systems. See [hal readme](lib/hal/README.md)
 
-Rich OS Hosts:
-  - Linux Kit Protocol over HID USB
-  - Linux I2C
-  - Linux SPI
-  - Windows Kit Protocol over HID USB
-
-Microcontrollers:
-  - Microchip AVR, SAM, & PIC families. See [hal readme](lib/hal/readme.md)
-
-If you have specific microcontrollers or Rich OS platforms you need support
-for, please contact us through the Microchip portal with your request.
+Porting requires a time delay function of millisecond resolution (hal_delay_ms) which
+can be implemented via loop, timer, or rtos sleep/wait and a communication interface.
 
 CryptoAuthLib Architecture
 ----------------------------
@@ -147,7 +132,7 @@ Directory Structure
 lib - primary library source code
 lib/atcacert - certificate data and i/o methods
 lib/calib - the Basic Cryptoauth API
-lib/crypto - Software crypto implementations external crypto libraries support (primarily SHA1 and SHA256)
+lib/crypto - Software crypto implementations external crypto libraries support (primarily SHA1 and SHA2)
 lib/hal - hardware abstraction layer code for supporting specific platforms
 lib/host - support functions for common host-side calculations
 lib/jwt - json web token functions
@@ -165,47 +150,7 @@ Tests
 There is a set of integration tests found in the test directory which will at least
 partially demonstrate the use of the objects.  Some tests may depend upon a
 certain device being configured in a certain way and may not work for all
-devices or specific configurations of the device.
-
-The test/cmd-processor.c file contains a main() function for running the tests.
-It implements a command-line interface. Typing help will bring up the list of
-commands available.
-
-One first selects a device type, with one of the following commands:
-  - 204 (ATSHA204A)
-  - 108 (ATECC108A)
-  - 508 (ATECC508A)
-  - 608 (ATECC608A/B)
-
-From there the following unit test sweets are available:
-  - unit (test command builder functions)
-  - basic (test basic API functions)
-  - cio (test certification i/o functions)
-  - cd (test certificate data functions)
-  - util (test utility functions)
-  - crypto (test software crypto functions)
-
-Tests available depend on the lock level of the device. The unit tests
-won't lock the config or data zones automatically to allow retesting at desired
-lock levels. Therefore, some commands will need to be repeated after locking
-to exercise all available tests.
-
-Starting from a blank device, the sequence of commands to exercise all unit
-tests is:
-```text
-unit
-basic
-lockcfg
-unit
-basic
-lockdata
-unit
-basic
-cio
-cd
-util
-crypto
-```
+devices or specific configurations of the device. See [test readme](test/README.md)
 
 Using CryptoAuthLib (Microchip CryptoAuth Library)
 ===========================================
@@ -243,3 +188,10 @@ Edit the mchp-cryptoauth.rules file and add the following line to the file:
 ```text
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2312", MODE="0666"
 ```
+
+Updating *X.509 compressed certificate format* to support extended years 
+===========================================
+
+The X.509 compressed certificate format now supports encoding issue and expiry years beyond 2031.
+
+For implementation details, see: [Extending Certificate Years](https://github.com/MicrochipTech/cryptoauthlib/wiki/Extending-Certificate-Years)

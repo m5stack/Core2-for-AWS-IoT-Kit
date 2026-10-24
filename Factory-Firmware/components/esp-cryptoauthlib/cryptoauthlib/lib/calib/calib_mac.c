@@ -35,6 +35,7 @@
 
 #include "cryptoauthlib.h"
 
+#if CALIB_MAC_EN
 /** \brief Executes MAC command, which computes a SHA-256 digest of a key
  *          stored in the device, a challenge, and other information on the
  *          device.
@@ -51,8 +52,8 @@
  */
 ATCA_STATUS calib_mac(ATCADevice device, uint8_t mode, uint16_t key_id, const uint8_t* challenge, uint8_t* digest)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
 
     do
     {
@@ -62,34 +63,51 @@ ATCA_STATUS calib_mac(ATCADevice device, uint8_t mode, uint16_t key_id, const ui
             break;
         }
 
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
+            break;
+        }
+
+        (void)memset(packet, 0x00, sizeof(ATCAPacket));
+
         // build mac command
-        packet.param1 = mode;
-        packet.param2 = key_id;
-        if (!(mode & MAC_MODE_BLOCK2_TEMPKEY))
+        packet->param1 = mode;
+        packet->param2 = key_id;
+        if ((mode & MAC_MODE_BLOCK2_TEMPKEY) != MAC_MODE_BLOCK2_TEMPKEY)
         {
             if (challenge == NULL)
             {
-                return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
+                status = ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
+                break;
             }
-            memcpy(&packet.data[0], challenge, 32);  // a 32-byte challenge
+
+            #if (CA_MAX_PACKET_SIZE < (ATCA_CMD_SIZE_MIN + MAC_CHALLENGE_SIZE))
+            #error "CA_MAX_PACKET_SIZE cannot accomodate mac command with challenge"
+            #endif
+
+            (void)memcpy(&packet->data[0], challenge, 32);  // a 32-byte challenge
         }
 
-        if ((status = atMAC(atcab_get_device_type_ext(device), &packet)) != ATCA_SUCCESS)
+        if ((status = atMAC(atcab_get_device_type_ext(device), packet)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "atMAC - failed");
+            (void)ATCA_TRACE(status, "atMAC - failed");
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_mac - execution failed");
+            (void)ATCA_TRACE(status, "calib_mac - execution failed");
             break;
         }
 
-        memcpy(digest, &packet.data[ATCA_RSP_DATA_IDX], MAC_SIZE);
+        (void)memcpy(digest, &packet->data[ATCA_RSP_DATA_IDX], MAC_SIZE);
 
-    }
-    while (0);
+    } while (false);
 
+    calib_packet_free(packet);
     return status;
 }
+#endif  /* CALIB_MAC_EN */

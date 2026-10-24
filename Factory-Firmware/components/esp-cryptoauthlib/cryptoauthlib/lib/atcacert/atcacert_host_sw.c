@@ -25,73 +25,168 @@
  * THIS SOFTWARE.
  */
 
+#include "atca_config.h"
+#include "cryptoauthlib.h"
 #include "atcacert_host_sw.h"
-#include "crypto/atca_crypto_sw_sha2.h"
-#include "crypto/atca_crypto_sw_ecdsa.h"
-#include "crypto/atca_crypto_sw_rand.h"
+#include "crypto/atca_crypto_sw.h"
+#include "cal_internal.h"
 
+#if ATCACERT_EN
 
-
-
-
-
-int atcacert_verify_cert_sw(const atcacert_def_t* cert_def,
-                            const uint8_t*        cert,
-                            size_t                cert_size,
-                            const uint8_t         ca_public_key[64])
+#if ATCAC_VERIFY_EN && ATCACERT_COMPCERT_EN
+ATCA_STATUS atcacert_verify_cert_sw(const atcacert_def_t* cert_def,
+                                    const uint8_t*        cert,
+                                    size_t                cert_size,
+                                    const cal_buffer*     ca_public_key)
 {
-    int ret = 0;
-    uint8_t tbs_digest[32];
-    uint8_t signature[64];
+    ATCA_STATUS ret = 0;
+    uint8_t key_type = 0u;
+    uint8_t tbs_digest[ATCA_SHA2_512_DIGEST_SIZE];
+    cal_buffer dig = CAL_BUF_INIT(0u, tbs_digest);
+    uint8_t signature[ATCA_MAX_ECC_SIG_SIZE];
+    cal_buffer sig = CAL_BUF_INIT(0u, signature);
+    atcac_pk_ctx_t pkey_ctx;
 
+#if ATCA_CHECK_PARAMS_EN
     if (cert_def == NULL || ca_public_key == NULL || cert == NULL)
     {
         return ATCACERT_E_BAD_PARAMS;
     }
+#endif
 
-    ret = atcacert_get_tbs_digest(cert_def, cert, cert_size, tbs_digest);
+    switch(ca_public_key->len)
+    {
+        case ATCA_ECCP256_PUBKEY_SIZE:
+            dig.len = ATCA_SHA2_256_DIGEST_SIZE;
+            break;
+#if ATCA_TA_SUPPORT
+        case ATCA_ECCP384_PUBKEY_SIZE:
+            dig.len = ATCA_SHA2_384_DIGEST_SIZE;
+            key_type = TA_KEY_TYPE_ECCP384;
+            break;
+        case ATCA_ECCP521_PUBKEY_SIZE:
+            dig.len = ATCA_SHA2_512_DIGEST_SIZE;
+            key_type = TA_KEY_TYPE_ECCP521;
+            break;
+#endif
+        default:
+            ret = ATCACERT_E_BAD_PARAMS;
+            break;
+    }
     if (ret != ATCACERT_E_SUCCESS)
     {
         return ret;
     }
 
-    ret = atcacert_get_signature(cert_def, cert, cert_size, signature);
+    ret = atcacert_get_tbs_digest(cert_def, cert, cert_size, &dig);
     if (ret != ATCACERT_E_SUCCESS)
     {
         return ret;
     }
 
-    ret = atcac_sw_ecdsa_verify_p256(tbs_digest, signature, ca_public_key);
+    sig.len = (0u == cert_def->std_sig_size) ? ATCA_ECCP256_SIG_SIZE : cert_def->std_sig_size;
+    ret = atcacert_get_signature(cert_def, cert, cert_size, &sig);
     if (ret != ATCACERT_E_SUCCESS)
     {
         return ret;
     }
 
-    return ATCACERT_E_SUCCESS;
+    /* Initialize the key using the provided X,Y cordinantes */
+    ret = atcac_pk_init(&pkey_ctx, ca_public_key->buf, ca_public_key->len, key_type, true);
+    if (ret != ATCACERT_E_SUCCESS)
+    {
+        return ret;
+    }
+
+    /* Perform the verification */
+    ret = atcac_pk_verify(&pkey_ctx, dig.buf, dig.len, sig.buf, sig.len);
+
+    /* Make sure to free the key before testing the result of the verify */
+    (void)atcac_pk_free(&pkey_ctx);
+
+    return ret;
 }
+#endif /* ATCAC_VERIFY_EN */
 
-
-
-int atcacert_gen_challenge_sw(uint8_t challenge[32])
+#if ATCAC_RANDOM_EN
+ATCA_STATUS atcacert_gen_challenge_sw(cal_buffer* challenge)
 {
+#if ATCA_CHECK_PARAMS_EN
     if (challenge == NULL)
     {
         return ATCACERT_E_BAD_PARAMS;
     }
+#endif
 
-    return atcac_sw_random(challenge, 32);
+    return atcac_sw_random(challenge->buf, challenge->len);
 }
+#endif /* ATCAC_RANDOM_EN */
 
-
-
-int atcacert_verify_response_sw(const uint8_t device_public_key[64],
-                                const uint8_t challenge[32],
-                                const uint8_t response[64])
+#if ATCAC_VERIFY_EN
+ATCA_STATUS atcacert_verify_response_sw(const cal_buffer* device_public_key,
+                                        const cal_buffer* challenge,
+                                        const cal_buffer* response)
 {
+    atcac_pk_ctx_t pkey_ctx;
+    uint8_t key_type = 0u;
+    ATCA_STATUS ret = 0;
+
+#if ATCA_CHECK_PARAMS_EN
     if (device_public_key == NULL || challenge == NULL || response == NULL)
     {
         return ATCACERT_E_BAD_PARAMS;
     }
+#endif
 
-    return atcac_sw_ecdsa_verify_p256(challenge, response, device_public_key);
+    (void)memset(&pkey_ctx, 0, sizeof(pkey_ctx));
+
+    switch(device_public_key->len)
+    {
+        case ATCA_ECCP256_PUBKEY_SIZE:
+            key_type = ATCA_KEY_TYPE_ECCP256;
+            break;
+#if ATCA_TA_SUPPORT
+        case ATCA_ECCP384_PUBKEY_SIZE:
+            key_type = TA_KEY_TYPE_ECCP384;
+            break;
+        case ATCA_ECCP521_PUBKEY_SIZE:
+            key_type = TA_KEY_TYPE_ECCP521;
+            break;
+#endif
+        default:
+            ret = ATCACERT_E_BAD_PARAMS;
+            break;
+    }
+    if (ret != ATCACERT_E_SUCCESS)
+    {
+        return ret;
+    }
+
+    /* Initialize the key using the provided X,Y cordinantes */
+    ret = atcac_pk_init(&pkey_ctx, device_public_key->buf, device_public_key->len, key_type, true);
+    if (ret != ATCACERT_E_SUCCESS)
+    {
+        return ret;
+    }
+
+    /* Perform the verification */
+    ret = atcac_pk_verify(&pkey_ctx, challenge->buf, challenge->len, response->buf, response->len);
+
+    /* Make sure to free the key before testing the result of the verify */
+    (void)atcac_pk_free(&pkey_ctx);
+
+    return ret;
 }
+#endif /* ATCAC_VERIFY_EN */
+
+#if ATCAC_CERT_ADD_EN && ATCACERT_COMPCERT_EN
+ATCA_STATUS atcacert_cert_add(void * cert, const struct atcacert_def_s * cert_def)
+{
+    ATCA_STATUS status;
+    status = atcac_sw_cert_add(cert, cert_def);
+
+    return status;
+}
+#endif
+
+#endif /* ATCACERT_EN */

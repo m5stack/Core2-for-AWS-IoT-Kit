@@ -79,7 +79,7 @@ ATCA_STATUS hal_i2c_change_baud(ATCAIface iface, uint32_t speed)
 ATCA_STATUS hal_i2c_init(ATCAIface iface, ATCAIfaceCfg *cfg)
 {
     int bus = cfg->atcai2c.bus;
-    atecc608_device = i2c_malloc_device(bus, I2C1_SDA_PIN, I2C1_SCL_PIN, cfg->atcai2c.baud, cfg->atcai2c.address >> 1);
+    atecc608_device = i2c_malloc_device(bus, I2C1_SDA_PIN, I2C1_SCL_PIN, cfg->atcai2c.baud, ATCA_IFACECFG_I2C_ADDRESS(cfg) >> 1);
 
     if (atecc608_device == NULL) {
         return ATCA_COMM_FAIL;
@@ -104,7 +104,7 @@ ATCA_STATUS hal_i2c_post_init(ATCAIface iface)
  * \param[in] txlength      number of bytes to send
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
-ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t address, uint8_t *txdata, int txlength)
+ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t word_address, uint8_t *txdata, int txlength)
 {
     ATCAIfaceCfg *cfg = iface->mIfaceCFG;
     esp_err_t rc;
@@ -114,13 +114,20 @@ ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t address, uint8_t *txdata, int 
         return ATCA_BAD_PARAM;
     }
 
+    // The device address is re-read on every call because the wake sequence temporarily sets it to 0.
+    uint8_t device_address = ATCA_IFACECFG_I2C_ADDRESS(cfg);
+
     //ESP_LOGD(TAG, "txdata: %p , txlength: %d", txdata, txlength);
     //ESP_LOG_BUFFER_HEXDUMP(TAG, txdata, txlength, 3);
 
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     (void)i2c_master_start(cmd);
-    (void)i2c_master_write_byte(cmd, address | I2C_MASTER_WRITE, ACK_CHECK_EN);
-    (void)i2c_master_write(cmd, txdata, txlength, ACK_CHECK_EN);
+    (void)i2c_master_write_byte(cmd, device_address | I2C_MASTER_WRITE, ACK_CHECK_EN);
+    (void)i2c_master_write_byte(cmd, word_address, ACK_CHECK_EN);
+    if (NULL != txdata && 0 < txlength)
+    {
+        (void)i2c_master_write(cmd, txdata, txlength, ACK_CHECK_EN);
+    }
     (void)i2c_master_stop(cmd);
     i2c_apply_bus(atecc608_device);
     rc = i2c_master_cmd_begin(cfg->atcai2c.bus, cmd, 10);
@@ -139,7 +146,7 @@ ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t address, uint8_t *txdata, int 
 
 /** \brief HAL implementation of I2C receive function
  * \param[in]    iface          Device to interact with.
- * \param[in]    address        Device address
+ * \param[in]    address        8-bit device address (including the R/W bit position)
  * \param[out]   rxdata         Data received will be returned here.
  * \param[in,out] rxlength      As input, the size of the rxdata buffer.
  *                              As output, the number of bytes received.
@@ -154,7 +161,7 @@ ATCA_STATUS hal_i2c_receive(ATCAIface iface, uint8_t address, uint8_t *rxdata, u
  
     if ((NULL == cfg) || (NULL == rxlength) || (NULL == rxdata))
     {
-        return ATCA_TRACE(ATCA_INVALID_POINTER, "NULL pointer encountered");
+        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer encountered");
     }
 
     cmd = i2c_cmd_link_create();

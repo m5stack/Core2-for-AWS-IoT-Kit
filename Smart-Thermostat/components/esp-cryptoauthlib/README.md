@@ -1,10 +1,15 @@
 # ESP-CRYPTOAUTHLIB
 
-This is a port of Microchip's [cryptoauthlib](https://github.com/MicrochipTech/cryptoauthlib) for ESP-IDF. It contains necessary build support to use cryptoauthlib with ESP-IDF as well as `esp_cryptoauthlib_utility` for configuring and provisiong ATECC608A chip integrated with [ESP32-WROOM-32SE](https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32se_datasheet_en.pdf). The cryptoauthlib folder which is a subset of Microchip's [cryptoauthlib](https://github.com/MicrochipTech/cryptoauthlib) is created with help of script [generate_component.sh](./generate_component.sh).
+## Supported Targets
+
+| Supported Target Board | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C5 | ESP32-C6 | ESP32-C61 | ESP32-H2 | ESP32-P4 | ESP32-S3 |
+| ---------------------- | ----- | -------- | -------- | -------- | -------- | --------- | -------- | -------- | -------- |
+
+This is a port of Microchip's [cryptoauthlib](https://github.com/MicrochipTech/cryptoauthlib) for ESP-IDF. It contains necessary build support to use cryptoauthlib with ESP-IDF as well as `esp_cryptoauthlib_utility` for configuring and provisiong ATECC608A chip connected to a Supported Target Board. The cryptoauthlib folder which is a subset of Microchip's [cryptoauthlib](https://github.com/MicrochipTech/cryptoauthlib) is created with help of script [generate_component.sh](https://github.com/espressif/esp-cryptoauthlib/blob/master/generate_component.sh).
 
 ## Requirements
 
-* [ESP-IDF](https://github.com/espressif/esp-idf) version should be `release/v4.3` or newer.
+* [ESP-IDF](https://github.com/espressif/esp-idf) version should be `release/v5.0` or newer.
 * Environment variable `IDF_PATH` should be set
 
 ## How to use esp-cryptoauthlib with ESP-IDF
@@ -27,6 +32,6 @@ There are two ways to use `esp-cryptoauthlib` in your project
 ```
 * Include  `esp-cryptoauthlib` in `ESP-IDF` with setting `EXTRA_COMPONENT_DIRS` in CMakeLists.txt/Makefile of your project.For reference see [Optional Project Variables](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html#optional-project-variables)
 
-## How to configure and provision ATECC608A on ESP32-WROOM-32SE
-The python utilty `esp_cryptoauth_utility` helps to configure, generate resources as well as provision ATECC608A chip integrated with `ESP32-WROOM-32SE`.
-For detailed instructions on how to use the utility please refer utility [README.md](esp_cryptoauth_utility/README.md)
+## How to configure and provision ATECC608
+The python utilty `esp_cryptoauth_utility` helps to configure, generate resources as well as provision ATECC608A chip connected to an ESP module.
+For detailed instructions on how to use the utility please refer utility [README.md](https://github.com/espressif/esp-cryptoauthlib/blob/master/esp_cryptoauth_utility/README.md)

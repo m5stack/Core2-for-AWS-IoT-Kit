@@ -36,7 +36,7 @@
 
 #include "cryptoauthlib.h"
 
-
+#if ATCAB_AES_CCM_EN
 /** \brief Initialize context for AES CCM operation with an existing IV, which
  *         is common when starting a decrypt operation.
  *
@@ -68,25 +68,25 @@ ATCA_STATUS atcab_aes_ccm_init_ext(ATCADevice device, atca_aes_ccm_ctx_t* ctx, u
     }
 
     // Length/nonce field specifications according to rfc3610.
-    if (iv == NULL || iv_size < 7 || iv_size > 13)
+    if (iv == NULL || iv_size < 7u || iv_size > 13u)
     {
         return ATCA_BAD_PARAM;
     }
 
     // Auth field specifications according to rfc3610.
-    if (tag_size < 3 || tag_size > ATCA_AES128_BLOCK_SIZE || tag_size % 2 != 0)
+    if (tag_size < 3u || tag_size > ATCA_AES128_BLOCK_SIZE || tag_size % 2u != 0u)
     {
         return ATCA_BAD_PARAM;
     }
 
-    memset(ctx, 0, sizeof(*ctx));
+    (void)memset(ctx, 0, sizeof(*ctx));
     ctx->iv_size = (uint8_t)iv_size;
 
     // --------------------- Init sequence for authentication .......................//
     // Encoding the number of bytes in auth field.
-    M = (uint8_t)(tag_size - 2) / 2;
+    M = (uint8_t)(tag_size - 2u) / 2u;
     // Encoding the number of bytes in length field.
-    L = (uint8_t)(ATCA_AES128_BLOCK_SIZE - iv_size - 1 - 1);
+    L = (uint8_t)(ATCA_AES128_BLOCK_SIZE - iv_size - 1u - 1u);
 
     // Store M value in ctx for later use.
     ctx->M = M;
@@ -99,9 +99,9 @@ ATCA_STATUS atcab_aes_ccm_init_ext(ATCADevice device, atca_aes_ccm_ctx_t* ctx, u
        5 ... 3      M'
        2 ... 0      L'
        -----------------------*/
-    memset(B, 0, ATCA_AES128_BLOCK_SIZE);
+    (void)memset(B, 0, ATCA_AES128_BLOCK_SIZE);
     // Formatting flag field
-    B[0] = L | (M << 3) | ((aad_size > 0) << 6);
+    B[0] = (uint8_t)(L | (M << 3u) | (uint8_t)((aad_size > 0u ? 1u : 0u) << 6u));
 
     /*----------------------
        Octet Number   Contents
@@ -112,12 +112,16 @@ ATCA_STATUS atcab_aes_ccm_init_ext(ATCADevice device, atca_aes_ccm_ctx_t* ctx, u
        -----------------------*/
 
     // Copying the IV into the nonce field.
-    memcpy(&B[1], iv, iv_size);
+    (void)memcpy(&B[1], iv, iv_size);
 
     // Update length field in B0 block.
-    for (i = 0, size_left = text_size; i < (size_t)(L + 1); i++, size_left >>= 8)
+    i = 0;
+    size_left = text_size;
+    while (i < ((size_t)L + 1u))
     {
-        B[15 - i] = (unsigned char)( size_left & 0xFF );
+        B[15U - i] = (unsigned char)( size_left & 0xFFu );
+        i++;
+        size_left >>= 8;
     }
 
     // Init CBC-MAC context
@@ -135,12 +139,15 @@ ATCA_STATUS atcab_aes_ccm_init_ext(ATCADevice device, atca_aes_ccm_ctx_t* ctx, u
     }
 
     // Loading AAD size in ctx buffer.
-    ctx->partial_aad[0] = (uint8_t)(aad_size >> 8) & 0xff;
-    ctx->partial_aad[1] = (uint8_t)(aad_size & 0xff);
-    ctx->partial_aad_size = 2;
+    if (aad_size > 0u)
+    {
+        ctx->partial_aad[0] = (uint8_t)((aad_size >> 8) & 0xffu);
+        ctx->partial_aad[1] = (uint8_t)(aad_size & 0xffu);
+        ctx->partial_aad_size = 2;
+    }
 
     // --------------------- Init sequence for encryption/decryption .......................//
-    memset(counter, 0, ATCA_AES128_BLOCK_SIZE);
+    (void)memset(counter, 0, ATCA_AES128_BLOCK_SIZE);
     ctx->text_size = text_size;
 
     /*----------------------
@@ -162,11 +169,11 @@ ATCA_STATUS atcab_aes_ccm_init_ext(ATCADevice device, atca_aes_ccm_ctx_t* ctx, u
        16-L ... 15    Counter i
        -----------------------*/
     // Formatting to get the initial counter value
-    memcpy(&counter[1], iv, iv_size);
-    memcpy(ctx->counter, counter, ATCA_AES128_BLOCK_SIZE);
+    (void)memcpy(&counter[1], iv, iv_size);
+    (void)memcpy(ctx->counter, counter, ATCA_AES128_BLOCK_SIZE);
 
     // Init CTR mode context with the counter value obtained from previous step.
-    status = atcab_aes_ctr_init_ext(device, &ctx->ctr_ctx, key_id, key_block, (uint8_t)(ATCA_AES128_BLOCK_SIZE - iv_size - 1), counter);
+    status = atcab_aes_ctr_init_ext(device, &ctx->ctr_ctx, key_id, key_block, (uint8_t)(ATCA_AES128_BLOCK_SIZE - iv_size - 1u), counter);
     if (status != ATCA_SUCCESS)
     {
         return status;
@@ -202,7 +209,9 @@ ATCA_STATUS atcab_aes_ccm_init(atca_aes_ccm_ctx_t* ctx, uint16_t key_id, uint8_t
 {
     return atcab_aes_ccm_init_ext(atcab_get_device(), ctx, key_id, key_block, iv, iv_size, aad_size, text_size, tag_size);
 }
+#endif /* ATCAB_AES_CCM_EN */
 
+#if ATCAB_AES_CCM_RAND_IV_EN
 /** \brief Initialize context for AES CCM operation with a random nonce
  *
  * \param[in] ctx          AES CCM context to be initialized
@@ -223,18 +232,26 @@ ATCA_STATUS atcab_aes_ccm_init_rand_ext(ATCADevice device, atca_aes_ccm_ctx_t* c
                                         size_t text_size, size_t tag_size)
 {
     ATCA_STATUS status;
-    uint8_t random_nonce[32];
+    uint8_t random_nonce[32] = { 0 };
 
     // Length/nonce field specifications according to rfc3610.
-    if (iv_size < 7 || iv_size > 13)
+    if (iv_size < 7u || iv_size > 13u)
     {
         // Generating random number to feed into calib_aes_ccm_init function.
-        status = atcab_random_ext(device, random_nonce);
-        if (status != ATCA_SUCCESS)
+#if ATCA_HOSTLIB_EN
+        if (ATCA_SUCCESS != (status = (ATCA_STATUS)atcac_sw_random(random_nonce, 32)))
         {
             return status;
         }
-        memcpy(iv, random_nonce, iv_size);
+#elif CALIB_RANDOM_EN || TALIB_RANDOM_EN
+        if (ATCA_SUCCESS != (status = atcab_random_ext(device, random_nonce)))
+        {
+            return status;
+        }
+#else
+        return ATCA_GEN_FAIL;
+#endif
+        (void)memcpy(iv, random_nonce, iv_size);
     }
 
     // Pass required data along with generated random number to calib_aes_ccm_init function
@@ -268,7 +285,9 @@ ATCA_STATUS atcab_aes_ccm_init_rand(atca_aes_ccm_ctx_t* ctx, uint16_t key_id, ui
 {
     return atcab_aes_ccm_init_rand_ext(atcab_get_device(), ctx, key_id, key_block, iv, iv_size, aad_size, text_size, tag_size);
 }
+#endif /* ATCAB_AES_CCM_RAND_IV_EN */
 
+#if ATCAB_AES_CCM_EN
 /** \brief Process Additional Authenticated Data (AAD) using CCM mode and a
  *         key within the ATECC608A device.
  *
@@ -290,7 +309,7 @@ ATCA_STATUS atcab_aes_ccm_aad_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* aad
     size_t rem_size;
     size_t copy_size;
 
-    if (aad_size == 0)
+    if (0u == aad_size)
     {
         return ATCA_SUCCESS;
     }
@@ -304,7 +323,7 @@ ATCA_STATUS atcab_aes_ccm_aad_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* aad
     copy_size = aad_size > rem_size ? rem_size : aad_size;
 
     // Copy data into current block
-    memcpy(&ctx->partial_aad[ctx->partial_aad_size], aad, copy_size);
+    (void)memcpy(&ctx->partial_aad[ctx->partial_aad_size], aad, copy_size);
 
     if (ctx->partial_aad_size + aad_size < ATCA_AES128_BLOCK_SIZE)
     {
@@ -322,9 +341,9 @@ ATCA_STATUS atcab_aes_ccm_aad_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* aad
     // Process any additional blocks
     aad_size -= copy_size; // Adjust to the remaining aad bytes
     block_count = aad_size / ATCA_AES128_BLOCK_SIZE;
-    if (block_count > 0)
+    if (block_count > 0u)
     {
-        if (ATCA_SUCCESS != (status = atcab_aes_cbcmac_update(&ctx->cbc_mac_ctx,  &aad[copy_size],  block_count * ATCA_AES128_BLOCK_SIZE)))
+        if (ATCA_SUCCESS != (status = atcab_aes_cbcmac_update(&ctx->cbc_mac_ctx,  &aad[copy_size],  (uint32_t)block_count * ATCA_AES128_BLOCK_SIZE)))
         {
             return status;
         }
@@ -332,7 +351,7 @@ ATCA_STATUS atcab_aes_ccm_aad_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* aad
 
     // Save any remaining data
     ctx->partial_aad_size = aad_size % ATCA_AES128_BLOCK_SIZE;
-    memcpy(ctx->partial_aad, &aad[copy_size + block_count * ATCA_AES128_BLOCK_SIZE], ctx->partial_aad_size);
+    (void)memcpy(ctx->partial_aad, &aad[copy_size + block_count * ATCA_AES128_BLOCK_SIZE], ctx->partial_aad_size);
 
     return ATCA_SUCCESS;
 }
@@ -354,17 +373,17 @@ ATCA_STATUS atcab_aes_ccm_aad_finish(atca_aes_ccm_ctx_t* ctx)
 
     if (ctx == NULL)
     {
-        status = ATCA_TRACE(ATCA_BAD_PARAM, "Null pointer");
+        return ATCA_BAD_PARAM;
     }
 
     // Pad and process any incomplete aad data blocks
-    if (ctx->partial_aad_size > 0)
+    if (ctx->partial_aad_size > 0u)
     {
-        uint8_t buffer[ATCA_AES128_BLOCK_SIZE];
-        memset(buffer, 0, ATCA_AES128_BLOCK_SIZE);
-        memcpy(buffer, ctx->partial_aad, ctx->partial_aad_size);
+        uint8_t buf[ATCA_AES128_BLOCK_SIZE];
+        (void)memset(buf, 0, ATCA_AES128_BLOCK_SIZE);
+        (void)memcpy(buf, ctx->partial_aad, ctx->partial_aad_size);
 
-        status = atcab_aes_cbcmac_update(&ctx->cbc_mac_ctx, buffer, ATCA_AES128_BLOCK_SIZE);
+        status = atcab_aes_cbcmac_update(&ctx->cbc_mac_ctx, buf, ATCA_AES128_BLOCK_SIZE);
         if (status != ATCA_SUCCESS)
         {
             return status;
@@ -393,7 +412,7 @@ static ATCA_STATUS atcab_aes_ccm_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* 
     uint32_t data_idx;
     uint32_t i;
 
-    if (input_size == 0)
+    if (0u == input_size)
     {
         // Nothing to do
         return ATCA_SUCCESS;
@@ -413,31 +432,35 @@ static ATCA_STATUS atcab_aes_ccm_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* 
     data_idx = 0;
     while (data_idx < input_size)
     {
-        if (ctx->data_size % ATCA_AES128_BLOCK_SIZE == 0)
+        if (0u == (ctx->data_size % ATCA_AES128_BLOCK_SIZE))
         {
             // Need to calculate next encrypted counter block
             if (ATCA_SUCCESS != (status = atcab_aes_encrypt_ext(ctx->ctr_ctx.device, ctx->ctr_ctx.key_id, ctx->ctr_ctx.key_block, ctx->ctr_ctx.cb, ctx->enc_cb)))
             {
-                ATCA_TRACE(status, "AES CCM CB encrypt failed");
+                (void)ATCA_TRACE(status, "AES CCM CB encrypt failed");
             }
 
             // Increment counter
             if (ATCA_SUCCESS != (status = atcab_aes_ctr_increment(&ctx->ctr_ctx)))
             {
-                ATCA_TRACE(status, "AES CCM counter increment failed");
+                (void)ATCA_TRACE(status, "AES CCM counter increment failed");
             }
         }
 
         // Process data with current encrypted counter block
-        for (i = ctx->data_size % ATCA_AES128_BLOCK_SIZE; i < ATCA_AES128_BLOCK_SIZE && data_idx < input_size; i++, data_idx++)
+        i = ctx->data_size % ATCA_AES128_BLOCK_SIZE;
+        while ((i < ATCA_AES128_BLOCK_SIZE) && (data_idx < input_size))
         {
             output[data_idx] = input[data_idx] ^ ctx->enc_cb[i];
             // Save the current ciphertext block depending on whether this is an encrypt or decrypt operation
             ctx->ciphertext_block[i] = is_encrypt ? input[data_idx] : output[data_idx];
-            ctx->data_size += 1;
+            ctx->data_size += 1u;
+
+            i++;
+            data_idx++;
         }
 
-        if (ctx->data_size % ATCA_AES128_BLOCK_SIZE == 0)
+        if (0u == (ctx->data_size % ATCA_AES128_BLOCK_SIZE))
         {
             // Adding data to CBC-MAC to calculate tag
             status = atcab_aes_cbcmac_update(&ctx->cbc_mac_ctx, ctx->ciphertext_block, ATCA_AES128_BLOCK_SIZE);
@@ -464,7 +487,7 @@ static ATCA_STATUS atcab_aes_ccm_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* 
  */
 ATCA_STATUS atcab_aes_ccm_encrypt_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* plaintext, uint32_t plaintext_size, uint8_t* ciphertext)
 {
-    return atcab_aes_ccm_update(ctx, plaintext, plaintext_size, ciphertext, true);
+    return atcab_aes_ccm_update(ctx, plaintext, (size_t)plaintext_size, ciphertext, true);
 }
 
 /** \brief Process data using CCM mode and a key within the ATECC608A device.
@@ -479,7 +502,7 @@ ATCA_STATUS atcab_aes_ccm_encrypt_update(atca_aes_ccm_ctx_t* ctx, const uint8_t*
  */
 ATCA_STATUS atcab_aes_ccm_decrypt_update(atca_aes_ccm_ctx_t* ctx, const uint8_t* ciphertext, uint32_t ciphertext_size, uint8_t* plaintext)
 {
-    return atcab_aes_ccm_update(ctx, ciphertext, ciphertext_size, plaintext, false);
+    return atcab_aes_ccm_update(ctx, ciphertext, (size_t)ciphertext_size, plaintext, false);
 }
 
 /** \brief Complete a CCM operation returning the authentication tag.
@@ -495,32 +518,32 @@ static ATCA_STATUS atcab_aes_ccm_finish(atca_aes_ccm_ctx_t* ctx, uint8_t* tag)
 
     uint8_t t[ATCA_AES128_BLOCK_SIZE];
     uint8_t u[ATCA_AES128_BLOCK_SIZE];
-    uint8_t buffer[ATCA_AES128_BLOCK_SIZE];
+    uint8_t buf[ATCA_AES128_BLOCK_SIZE];
 
-    memset(t, 0, ATCA_AES128_BLOCK_SIZE);
-    memset(u, 0, ATCA_AES128_BLOCK_SIZE);
-    memset(buffer, 0, ATCA_AES128_BLOCK_SIZE);
+    (void)memset(t, 0, ATCA_AES128_BLOCK_SIZE);
+    (void)memset(u, 0, ATCA_AES128_BLOCK_SIZE);
+    (void)memset(buf, 0, ATCA_AES128_BLOCK_SIZE);
 
-    if (ctx->data_size % ATCA_AES128_BLOCK_SIZE != 0)
+    if (ctx->data_size % ATCA_AES128_BLOCK_SIZE != 0u)
     {
-        memcpy(buffer, ctx->ciphertext_block, (ctx->data_size % ATCA_AES128_BLOCK_SIZE));
+        (void)memcpy(buf, ctx->ciphertext_block, ((size_t)ctx->data_size % ATCA_AES128_BLOCK_SIZE));
 
         // Adding data to CBC-MAC to calculate tag
-        status = atcab_aes_cbcmac_update(&ctx->cbc_mac_ctx, buffer, ATCA_AES128_BLOCK_SIZE);
+        status = atcab_aes_cbcmac_update(&ctx->cbc_mac_ctx, buf, ATCA_AES128_BLOCK_SIZE);
         if (status != ATCA_SUCCESS)
         {
             return status;
         }
     }
 
-    status = atcab_aes_cbcmac_finish(&ctx->cbc_mac_ctx, t, (ctx->M * 2) + 2);
+    status = atcab_aes_cbcmac_finish(&ctx->cbc_mac_ctx, t, ((uint32_t)ctx->M * 2u) + 2u);
     if (status != ATCA_SUCCESS)
     {
         return status;
     }
 
     // Init CTR mode context
-    status = atcab_aes_ctr_init_ext(ctx->cbc_mac_ctx.cbc_ctx.device, &ctx->ctr_ctx, ctx->ctr_ctx.key_id, ctx->ctr_ctx.key_block, ATCA_AES128_BLOCK_SIZE - ctx->iv_size, ctx->counter);
+    status = atcab_aes_ctr_init_ext(ctx->cbc_mac_ctx.cbc_ctx.device, &ctx->ctr_ctx, ctx->ctr_ctx.key_id, ctx->ctr_ctx.key_block, ((ATCA_AES128_BLOCK_SIZE - ctx->iv_size) & 0xffu), ctx->counter);
     if (status != ATCA_SUCCESS)
     {
         return status;
@@ -532,7 +555,7 @@ static ATCA_STATUS atcab_aes_ccm_finish(atca_aes_ccm_ctx_t* ctx, uint8_t* tag)
         return status;
     }
 
-    memcpy(tag, (const void*)u, (ctx->M * 2) + 2);
+    (void)memcpy(tag, u, ((size_t)ctx->M * 2u) + 2u);
 
     return ATCA_SUCCESS;
 }
@@ -557,7 +580,7 @@ ATCA_STATUS atcab_aes_ccm_encrypt_finish(atca_aes_ccm_ctx_t* ctx, uint8_t* tag, 
     }
 
     // Update tag size
-    *tag_size = (ctx->M * 2) + 2;
+    *tag_size = ((ctx->M * 2u) + 2u) & 0xffu;
     return ATCA_SUCCESS;
 }
 
@@ -575,7 +598,7 @@ ATCA_STATUS atcab_aes_ccm_decrypt_finish(atca_aes_ccm_ctx_t* ctx, const uint8_t*
     ATCA_STATUS status;
     uint8_t t[ATCA_AES128_BLOCK_SIZE];
 
-    *is_verified = 0;
+    *is_verified = false;
 
     // Finish and get the tag
     status = atcab_aes_ccm_finish(ctx, t);
@@ -585,10 +608,11 @@ ATCA_STATUS atcab_aes_ccm_decrypt_finish(atca_aes_ccm_ctx_t* ctx, const uint8_t*
     }
 
     // Compare with the tag calculated.
-    if (memcmp(t, tag, (ctx->M * 2) + 2) == 0)
+    if (0 == (memcmp(t, tag, ((size_t)ctx->M * 2u) + 2u)))
     {
-        *is_verified = 1;
+        *is_verified = true;
     }
 
     return ATCA_SUCCESS;
 }
+#endif /* ATCAB_AES_CCM_EN */

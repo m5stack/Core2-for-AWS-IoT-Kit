@@ -1,0 +1,3 @@
+ESP-IDF Version: release-v6.1
+Git Commit: 0d9287800812c95662921c2c5e812023939e3d58
+ecu_firmware.bin SHA1: 7d8ee91954a9231507a25e65263c027ba637f74a

@@ -33,6 +33,12 @@
 
 #include "cryptoauthlib.h"
 
+#if CALIB_RANDOM_EN
+
+#if (CA_MAX_PACKET_SIZE < RANDOM_RSP_SIZE)
+#error "Random command packet cannot be accommodated inside the maximum packet size provided"
+#endif
+
 /** \brief Executes Random command, which generates a 32 byte random number
  *          from the CryptoAuth device.
  *
@@ -43,46 +49,58 @@
  */
 ATCA_STATUS calib_random(ATCADevice device, uint8_t *rand_out)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
 
     do
     {
+#if ATCA_CHECK_PARAMS_EN
         if (device == NULL)
         {
             status = ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
             break;
         }
+#endif
+
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
+            break;
+        }
+
+        (void)memset(packet, 0x00, sizeof(ATCAPacket));
 
         // build an random command
-        packet.param1 = RANDOM_SEED_UPDATE;
-        packet.param2 = 0x0000;
+        packet->param1 = RANDOM_SEED_UPDATE;
+        packet->param2 = 0x0000;
 
-        if ((status = atRandom(atcab_get_device_type_ext(device), &packet)) != ATCA_SUCCESS)
+        if ((status = atRandom(atcab_get_device_type_ext(device), packet)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "atRandom - failed");
+            (void)ATCA_TRACE(status, "atRandom - failed");
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_random - execution failed");
+            (void)ATCA_TRACE(status, "calib_random - execution failed");
             break;
         }
 
-        if (packet.data[ATCA_COUNT_IDX] != RANDOM_RSP_SIZE)
+        if (packet->data[ATCA_COUNT_IDX] != RANDOM_RSP_SIZE)
         {
             status = ATCA_TRACE(ATCA_RX_FAIL, "Unexpected response size");
             break;
         }
 
-        if (rand_out)
+        if (NULL != rand_out)
         {
-            memcpy(rand_out, &packet.data[ATCA_RSP_DATA_IDX], RANDOM_NUM_SIZE);
+            (void)memcpy(rand_out, &packet->data[ATCA_RSP_DATA_IDX], RANDOM_NUM_SIZE);
         }
-    }
-    while (0);
+    } while (false);
 
-
+    calib_packet_free(packet);
     return status;
 }
+#endif  /* CALIB_RANDOM_EN */

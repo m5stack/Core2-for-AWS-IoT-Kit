@@ -47,56 +47,73 @@ extern "C" {
  *
    @{ */
 
+#if ATCAC_VERIFY_EN && ATCACERT_COMPCERT_EN
 /**
  * \brief Verify a certificate against its certificate authority's public key using software crypto
- *        functions.The function is currently not implemented.
+ *        functions.
  *
  * \param[in] cert_def       Certificate definition describing how to extract the TBS and signature
  *                           components from the certificate specified.
  * \param[in] cert           Certificate to verify.
  * \param[in] cert_size      Size of the certificate (cert) in bytes.
- * \param[in] ca_public_key  The ECC P256 public key of the certificate authority that signed this
- *                           certificate. Formatted as the 32 byte X and Y integers concatenated
- *                           together (64 bytes total).
+ * \param[in] ca_public_key  Buffer pointing to the ECC P256/P384/P521 public key of the certificate 
+ *                           authority that signed this certificate. Formatted as the X and Y integers 
+ *                           concatenated together.                      
  *
- * \return ATCA_UNIMPLEMENTED , as the function is currently not implemented.
+ * \return ATCACERT_E_SUCCESS if the verify succeeds, ATCACERT_VERIFY_FAILED or ATCA_EXECUTION_ERROR if it fails to
+ *         verify. ATCA_EXECUTION_ERROR may occur when the public key is invalid and doesn't fall
+ *         on the P256/P384/P521 curve.
  */
-int atcacert_verify_cert_sw(const atcacert_def_t* cert_def,
-                            const uint8_t*        cert,
-                            size_t                cert_size,
-                            const uint8_t         ca_public_key[64]);
+ATCA_STATUS atcacert_verify_cert_sw(const atcacert_def_t* cert_def,
+                                    const uint8_t*        cert,
+                                    size_t                cert_size,
+                                    const cal_buffer*     ca_public_key);
+#endif
 
 
-
+#if ATCAC_RANDOM_EN
 /**
- * \brief Generate a random challenge to be sent to the client using a software PRNG.The function is currently not implemented.
+ * \brief Generate a random challenge to be sent to the client using a software PRNG.
  *
- * \param[out] challenge  Random challenge is return here. 32 bytes.
+ * \param[out] challenge  Random challenge is return in the buffer.
  *
- * \return ATCA_UNIMPLEMENTED , as the function is currently not implemented.
+ * \return ATCACERT_E_SUCCESS on success, otherwise an error code.
  */
-int atcacert_gen_challenge_sw(uint8_t challenge[32]);
+ATCA_STATUS atcacert_gen_challenge_sw(cal_buffer* challenge);
+#endif
 
 
-
-
+#if ATCAC_VERIFY_EN
 /**
- * \brief Verify a client's response to a challenge using software crypto functions.The function is currently not implemented.
+ * \brief Verify a client's response to a challenge using software crypto functions.
  *
  * The challenge-response protocol is an ECDSA Sign and Verify. This performs an ECDSA verify on the
  * response returned by the client, verifying the client has the private key counter-part to the
  * public key returned in its certificate.
  *
- * \param[in] device_public_key  Device public key as read from its certificate. Formatted as the X
- *                               and Y integers concatenated together. 64 bytes.
- * \param[in] challenge          Challenge that was sent to the client. 32 bytes.
- * \param[in] response           Response returned from the client to be verified. 64 bytes.
+ * \param[in] device_public_key  Buffer pointing to the device public key as read from its certificate. 
+ *                               Formatted as the X and Y integers concatenated together.
+ * \param[in] challenge          Buffer pointing to the Challenge that was sent to the client.
+ * \param[in] response           Response returned from the client to be verified is returned in the buffer.
  *
- * \return ATCA_UNIMPLEMENTED , as the function is currently not implemented.
+ * \return ATCACERT_E_SUCCESS if the verify succeeds, ATCACERT_VERIFY_FAILED or ATCA_EXECUTION_ERROR if it fails to
+ *         verify. ATCA_EXECUTION_ERROR may occur when the public key is invalid and doesn't fall
+ *         on the P256/P384/P521 curve.
  */
-int atcacert_verify_response_sw(const uint8_t device_public_key[64],
-                                const uint8_t challenge[32],
-                                const uint8_t response[64]);
+ATCA_STATUS atcacert_verify_response_sw(const cal_buffer* device_public_key,
+                                        const cal_buffer* challenge,
+                                        const cal_buffer* response);
+#endif
+
+#if ATCAC_CERT_ADD_EN && ATCACERT_COMPCERT_EN
+/** \brief Rebuild a certificate from an atcacert_def_t structure, and then add
+ * it to an software host library cert chain.
+ * \param[in,out] cert sw host cert chain.
+ * \param[in] cert_def Certificate definition that will be rebuilt and added
+ * \return 0 on success, otherwise an error code.
+ */
+ATCA_STATUS atcacert_cert_add(void * cert, const struct atcacert_def_s * cert_def);
+#endif
 
 /** @} */
 #ifdef __cplusplus

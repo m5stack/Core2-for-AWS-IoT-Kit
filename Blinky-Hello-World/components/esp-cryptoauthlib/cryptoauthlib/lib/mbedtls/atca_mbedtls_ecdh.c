@@ -28,15 +28,10 @@
 /* mbedTLS boilerplate includes */
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
+#include "mbedtls/mbedtls_config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
-
-#if defined(MBEDTLS_ECDH_C)
-
-#include "mbedtls/ecdh.h"
-#include "mbedtls/platform_util.h"
 
 /* Cryptoauthlib Includes */
 #include "cryptoauthlib.h"
@@ -44,7 +39,25 @@
 #include "atca_mbedtls_wrap.h"
 #include <string.h>
 
+#if defined(MBEDTLS_ECDH_C) && defined(ATCA_MBEDTLS)
+
+#include "mbedtls/ecdh.h"
+#include "mbedtls/platform_util.h"
+
 #ifdef MBEDTLS_ECDH_GEN_PUBLIC_ALT
+
+/** ECDH Callback to obtain the "slot" used in ECDH operations from the application */
+static atca_ecdh_slot_cb_t g_mbedtls_slot_cb = NULL;
+void atca_register_ecdh_slot_cb(atca_ecdh_slot_cb_t cb)
+{
+    g_mbedtls_slot_cb = cb;
+}
+
+void atca_unregister_ecdh_slot_cb(void)
+{
+    g_mbedtls_slot_cb = NULL;
+}
+
 /** Generate ECDH keypair */
 int mbedtls_ecdh_gen_public(mbedtls_ecp_group *grp, mbedtls_mpi *d, mbedtls_ecp_point *Q,
                             int (*f_rng)(void *, unsigned char *, size_t),
@@ -53,7 +66,7 @@ int mbedtls_ecdh_gen_public(mbedtls_ecp_group *grp, mbedtls_mpi *d, mbedtls_ecp_
     int ret = 0;
     uint8_t public_key[ATCA_PUB_KEY_SIZE];
     uint8_t temp = 1;
-    uint16_t slotid = atca_mbedtls_ecdh_slot_cb();
+    uint16_t slotid = g_mbedtls_slot_cb();
 
     if (!grp || !d || !Q)
     {
@@ -77,17 +90,17 @@ int mbedtls_ecdh_gen_public(mbedtls_ecp_group *grp, mbedtls_mpi *d, mbedtls_ecp_
 
     if (!ret)
     {
-        ret = mbedtls_mpi_read_binary(&(Q->X), public_key, ATCA_PUB_KEY_SIZE / 2);
+        ret = mbedtls_mpi_read_binary(&(Q->MBEDTLS_PRIVATE(X)), public_key, ATCA_PUB_KEY_SIZE / 2);
     }
 
     if (!ret)
     {
-        ret = mbedtls_mpi_read_binary(&(Q->Y), &public_key[ATCA_PUB_KEY_SIZE / 2], ATCA_PUB_KEY_SIZE / 2);
+        ret = mbedtls_mpi_read_binary(&(Q->MBEDTLS_PRIVATE(Y)), &public_key[ATCA_PUB_KEY_SIZE / 2], ATCA_PUB_KEY_SIZE / 2);
     }
 
     if (!ret)
     {
-        ret = mbedtls_mpi_read_binary(&(Q->Z), &temp, 1);
+        ret = mbedtls_mpi_read_binary(&(Q->MBEDTLS_PRIVATE(Z)), &temp, 1);
     }
 
     return ret;
@@ -95,6 +108,21 @@ int mbedtls_ecdh_gen_public(mbedtls_ecp_group *grp, mbedtls_mpi *d, mbedtls_ecp_
 #endif /* MBEDTLS_ECDH_GEN_PUBLIC_ALT */
 
 #ifdef MBEDTLS_ECDH_COMPUTE_SHARED_ALT
+
+/*
+ * ECDH Callback to obtain the IO Protection secret from the application 
+ */
+static atca_ecdh_ioprot_cb_t g_mbedtls_ioprot_cb = NULL;
+void atca_register_ecdh_ioprot_cb(atca_ecdh_ioprot_cb_t cb)
+{
+    g_mbedtls_ioprot_cb = cb;
+}
+
+void atca_unregister_ecdh_ioprot_cb(void)
+{
+    g_mbedtls_ioprot_cb = NULL;
+}
+
 /*
  * Compute shared secret (SEC1 3.3.1)
  */
@@ -122,20 +150,20 @@ int mbedtls_ecdh_compute_shared(mbedtls_ecp_group *grp, mbedtls_mpi *z,
 
     if (!ret)
     {
-        ret = mbedtls_mpi_write_binary(&(Q->X), public_key, ATCA_PUB_KEY_SIZE / 2);
+        ret = mbedtls_mpi_write_binary(&(Q->MBEDTLS_PRIVATE(X)), public_key, ATCA_PUB_KEY_SIZE / 2);
     }
 
     if (!ret)
     {
-        ret = mbedtls_mpi_write_binary(&(Q->Y), &public_key[ATCA_PUB_KEY_SIZE / 2], ATCA_PUB_KEY_SIZE / 2);
+        ret = mbedtls_mpi_write_binary(&(Q->MBEDTLS_PRIVATE(Y)), &public_key[ATCA_PUB_KEY_SIZE / 2], ATCA_PUB_KEY_SIZE / 2);
     }
 
     if (!ret)
     {
-        slotid = *(uint16_t*)d->p;
+        slotid = *(uint16_t*)d->MBEDTLS_PRIVATE(p);
         if (ATECC608 == atcab_get_device_type())
         {
-            ret = atca_mbedtls_ecdh_ioprot_cb(secret);
+            ret = g_mbedtls_ioprot_cb(secret);
             if (!ret)
             {
                 if (slotid > 15)
@@ -164,4 +192,4 @@ int mbedtls_ecdh_compute_shared(mbedtls_ecp_group *grp, mbedtls_mpi *z,
 }
 #endif /* MBEDTLS_ECDH_COMPUTE_SHARED_ALT */
 
-#endif /* MBEDTLS_ECDH_C */
+#endif /* MBEDTLS_ECDH_C && ATCA_MBEDTLS */

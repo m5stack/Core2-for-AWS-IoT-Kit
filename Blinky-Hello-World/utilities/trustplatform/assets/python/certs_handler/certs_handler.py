@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric import utils as crypto_utils
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-from cryptography.utils import int_to_bytes
+from cryptography.utils import int_to_bytes, int_from_bytes
 
 from .create_root import *
 from .create_cert_defs import *
@@ -31,7 +31,7 @@ class certs_handler():
 
     signer_org_name=root_org_name
     signer_common_name='Crypto Authentication Signer '
-    signer_validity=20
+    signer_validity=31
 
     device_org_name=root_org_name
     device_validity=28

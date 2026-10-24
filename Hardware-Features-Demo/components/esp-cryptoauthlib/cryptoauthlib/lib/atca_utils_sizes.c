@@ -26,11 +26,20 @@
  */
 
 #include "cryptoauthlib.h"
+#include "cal_internal.h"
+
+#ifdef __COVERITY__
+#pragma coverity compliance block deviate "MISRA C-2012 Rule 20.12" "This macro is used as a template to generate hooks for python integration"
+#endif
 
 #define SIZE_OF_API_T(x)  size_t x ## _size(void); size_t x ## _size(void) { return sizeof( x ); }
 #define SIZE_OF_API_S(x)  size_t x ## _size(void); size_t x ## _size(void) { return sizeof(struct x ); }
 
-#if ATCA_CA_SUPPORT
+#if ATCA_CA_SUPPORT || defined(ATCA_USE_ATCAB_FUNCTIONS)
+#include "atcacert/atcacert_check_config.h"
+#endif
+
+#if ATCACERT_COMPCERT_EN
 #include "atcacert/atcacert_date.h"
 #include "atcacert/atcacert_def.h"
 /* atcacert_date.h */
@@ -49,10 +58,16 @@ SIZE_OF_API_T(atcacert_def_t)
 SIZE_OF_API_T(atcacert_build_state_t)
 #endif
 
-/* atcab.h */
+/* atca_crypto_hw_aes.h */
+#ifdef atca_aes_cbc_ctx_t
 SIZE_OF_API_T(atca_aes_cbc_ctx_t)
+#endif
+#ifdef atca_aes_cmac_ctx_t
 SIZE_OF_API_T(atca_aes_cmac_ctx_t)
+#endif
+#ifdef atca_aes_ctr_ctx_t
 SIZE_OF_API_T(atca_aes_ctr_ctx_t)
+#endif
 
 #if ATCA_CA_SUPPORT
 #include "host/atca_host.h"
@@ -105,3 +120,48 @@ SIZE_OF_API_S(atca_iface)
 
 /* atca_status.h */
 SIZE_OF_API_T(ATCA_STATUS)
+
+/* atca_crypto_sw.h */
+#if ATCAC_SHA1_EN || ATCA_CRYPTO_SHA1_EN
+SIZE_OF_API_S(atcac_sha1_ctx)
+SIZE_OF_API_T(atcac_sha1_ctx_t)
+#endif
+
+#if ATCAC_SHA256_EN || ATCA_CRYPTO_SHA256_EN
+SIZE_OF_API_S(atcac_sha2_256_ctx)
+SIZE_OF_API_T(atcac_sha2_256_ctx_t)
+#endif
+
+#if ATCAC_SHA384_EN || ATCA_CRYPTO_SHA384_EN
+SIZE_OF_API_S(atcac_sha2_384_ctx)
+SIZE_OF_API_T(atcac_sha2_384_ctx_t)
+#endif
+
+#if ATCAC_SHA512_EN || ATCA_CRYPTO_SHA512_EN
+SIZE_OF_API_S(atcac_sha2_512_ctx)
+SIZE_OF_API_T(atcac_sha2_512_ctx_t)
+#endif
+
+#if ATCAC_SHA256_HMAC_EN || ATCA_CRYPTO_SHA2_HMAC_EN
+SIZE_OF_API_S(atcac_hmac_ctx)
+SIZE_OF_API_T(atcac_hmac_ctx_t)
+#endif
+
+#if ATCAC_AES_CMAC_EN
+SIZE_OF_API_S(atcac_aes_cmac_ctx)
+SIZE_OF_API_T(atcac_aes_cmac_ctx_t)
+#endif
+
+#if ATCAC_AES_GCM_EN
+SIZE_OF_API_S(atcac_aes_gcm_ctx)
+SIZE_OF_API_T(atcac_aes_gcm_ctx_t)
+#endif
+
+#if ATCAC_PKEY_EN
+SIZE_OF_API_S(atcac_pk_ctx)
+SIZE_OF_API_T(atcac_pk_ctx_t)
+#endif
+
+#ifdef __COVERITY__
+#pragma coverity compliance end_block "MISRA C-2012 Rule 20.12"
+#endif

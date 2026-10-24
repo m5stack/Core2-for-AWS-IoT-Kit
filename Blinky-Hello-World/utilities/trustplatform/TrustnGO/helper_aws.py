@@ -68,3 +68,4 @@ def configure_aws_cli(selected_region):
     except:
         print("Verify account csv file existence and its content!")
         return 'danger'
+

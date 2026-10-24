@@ -38,6 +38,10 @@
 
 #include "cryptoauthlib.h"
 
+#if (CA_MAX_PACKET_SIZE < ATCA_CMD_SIZE_MIN)
+#error "Info command packet cannot be accommodated inside the maximum packet size provided"
+#endif
+
 /** \brief Issues an Info command, which return internal device information and
  *          can control GPIO and the persistent latch.
  *
@@ -50,45 +54,70 @@
  */
 ATCA_STATUS calib_info_base(ATCADevice device, uint8_t mode, uint16_t param2, uint8_t* out_data)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
-
-    if (device == NULL)
-    {
-        return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
-    }
-
-    // build an info command
-    packet.param1 = mode;
-    packet.param2 = param2;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
 
     do
     {
-
-        if ((status = atInfo(atcab_get_device_type_ext(device), &packet)) != ATCA_SUCCESS)
+#if ATCA_CHECK_PARAMS_EN
+        if (device == NULL)
         {
-            ATCA_TRACE(status, "atInfo - failed");
+            status = ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
+            break;
+        }
+#endif
+
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        (void)memset(packet, 0x00, sizeof(ATCAPacket));
+
+        // build an info command
+        packet->param1 = mode;
+        packet->param2 = param2;
+
+        if ((status = atInfo(atcab_get_device_type_ext(device), packet)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_info_base - execution failed");
+            (void)ATCA_TRACE(status, "atInfo - failed");
             break;
         }
 
-        uint8_t response = packet.data[ATCA_COUNT_IDX];
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
+        {
+            // For ECC204,TA010,SHA10x Lock status and Key valid modes return their status in first byte.
+            // So, need to consider 01 as valid response as it presents lock/keyvalid status.
+            if (((INFO_MODE_LOCK_STATUS == mode) || (INFO_MODE_KEY_VALID == mode))
+                && (atcab_is_ca2_device(device->mIface.mIfaceCFG->devtype)))
+            {
+                if (status == ATCA_CHECKMAC_VERIFY_FAILED)
+                {
+                    status = ATCA_SUCCESS;
+                }
+            }
+            else
+            {
+                (void)ATCA_TRACE(status, "calib_info_base - execution failed");
+                break;
+            }
+        }
 
-        if (response && out_data)
+        uint8_t response = packet->data[ATCA_COUNT_IDX];
+
+        if ((response != 0u) && (NULL != out_data))
         {
             if (((INFO_MODE_LOCK_STATUS == mode) || (INFO_MODE_KEY_VALID == mode))
-                && (ECC204 == device->mIface.mIfaceCFG->devtype))
+                && (atcab_is_ca2_device(device->mIface.mIfaceCFG->devtype)))
             {
-                memcpy(out_data, &packet.data[ATCA_RSP_DATA_IDX], 1);
+                (void)memcpy(out_data, &packet->data[ATCA_RSP_DATA_IDX], 1);
             }
-            else if (response >= 7)
+            else if (response >= 7u)
             {
-                memcpy(out_data, &packet.data[ATCA_RSP_DATA_IDX], 4);
+                (void)memcpy(out_data, &packet->data[ATCA_RSP_DATA_IDX], 4);
             }
             else
             {
@@ -96,9 +125,9 @@ ATCA_STATUS calib_info_base(ATCADevice device, uint8_t mode, uint16_t param2, ui
             }
 
         }
-    }
-    while (0);
+    } while (false);
 
+    calib_packet_free(packet);
     return status;
 }
 
@@ -117,6 +146,7 @@ ATCA_STATUS calib_info(ATCADevice device, uint8_t* revision)
     return calib_info_base(device, INFO_MODE_REVISION, 0, revision);
 }
 
+#if CALIB_INFO_LATCH_EN
 /** \brief Use the Info command to get the persistent latch current state for
  *          an ATECC608 device.
  *
@@ -128,7 +158,7 @@ ATCA_STATUS calib_info(ATCADevice device, uint8_t* revision)
 
 ATCA_STATUS calib_info_get_latch(ATCADevice device, bool* state)
 {
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCA_STATUS status;
     uint8_t out_data[4];
 
     if (state == NULL)
@@ -141,7 +171,7 @@ ATCA_STATUS calib_info_get_latch(ATCADevice device, bool* state)
         return ATCA_TRACE(status, "calib_info_base - failed");
     }
 
-    *state = (out_data[0] == 1);
+    *state = (out_data[0] == 1u);
 
     return status;
 }
@@ -161,12 +191,13 @@ ATCA_STATUS calib_info_set_latch(ATCADevice device, bool state)
     param2 |= state ? INFO_PARAM2_LATCH_SET : INFO_PARAM2_LATCH_CLEAR;
     return calib_info_base(device, INFO_MODE_VOL_KEY_PERMIT, param2, NULL);
 }
+#endif /* CALIB_INFO_LATCH_EN */
 
 /** \brief Use Info command to check ECC Private key stored in key slot is valid or not
  *
  *  \param[in]   device      Device context pointer
  *  \param[in]   key_id      ECC private key slot id
- *                           For ECC204, key_id is 0x00
+ *                           For ECC204,TA010 key_id is 0x00
  *  \param[out]  is_valid    return private key is valid or invalid
  *
  *  \return ATCA_SUCCESS on success, otherwise an error code.
@@ -176,8 +207,8 @@ ATCA_STATUS calib_info_privkey_valid(ATCADevice device, uint16_t key_id, uint8_t
     return calib_info_base(device, INFO_MODE_KEY_VALID, key_id, is_valid);
 }
 
-#ifdef ATCA_ECC204_SUPPORT
-/** \brief Use Info command to ECC204 config/data zone lock status
+#if ATCA_CA2_SUPPORT
+/** \brief Use Info command to ECC204,TA010 config/data zone lock status
  *
  *  \param[in]   device      Device context pointer
  *  \param[in]   param2      selects the zone and slot
@@ -188,5 +219,17 @@ ATCA_STATUS calib_info_privkey_valid(ATCADevice device, uint16_t key_id, uint8_t
 ATCA_STATUS calib_info_lock_status(ATCADevice device, uint16_t param2, uint8_t* is_locked)
 {
     return calib_info_base(device, INFO_MODE_LOCK_STATUS, param2, is_locked);
+}
+
+/** \brief Use Info command to get ECC204,TA010,SHA10x chip status
+ *
+ *  \param[in]   device      Device context pointer
+ *  \param[out]  chip_status return chip status here
+ *
+ *  \return ATCA_SUCCESS on success, otherwise an error code.
+ */
+ATCA_STATUS calib_info_chip_status(ATCADevice device, uint8_t* chip_status)
+{
+    return calib_info_base(device, INFO_MODE_CHIP_STATUS, (uint16_t)0x00, chip_status);
 }
 #endif

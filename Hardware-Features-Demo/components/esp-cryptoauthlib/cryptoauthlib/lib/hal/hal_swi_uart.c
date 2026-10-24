@@ -43,7 +43,8 @@
 
 ATCA_STATUS hal_swi_init(ATCAIface iface, ATCAIfaceCfg *cfg)
 {
-
+    ((void)iface);
+    ((void)cfg);
     return ATCA_SUCCESS;
 }
 
@@ -54,6 +55,7 @@ ATCA_STATUS hal_swi_init(ATCAIface iface, ATCAIfaceCfg *cfg)
 
 ATCA_STATUS hal_swi_post_init(ATCAIface iface)
 {
+    ((void)iface);
     return ATCA_SUCCESS;
 }
 
@@ -105,26 +107,43 @@ static ATCA_STATUS hal_swi_uart_send_bit(ATCAIface iface, uint8_t data)
 
 ATCA_STATUS hal_swi_send(ATCAIface iface, uint8_t word_address, uint8_t *txdata, int txlength)
 {
-    (void)word_address;
     ATCA_STATUS status = ATCA_SUCCESS;
-    uint8_t i, bit_mask, bit_data;
+    uint8_t bit_mask, bit_data;
+    int i;
 
     (void)iface->phy->halcontrol(iface, ATCA_HAL_FLUSH_BUFFER, NULL, 0);
 
-    for (i = 0; i < txlength; i++)
+    //!Send word address
+    for (bit_mask = 1U; bit_mask > 0U; bit_mask <<= 1U)
     {
-        for (bit_mask = 1; bit_mask > 0; bit_mask <<= 1)
+        // Send one byte that represent one bit, 0x7F for one or 0x7D for zero
+        // The LSB (least significant bit) is sent first.
+        bit_data = ((bit_mask & word_address) != 0U) ? 0x7FU : 0x7DU;
+        status = hal_swi_uart_send_bit(iface, bit_data);
+        if (status != ATCA_SUCCESS)
         {
-            // Send one byte that represent one bit, 0x7F for one or 0x7D for zero
-            // The LSB (least significant bit) is sent first.
-            bit_data = (bit_mask & *txdata) ? 0x7F : 0x7D;
-            status = hal_swi_uart_send_bit(iface, bit_data);
-            if (status != ATCA_SUCCESS)
-            {
-                return ATCA_COMM_FAIL;
-            }
+            return ATCA_COMM_FAIL;
         }
-        txdata++;
+    }
+
+    if((NULL != txdata) && (0 < txlength))
+    {
+        //!Send data
+        for (i = 0; i < txlength; i++)
+        {
+            for (bit_mask = 1U; bit_mask > 0U; bit_mask <<= 1U)
+            {
+                // Send one byte that represent one bit, 0x7F for one or 0x7D for zero
+                // The LSB (least significant bit) is sent first.
+                bit_data = ((bit_mask & *txdata) != 0U) ? 0x7FU : 0x7DU;
+                status = hal_swi_uart_send_bit(iface, bit_data);
+                if (status != ATCA_SUCCESS)
+                {
+                return ATCA_COMM_FAIL;
+                }
+            }
+            txdata++;
+        }
     }
 
     return ATCA_SUCCESS;
@@ -144,28 +163,29 @@ ATCA_STATUS hal_swi_receive(ATCAIface iface, uint8_t word_address, uint8_t *rxda
     ATCA_STATUS status = ATCA_COMM_FAIL;
     uint8_t bit_mask, bit_data = 0;
 
-    if ((cfg == NULL) || (rxlength == NULL) || (rxdata == NULL) || (*rxlength < 1))
+    if ((cfg == NULL) || (rxlength == NULL) || (rxdata == NULL) || (*rxlength < 1u))
     {
         return ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer encountered");
     }
 
     (void)word_address;
 
-    for (int i = 0; i < *rxlength; i++, rxdata++)
+    for (unsigned int i = 0u; i < *rxlength; i++)
     {
-        for (bit_mask = 1; bit_mask > 0; bit_mask <<= 1)
+        for (bit_mask = 1u; bit_mask > 0u; bit_mask <<= 1)
         {
-            bit_data = 0;
+            bit_data = 0u;
             status = hal_swi_uart_receive_bit(iface, &bit_data);
             if (status != ATCA_SUCCESS)
             {
                 break;
             }
-            if ((bit_data ^ 0x7F) < 2)
+            if ((bit_data ^ 0x7Fu) < 2u)
             {
                 *rxdata |= bit_mask;
             }
         }
+        rxdata++;
     }
 
     return status;
@@ -209,7 +229,7 @@ ATCA_STATUS hal_swi_wake(ATCAIface iface)
         atca_delay_us(cfg->wake_delay);
 
         temp = CALIB_SWI_FLAG_TX;
-        hal_swi_send(iface, 0xFF, (uint8_t*)&temp, 1);
+        (void)hal_swi_send(iface, 0xFF, (uint8_t*)&temp, 1);
 
         // Read Wake response
         temp = 0;
@@ -218,7 +238,7 @@ ATCA_STATUS hal_swi_wake(ATCAIface iface)
             status = hal_check_wake((uint8_t*)&temp, sizeof(temp));
         }
     }
-    while (0);
+    while (false);
 
     return status;
 }
@@ -263,28 +283,35 @@ ATCA_STATUS hal_swi_control(ATCAIface iface, uint8_t option, void* param, size_t
 {
     (void)param;
     (void)paramlen;
+    ATCA_STATUS status = ATCA_BAD_PARAM;
 
-    if (iface && iface->mIfaceCFG)
+    if (NULL != iface && NULL != iface->mIfaceCFG)
     {
         switch (option)
         {
         case ATCA_HAL_CONTROL_WAKE:
-            return hal_swi_wake(iface);
+            status = hal_swi_wake(iface);
+            break;
         case ATCA_HAL_CONTROL_IDLE:
-            return hal_swi_idle(iface);
+            status = hal_swi_idle(iface);
+            break;
         case ATCA_HAL_CONTROL_SLEEP:
-            return hal_swi_sleep(iface);
+            status = hal_swi_sleep(iface);
+            break;
         case ATCA_HAL_CHANGE_BAUD:
-            return iface->phy->halcontrol(iface, ATCA_HAL_CHANGE_BAUD, param, paramlen);
+            status = iface->phy->halcontrol(iface, ATCA_HAL_CHANGE_BAUD, param, paramlen);
+            break;
         case ATCA_HAL_CONTROL_SELECT:
         /* fallthrough */
         case ATCA_HAL_CONTROL_DESELECT:
-            return ATCA_SUCCESS;
+            status = ATCA_SUCCESS;
+            break;
         default:
-            return ATCA_UNIMPLEMENTED;
+            status = ATCA_UNIMPLEMENTED;
+            break;
         }
     }
-    return ATCA_BAD_PARAM;
+    return status;
 }
 
 /** \brief manages reference count on given bus and releases resource if no more refences exist
@@ -294,7 +321,7 @@ ATCA_STATUS hal_swi_control(ATCAIface iface, uint8_t option, void* param, size_t
 
 ATCA_STATUS hal_swi_release(void *hal_data)
 {
-
+    ((void)hal_data);
     return ATCA_SUCCESS;
 }
 

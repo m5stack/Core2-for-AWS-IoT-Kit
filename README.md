@@ -1,7 +1,7 @@
 # M5Stack Core2 for AWS IoT Kit Code Repository
 This is the accompanying code repository for microcontroller tutorials presented in the [AWS IoT Kit](https://aws-iot-kit-docs.m5stack.com) program using the [M5Stack Core2 for AWS IoT Kit](https://m5stack.com/products/m5stack-core2-esp32-iot-development-kit-for-aws-iot-kit) reference Hardware.
 
-Each of the folders in this repository contains a separate project as described below. All projects are compatible with [ESP-IDF v4.2](https://www.espressif.com/en/products/sdks/esp-idf) or [PlatformIO](https://platformio.org/) and runs on Espressif's port of the [FreeRTOS kernel](https://www.freertos.org/). Please ensure that your installation of PlatformIO is updated to the latest version of PlatformIO Core (5.1+) using the command `pio upgrade`. Follow the [AWS IoT Kit — Getting Started](https://aws-iot-kit-docs.m5stack.com/en/getting-started/) tutorial for instructions on how to setup your environment.
+Each of the folders in this repository contains a separate project as described below. All projects are compatible with [ESP-IDF v4.4](https://www.espressif.com/en/products/sdks/esp-idf) or [PlatformIO](https://platformio.org/) (Espressif platform 5.4.0, which also runs natively on Apple Silicon) and runs on Espressif's port of the [FreeRTOS kernel](https://www.freertos.org/). Please ensure that your installation of PlatformIO is updated to the latest version of PlatformIO Core (5.1+) using the command `pio upgrade`. Follow the [AWS IoT Kit — Getting Started](https://aws-iot-kit-docs.m5stack.com/en/getting-started/) tutorial for instructions on how to setup your environment.
 
 For Arduino, UIFlow, or MicroPython content and code, please view the official [M5Stack Docs](https://docs.m5stack.com/#/).
 

@@ -34,6 +34,12 @@
 
 #include "cryptoauthlib.h"
 
+#if CALIB_UPDATEEXTRA_EN
+
+#if (CA_MAX_PACKET_SIZE < ATCA_CMD_SIZE_MIN)
+#error "UpdateExtra command packet cannot be accommodated inside the maximum packet size provided"
+#endif
+
 /** \brief Executes UpdateExtra command to update the values of the two
  *          extra bytes within the Configuration zone (bytes 84 and 85).
  *
@@ -49,36 +55,47 @@
  */
 ATCA_STATUS calib_updateextra(ATCADevice device, uint8_t mode, uint16_t new_value)
 {
-    ATCAPacket packet;
-    ATCA_STATUS status = ATCA_GEN_FAIL;
+    ATCAPacket * packet = NULL;
+    ATCA_STATUS status;
 
     do
     {
+#if ATCA_CHECK_PARAMS_EN
         if (device == NULL)
         {
             status = ATCA_TRACE(ATCA_BAD_PARAM, "NULL pointer received");
             break;
         }
+#endif
+
+        packet = calib_packet_alloc();
+        if(NULL == packet)
+        {
+            (void)ATCA_TRACE(ATCA_ALLOC_FAILURE, "calib_packet_alloc - failed");
+            status = ATCA_ALLOC_FAILURE;
+            break;
+        }
 
         // Build command
-        memset(&packet, 0, sizeof(packet));
-        packet.param1 = mode;
-        packet.param2 = new_value;
+        (void)memset(packet, 0, sizeof(ATCAPacket));
+        packet->param1 = mode;
+        packet->param2 = new_value;
 
-        if ((status = atUpdateExtra(atcab_get_device_type_ext(device), &packet)) != ATCA_SUCCESS)
+        if ((status = atUpdateExtra(atcab_get_device_type_ext(device), packet)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "atUpdateExtra - failed");
+            (void)ATCA_TRACE(status, "atUpdateExtra - failed");
             break;
         }
 
-        if ((status = atca_execute_command(&packet, device)) != ATCA_SUCCESS)
+        if ((status = atca_execute_command(packet, device)) != ATCA_SUCCESS)
         {
-            ATCA_TRACE(status, "calib_updateextra - execution failed");
+            (void)ATCA_TRACE(status, "calib_updateextra - execution failed");
             break;
         }
 
-    }
-    while (0);
+    } while (false);
 
+    calib_packet_free(packet);
     return status;
 }
+#endif  /* CALIB_UPDATEEXTRA */

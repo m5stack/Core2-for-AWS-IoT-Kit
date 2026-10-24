@@ -304,4 +304,3 @@ def check_and_install_policy(policy_name='Default'):
             print('Created policy {}'.format(policy_name))
         else:
             raise
-        

@@ -7,10 +7,12 @@
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 
+#define F_CLOSED    (-1)
+
 typedef struct atca_spi_host_s
 {
-    char spi_file[20];
-    int  f_spi;
+    char    spi_file[20];
+    int     f_spi;
 } atca_spi_host_t;
 
 /** \brief Open and configure the SPI device
@@ -18,42 +20,58 @@ typedef struct atca_spi_host_s
  * \param[in]  speed     Clock speed in Hz
  * \param[out] fd        resulting file descriptor
  */
-ATCA_STATUS hal_spi_open_file(const char * dev_name, uint32_t speed, int * fd)
+static ATCA_STATUS hal_spi_open_file(const char * dev_name, uint32_t speed, int * fd)
 {
     ATCA_STATUS status = ATCA_BAD_PARAM;
-    int ret;
 
-    if (dev_name && fd)
+    if ((NULL != dev_name) && (NULL != fd))
     {
-        uint8_t mode = SPI_MODE_3;
-        uint8_t bits = 8;
-
-        ret = open(dev_name, O_RDWR);
-
-        if (0 < ret)
+        status = ATCA_COMM_FAIL;
+        do
         {
-            *fd = ret;
-            ret = ioctl(*fd, SPI_IOC_WR_MODE, &mode);
-        }
+#ifdef __COVERITY__
+#pragma coverity compliance block \
+            (fp:12 "MISRA C-2012 Rule 10.1" "Macro usage is correct per POSIX specification" ) \
+            (fp:1 "MISRA C-2012 Rule 10.3" "Macro usage is correct per POSIX specification" ) \
+            (fp:6 "MISRA C-2012 Rule 10.4" "Macro usage is correct per POSIX specification" ) \
+            (fp:3 "MISRA C-2012 Rule 12.2" "Macro usage is correct per POSIX specification" ) \
+            (deviate:1 "CERT FIO32-C" "It is the system owner's responsibility ensure configuration provides a valid SPI device")
+#endif
+            uint8_t mode = SPI_MODE_3;
+            uint8_t bits = 8U;
 
-        if (0 <= ret)
-        {
-            ret = ioctl(*fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-        }
+            if (0 >= (*fd = open(dev_name, O_RDWR)))
+            {
+                break;
+            }
 
-        if (0 <= ret)
-        {
-            ret = ioctl(*fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-        }
+            /* Perform Device Configuration */
+            if (0 > ioctl(*fd, SPI_IOC_WR_MODE, &mode))
+            {
+                break;
+            }
 
-        if (*fd && (0 <= ret))
-        {
+            if (0 > ioctl(*fd, SPI_IOC_WR_BITS_PER_WORD, &bits))
+            {
+                break;
+            }
+            if (0 > ioctl(*fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed))
+            {
+                break;
+            }
+
+#ifdef __COVERITY__
+#pragma coverity compliance end_block \
+            "MISRA C-2012 Rule 10.1" \
+            "MISRA C-2012 Rule 10.3" \
+            "MISRA C-2012 Rule 10.4" \
+            "MISRA C-2012 Rule 12.2" \
+            "CERT FIO32-C"
+#endif
+
+            /* Configuration was fully successful */
             status = ATCA_SUCCESS;
-        }
-        else
-        {
-            status = ATCA_COMM_FAIL;
-        }
+        } while (false);
     }
 
     return status;
@@ -72,21 +90,23 @@ ATCA_STATUS hal_spi_open_file(const char * dev_name, uint32_t speed, int * fd)
 
 ATCA_STATUS hal_spi_init(ATCAIface iface, ATCAIfaceCfg *cfg)
 {
-
-    int f_spi;
     ATCA_STATUS status = ATCA_BAD_PARAM;
 
-    if (iface && cfg)
+    if ((NULL != iface) && (NULL != cfg))
     {
-        if (!iface->hal_data)
+        if (NULL == iface->hal_data)
         {
-            atca_spi_host_t * hal_data = malloc(sizeof(atca_spi_host_t));
-            if (hal_data)
+            /* coverity[misra_c_2012_directive_4_12_violation] Intentional as it is required for the linux environment */
+            /* coverity[misra_c_2012_rule_21_3_violation] Intentional as it is required for the linux environment */
+            if (NULL != (iface->hal_data = malloc(sizeof(atca_spi_host_t))))
             {
-                (void)snprintf(hal_data->spi_file, sizeof(hal_data->spi_file) - 1,
-                               "/dev/spidev%d.%d", (uint8_t)cfg->atcaspi.bus, (uint8_t)cfg->atcaspi.select_pin);
+                atca_spi_host_t * hal_data = (atca_spi_host_t*)iface->hal_data;
 
-                iface->hal_data = hal_data;
+                /* coverity[misra_c_2012_rule_21_6_violation] snprintf is approved for formatted string writes to buffers */
+                (void)snprintf(hal_data->spi_file, sizeof(hal_data->spi_file) - 1U,
+                               "/dev/spidev%d.%d", (uint8_t)ATCA_IFACECFG_VALUE(cfg, atcaspi.bus),
+                               (uint8_t)ATCA_IFACECFG_VALUE(cfg, atcaspi.select_pin));
+
                 status = ATCA_SUCCESS;
             }
             else
@@ -105,6 +125,7 @@ ATCA_STATUS hal_spi_init(ATCAIface iface, ATCAIfaceCfg *cfg)
 
 ATCA_STATUS hal_spi_post_init(ATCAIface iface)
 {
+    ((void)iface);
     return ATCA_SUCCESS;
 }
 
@@ -113,19 +134,18 @@ ATCA_STATUS hal_spi_post_init(ATCAIface iface)
  * \param[in]    iface          Device to interact with.
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
-ATCA_STATUS hal_spi_select(ATCAIface iface)
+static ATCA_STATUS hal_spi_select(ATCAIface iface)
 {
+    ATCA_STATUS status = ATCA_BAD_PARAM;
     ATCAIfaceCfg *cfg = atgetifacecfg(iface);
     atca_spi_host_t * hal_data = (atca_spi_host_t*)atgetifacehaldat(iface);
 
-    if (hal_data && cfg)
+    if ((NULL != hal_data) && (NULL != cfg))
     {
-        return hal_spi_open_file(hal_data->spi_file, cfg->atcaspi.baud, &hal_data->f_spi);
+        status = hal_spi_open_file(hal_data->spi_file,
+                                 ATCA_IFACECFG_VALUE(cfg, atcaspi.baud), &hal_data->f_spi);
     }
-    else
-    {
-        return ATCA_BAD_PARAM;
-    }
+    return status;
 }
 
 
@@ -133,22 +153,28 @@ ATCA_STATUS hal_spi_select(ATCAIface iface)
  * \param[in]    iface          Device to interact with.
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
-ATCA_STATUS hal_spi_deselect(ATCAIface iface)
+static ATCA_STATUS hal_spi_deselect(ATCAIface iface)
 {
+    ATCA_STATUS status = ATCA_BAD_PARAM;
     atca_spi_host_t * hal_data = (atca_spi_host_t*)atgetifacehaldat(iface);
 
-    if (hal_data)
+    if (NULL != hal_data)
     {
         struct spi_ioc_transfer spi_xfer = { 0 };
 
+        /* coverity[misra_c_2012_rule_10_1_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+        /* coverity[misra_c_2012_rule_10_4_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+        /* coverity[misra_c_2012_rule_12_2_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
         (void)ioctl(hal_data->f_spi, SPI_IOC_MESSAGE(1), &spi_xfer);
 
-        return close(hal_data->f_spi);
+        if (hal_data->f_spi >= 0) // Check if the file descriptor is still open
+        {
+            (void)close(hal_data->f_spi);
+            hal_data->f_spi = F_CLOSED; 
+        }
+        status = ATCA_SUCCESS;
     }
-    else
-    {
-        return ATCA_BAD_PARAM;
-    }
+    return status;
 }
 
 
@@ -160,19 +186,23 @@ ATCA_STATUS hal_spi_deselect(ATCAIface iface)
  *                              As output, the number of bytes received.
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
-ATCA_STATUS hal_spi_receive(ATCAIface iface, uint8_t flags, uint8_t *rxdata, uint16_t *rxlength)
+ATCA_STATUS hal_spi_receive(ATCAIface iface, uint8_t word_address, uint8_t *rxdata, uint16_t *rxlength)
 {
-    int f_spi;
     ATCA_STATUS status = ATCA_BAD_PARAM;
     atca_spi_host_t * hal_data = (atca_spi_host_t*)atgetifacehaldat(iface);
 
-    if (hal_data)
+    ((void)word_address);
+
+    if ((NULL != hal_data) && (NULL != rxdata) && (NULL != rxlength))
     {
         struct spi_ioc_transfer spi_xfer = { 0 };
         spi_xfer.rx_buf = (unsigned long)rxdata;
-        spi_xfer.len = *rxlength;
-        spi_xfer.cs_change = true;
+        spi_xfer.len = (unsigned int)*rxlength;
+        spi_xfer.cs_change = 1U;
 
+        /* coverity[misra_c_2012_rule_10_1_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+        /* coverity[misra_c_2012_rule_10_4_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+        /* coverity[misra_c_2012_rule_12_2_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
         if (*rxlength == ioctl(hal_data->f_spi, SPI_IOC_MESSAGE(1), &spi_xfer))
         {
             status = ATCA_SUCCESS;
@@ -185,7 +215,6 @@ ATCA_STATUS hal_spi_receive(ATCAIface iface, uint8_t flags, uint8_t *rxdata, uin
     return status;
 }
 
-
 /** \brief HAL implementation of SPI send
  * \param[in] iface           instance
  * \param[in] word_address    transaction type
@@ -194,22 +223,22 @@ ATCA_STATUS hal_spi_receive(ATCAIface iface, uint8_t flags, uint8_t *rxdata, uin
  * \param[in] len  number of bytes to send
  * \return ATCA_SUCCESS on success, otherwise an error code.
  */
-
-ATCA_STATUS hal_spi_send(ATCAIface iface, uint8_t flags, uint8_t *txdata, int txlen)
+ATCA_STATUS hal_spi_send(ATCAIface iface, uint8_t word_address, uint8_t *txdata, int txlength)
 {
-    int f_spi;
     ATCA_STATUS status = ATCA_SUCCESS;
     atca_spi_host_t * hal_data = (atca_spi_host_t*)atgetifacehaldat(iface);
-    int ret;
 
-    if (hal_data)
+    if ((NULL != hal_data))
     {
         struct spi_ioc_transfer spi_xfer = { 0 };
-        spi_xfer.tx_buf = (unsigned long)txdata;
-        spi_xfer.len = txlen;
-        spi_xfer.cs_change = true;
+        spi_xfer.tx_buf = (unsigned long)&word_address;
+        spi_xfer.len = (unsigned int)sizeof(word_address);
+        spi_xfer.cs_change = 1U;
 
-        if (txlen == ioctl(hal_data->f_spi, SPI_IOC_MESSAGE(1), &spi_xfer))
+        /* coverity[misra_c_2012_rule_10_1_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+        /* coverity[misra_c_2012_rule_10_4_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+        /* coverity[misra_c_2012_rule_12_2_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+        if (1 == ioctl(hal_data->f_spi, SPI_IOC_MESSAGE(1), &spi_xfer))
         {
             status = ATCA_SUCCESS;
         }
@@ -217,11 +246,30 @@ ATCA_STATUS hal_spi_send(ATCAIface iface, uint8_t flags, uint8_t *txdata, int tx
         {
             status = ATCA_COMM_FAIL;
         }
+
+        if ((ATCA_SUCCESS == status) && (NULL != txdata) && (0 < txlength))
+        {
+            struct spi_ioc_transfer spi_xfer_1 = { 0 };
+            spi_xfer_1.tx_buf = (unsigned long)txdata;
+            spi_xfer_1.len = (unsigned int)txlength;
+            spi_xfer_1.cs_change = 1U;
+
+            /* coverity[misra_c_2012_rule_10_1_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+            /* coverity[misra_c_2012_rule_10_4_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+            /* coverity[misra_c_2012_rule_12_2_violation] SPI_IOC_MESSAGE is defined by the Linux Specification and is used correctly here */
+            if (txlength == ioctl(hal_data->f_spi, SPI_IOC_MESSAGE(1), &spi_xfer_1))
+            {
+                status = ATCA_SUCCESS;
+            }
+            else
+            {
+                status = ATCA_COMM_FAIL;
+            }
+        }
     }
 
     return status;
 }
-
 
 /** \brief Perform control operations for the kit protocol
  * \param[in]     iface          Interface to interact with.
@@ -234,20 +282,24 @@ ATCA_STATUS hal_spi_control(ATCAIface iface, uint8_t option, void* param, size_t
 {
     (void)param;
     (void)paramlen;
+    ATCA_STATUS status = ATCA_BAD_PARAM;
 
-    if (iface && iface->mIfaceCFG)
+    if ((NULL != iface) && (NULL != iface->mIfaceCFG))
     {
         switch (option)
         {
         case ATCA_HAL_CONTROL_SELECT:
-            return hal_spi_select(iface);
+            status = hal_spi_select(iface);
+            break;
         case ATCA_HAL_CONTROL_DESELECT:
-            return hal_spi_deselect(iface);
+            status = hal_spi_deselect(iface);
+            break;
         default:
-            return ATCA_UNIMPLEMENTED;
+            status = ATCA_UNIMPLEMENTED;
+            break;
         }
     }
-    return ATCA_BAD_PARAM;
+    return status;
 }
 
 /** \brief manages reference count on given bus and releases resource if no more refences exist
@@ -256,11 +308,17 @@ ATCA_STATUS hal_spi_control(ATCAIface iface, uint8_t option, void* param, size_t
  */
 ATCA_STATUS hal_spi_release(void *hal_data)
 {
-    atca_spi_host_t *hal = (atca_spi_host_t*)hal_data;
-
-    if (hal)
+    if (NULL != hal_data)
     {
-        close(hal->f_spi);
+        atca_spi_host_t *hal = (atca_spi_host_t*)hal_data;
+
+        if (hal->f_spi >= 0) // Check if the file descriptor is still open
+        {
+            (void)close(hal->f_spi);
+            hal->f_spi = F_CLOSED; 
+        }
+
+        /* coverity[misra_c_2012_rule_21_3_violation] Intentional as it is required for the linux environment */
         free(hal);
     }
 
